@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "data_vent"
+version = "0.0.1"
+description = "inital attempt at migrating data-harvest"
+authors = [
+  { name = "Joe Duprey", email = "jduprey@uw.edu" },
+]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+  "fsspec",
+  "requests",
+  "s3fs<2022.8.0",
+  "dask",
+  "loguru",
+  "pandas",
+  "progressbar2",
+  "typer",
+  "zarr",
+  "xarray",
+  "netcdf4",
+  "zarr",
+  "lxml",
+  "gspread",
+  "fastparquet",
+  "pygithub",
+  "pendulum",
+  "siphon",
+  "prefect>2",
+  "requests-html",
+  "rechunker",
+  "pydantic<2",
+]
