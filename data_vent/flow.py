@@ -19,18 +19,29 @@ from data_vent.tasks import (
     request_data,
     get_request_response,
     check_data,
+    get_response,
+    get_stream,
+    setup_process,
+    data_processing,
 )
 
 from data_vent.test_configs import FlowParameters, my_params
 from data_vent.settings.main import harvest_settings
 from data_vent.pipelines.notifications import github_issue_notifier
 
+from data_vent.test_configs import DEV_PATH_SETTINGS
+
 @flow
 # TODO need to make sure these parameters are equivilant to prefect 1.0 version 
-def stream_ingest(default_params: dict, 
-                  harvest_options: Dict[str, Any] = {},
-                  issue_config: Dict[str, Any] = {},
-                  force_harvest: bool = False):
+def stream_ingest(
+    default_params: dict, 
+    harvest_options: Dict[str, Any] = {},
+    issue_config: Dict[str, Any] = {},
+    force_harvest: bool = False,
+    max_data_chunk: str = "100MB",
+    error_test: bool = False,
+    target_bucket: str = "s3://ooi-data",
+):
     logger = get_run_logger()
     logger.info("Running a toy flow!?")
 
@@ -54,33 +65,53 @@ def stream_ingest(default_params: dict,
     #harvest_options = Parameter("harvest_options", default={})
 
     stream_harvest = get_stream_harvest(default_dict.get("config"), harvest_options)
+    # TODO how do you actually set these path settings - it is confusing
+    stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
+
     is_requested = check_requested(stream_harvest)
 
     if is_requested == False:
     #with case(is_requested, False):
-            # Run the data request here
-            estimated_request = setup_harvest(
-                stream_harvest,
-                #TODO task_args necessary?
-                # task_args={
-                #     "state_handlers": state_handlers,
-                # },
-            )
-            request_response = request_data(estimated_request, stream_harvest, force_harvest)
+        # Run the data request here
+        estimated_request = setup_harvest(
+            stream_harvest,
+            #TODO task_args necessary?
+            # task_args={
+            #     "state_handlers": state_handlers,
+            # },
+        )
+        request_response = request_data(estimated_request, stream_harvest, force_harvest)
 
     if is_requested == True:
     #with case(is_requested, True):
-            # Get request response directly here
-            request_response = get_request_response(stream_harvest)
-            # Now run the data check
-            data_readiness = check_data(
-                request_response,
-                stream_harvest,
-                # TODO task_args necessary?
-                # task_args={
-                #     "state_handlers": state_handlers,
-                # },
-            )
+        # Get request response directly here
+        request_response = get_request_response(stream_harvest)
+        # Now run the data check
+        data_readiness = check_data(
+            request_response,
+            stream_harvest,
+            # TODO task_args necessary?
+            # task_args={
+            #     "state_handlers": state_handlers,
+            # },
+        )
+
+        response_json = get_response(data_readiness)
+        stream_harvest = get_stream(data_readiness)
+
+        # Process data to temp
+        nc_files_dict = setup_process(response_json, target_bucket)
+        stores_dict = data_processing(
+            nc_files_dict,
+            stream_harvest,
+            max_data_chunk,
+            error_test,
+            # TODO figure out what to do with task args
+            # task_args={
+            #     "state_handlers": state_handlers,
+            # },
+        )
+        
 
 
 stream_ingest(my_params)

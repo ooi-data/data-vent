@@ -24,14 +24,22 @@ from data_vent.producer import (
     create_request_estimate,
     perform_request,
 )
-
+from data_vent.processor import (
+    _download,
+    update_metadata,
+    chunk_ds,
+    append_to_zarr,
+    is_zarr_ready,
+    preproc,
+)
 from data_vent.processor.checker import check_in_progress
+from data_vent.processor.utils import _write_data_avail, _get_var_encoding
 
 from data_vent.utils.parser import (
     parse_exception,
     parse_response_thredds,
     filter_and_parse_datasets,
-    #setup_etl,
+    setup_etl,
 )
 
 
@@ -366,8 +374,8 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
         message = "Skipping for now and retrying again later due to missing data response file."
         update_and_write_status(stream_harvest, status_json)
         
-        # TODO can you raise Cancelled function?
-        raise Cancelled(
+        # TODO engine.signal - cannot Raise these prefect 2.0 functions
+        return Cancelled(
             message=message,
             result={"status": status_json, "message": message},
         )
@@ -433,7 +441,7 @@ def check_data(data_response, stream_harvest):
                     )
                     update_and_write_status(stream_harvest, status_json)
                     #TODO can I raise Cancelled?
-                    raise Cancelled(
+                    return Cancelled(
                         message=message,
                         result={"status": status_json, "message": message},
                     )
@@ -451,7 +459,167 @@ def check_data(data_response, stream_harvest):
                 )
                 update_and_write_status(stream_harvest, status_json)
                 #TODO can I raise Cancelled?
-                raise Cancelled(
+                return Cancelled(
                     message=message,
                     result={"status": status_json, "message": message},
                 )
+
+
+@task
+def get_response(data_response):
+    return data_response.get('data_response')
+
+
+@task
+def get_stream(data_response):
+    return data_response.get('stream_harvest')
+
+
+@task
+def setup_process(response_json, target_bucket):
+    logger = get_run_logger()
+    logger.info("=== Setting up process ===")
+    catalog_dict = parse_response_thredds(response_json)
+    filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
+    harvest_catalog = dict(**filtered_catalog_dict, **response_json)
+    nc_files_dict = setup_etl(harvest_catalog, target_bucket=target_bucket)
+    logger.info(
+        f"{len(nc_files_dict.get('datasets', []))} netcdf files to be processed."
+    )
+    return nc_files_dict
+
+
+@task
+def data_processing(nc_files_dict, stream_harvest, max_chunk, error_test):
+    logger = get_run_logger()
+    stream = nc_files_dict.get("stream")
+    name = stream.get("table_name")
+    logger.info(f"=== Processing {name}. ===")
+    status_json = stream_harvest.status.dict()
+    status_json.update({'process_status': 'pending'})
+    update_and_write_status(stream_harvest, status_json)
+    dataset_list = sorted(
+        nc_files_dict.get("datasets", []), key=lambda i: i.get('start_ts')
+    )
+    temp_zarr = nc_files_dict.get("temp_bucket")
+    temp_store = fsspec.get_mapper(
+        temp_zarr,
+        **stream_harvest.harvest_options.path_settings,
+    )
+
+    existing_enc = None
+    if not stream_harvest.harvest_options.refresh:
+        final_zarr = nc_files_dict.get("final_bucket")
+        final_store = fsspec.get_mapper(
+            final_zarr,
+            **stream_harvest.harvest_options.path_settings,
+        )
+        zg = zarr.open_consolidated(final_store)
+        existing_enc = {k: _get_var_encoding(var) for k, var in zg.arrays()}
+        # change "temp" to the actual final when daily append
+        temp_zarr = final_zarr
+        temp_store = final_store
+
+    if len(dataset_list) > 0:
+        for idx, d in enumerate(dataset_list):
+            is_first = False
+            if idx == 0:
+                if stream_harvest.harvest_options.refresh:
+                    # Append to live data when it's daily
+                    # So it's never the first
+                    is_first = True
+                if error_test:
+                    status_json.update({'process_status': 'failed'})
+                    update_and_write_status(stream_harvest, status_json)
+                    raise ValueError(
+                        "Error test in progress! Not actual error found here!"
+                    )
+            logger.info(
+                f"*** {name} ({d.get('deployment')}) | {d.get('start_ts')} - {d.get('end_ts')} ***"
+            )
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    source_url = '/'.join(
+                        [nc_files_dict.get('async_url'), d.get('name')]
+                    )
+                    # Download the netcdf files and read to a xarray dataset obj
+                    ncpath = _download(
+                        source_url=source_url,
+                        cache_location=tmpdir,
+                    )
+                    logger.info(f"Downloaded: {ncpath}")
+                    with dask.config.set(scheduler="single-threaded"):
+                        ds = (
+                            xr.open_dataset(
+                                ncpath, engine='netcdf4', decode_times=False
+                            )
+                            .pipe(preproc)
+                            .pipe(
+                                update_metadata,
+                                nc_files_dict.get('retrieved_dt'),
+                            )
+                        )
+                        logger.info("Finished preprocessing dataset.")
+
+                        # Chunk dataset and write to zarr
+                        if isinstance(ds, xr.Dataset):
+                            mod_ds, enc = chunk_ds(
+                                ds,
+                                max_chunk=max_chunk,
+                                existing_enc=existing_enc,
+                                apply=is_first
+                            )
+                            logger.info("Finished chunking dataset.")
+
+                            if is_first:
+                                # TODO: Like the _prepare_ds_to_append need to check on the dims and len for all variables
+                                mod_ds.to_zarr(
+                                    temp_store,
+                                    consolidated=True,
+                                    compute=True,
+                                    mode='w',
+                                    encoding=enc,
+                                )
+                                succeed = True
+                            else:
+                                succeed = append_to_zarr(
+                                    mod_ds, temp_store, enc, logger=logger
+                                )
+
+                            if succeed:
+                                is_done = False
+                                while not is_done:
+                                    store = fsspec.get_mapper(
+                                        temp_zarr,
+                                        **stream_harvest.harvest_options.path_settings,
+                                    )
+                                    is_done = is_zarr_ready(store)
+                                    if is_done:
+                                        continue
+                                    time.sleep(5)
+                                    logger.info(
+                                        "Waiting for zarr file writing to finish..."
+                                    )
+                                logger.info(
+                                    "SUCCESS: File successfully written to zarr."
+                                )
+                            else:
+                                logger.warning(
+                                    f"SKIPPED: Issues in file found for {d.get('name')}!"
+                                )
+                        else:
+                            logger.warning("SKIPPED: Failed pre processing!")
+            except Exception as e:
+                exc_dict = parse_exception(e)
+                # TODO engine signal migration
+                # raise FAIL(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+                return Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+    else:
+        # TODO engine signal migraiont
+        #raise SKIP("No datasets to process. Skipping...")
+        return Cancelled("No datasets to process. Skipping...")
+    return {
+        "final_path": nc_files_dict.get("final_bucket"),
+        "temp_path": nc_files_dict.get("temp_bucket"),
+    }
+
