@@ -26,6 +26,7 @@ from data_vent.producer import (
 )
 from data_vent.processor import (
     _download,
+    _update_time_coverage,
     update_metadata,
     chunk_ds,
     append_to_zarr,
@@ -34,6 +35,7 @@ from data_vent.processor import (
 )
 from data_vent.processor.checker import check_in_progress
 from data_vent.processor.utils import _write_data_avail, _get_var_encoding
+from data_vent.processor.pipeline import _fetch_avail_dict
 
 from data_vent.utils.parser import (
     parse_exception,
@@ -42,7 +44,8 @@ from data_vent.utils.parser import (
     setup_etl,
 )
 
-
+from data_vent.settings import harvest_settings
+# TODO dev path settings
 from data_vent.test_configs import DEV_PATH_SETTINGS, FLOW_PROCESS_BUCKET
 
 def setup_status_s3fs(
@@ -440,7 +443,7 @@ def check_data(data_response, stream_harvest):
                         }
                     )
                     update_and_write_status(stream_harvest, status_json)
-                    #TODO can I raise Cancelled?
+                    #TODO is this the right prefect 2.0 signal?
                     return Cancelled(
                         message=message,
                         result={"status": status_json, "message": message},
@@ -458,7 +461,7 @@ def check_data(data_response, stream_harvest):
                     }
                 )
                 update_and_write_status(stream_harvest, status_json)
-                #TODO can I raise Cancelled?
+                #TODO is the the right prefect 2.0 signal?
                 return Cancelled(
                     message=message,
                     result={"status": status_json, "message": message},
@@ -623,3 +626,173 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, error_test):
         "temp_path": nc_files_dict.get("temp_bucket"),
     }
 
+
+@task
+def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
+    logger = get_run_logger()
+    logger.info("=== Finalizing data stream. ===")
+    try:
+        final_path = stores_dict.get('final_path')
+        status_json = stream_harvest.status.dict()
+        final_store = fsspec.get_mapper(
+            final_path,
+            **stream_harvest.harvest_options.path_settings,
+        )
+        temp_store = fsspec.get_mapper(
+            stores_dict.get("temp_path"),
+            **stream_harvest.harvest_options.path_settings,
+        )
+        if stream_harvest.harvest_options.refresh:
+            # Remove missing groups in the final store
+            temp_group = zarr.open_consolidated(temp_store)
+            final_group = zarr.open_group(final_store, mode='a')
+            final_modified = False
+            for k, _ in final_group.items():
+                if k not in list(temp_group.array_keys()):
+                    final_group.pop(k)
+                    final_modified = True
+
+            if final_modified:
+                zarr.consolidate_metadata(final_store)
+
+            # Copy over the store, at this point, they should be similar
+            zarr.copy_store(temp_store, final_store, if_exists='replace')
+        # NOTE: Comment out since append to live data happened during
+        # data_processing task
+        # else:
+        #     zg = zarr.open_consolidated(final_store)
+        #     existing_enc = {k: _get_var_encoding(var) for k, var in zg.arrays()}
+        #     temp_ds = xr.open_dataset(
+        #         temp_store,
+        #         engine='zarr',
+        #         backend_kwargs={'consolidated': True},
+        #         decode_times=False,
+        #     )
+        #     mod_ds, enc = chunk_ds(temp_ds, max_chunk=max_chunk, apply=False, existing_enc=existing_enc)
+        #     succeed = append_to_zarr(mod_ds, final_store, enc, logger=logger)
+        #     if succeed:
+        #         is_done = False
+        #         while not is_done:
+        #             store = fsspec.get_mapper(
+        #                 final_path,
+        #                 **stream_harvest.harvest_options.path_settings,
+        #             )
+        #             is_done = is_zarr_ready(store)
+        #             if is_done:
+        #                 continue
+        #             time.sleep(5)
+        #             logger.info("Waiting for zarr file writing to finish...")
+        #     else:
+        #         status_json.update(
+        #             {
+        #                 'process_status': 'failed',
+        #                 'cloud_location': final_path,
+        #                 'processed_at': datetime.datetime.utcnow().isoformat(),
+        #             }
+        #         )
+        #         update_and_write_status(stream_harvest, status_json)
+        #         raise FAIL(f"Issues in file found for {final_path}!")
+
+        # Update start and end date in global attributes
+        start_dt, end_dt = _update_time_coverage(final_store)
+
+        if stream_harvest.harvest_options.refresh:
+            # Clean up temp_store
+            # no temp store was created during daily append
+            temp_store.clear()
+        logger.info(f"Data stream finalized: {final_path}")
+        status_json.update(
+            {
+                'process_status': 'success',
+                'cloud_location': final_path,
+                'start_date': start_dt,
+                'end_date': end_dt,
+                'processed_at': datetime.datetime.utcnow().isoformat(),
+                'data_check': False,
+            }
+        )
+        if stream_harvest.harvest_options.refresh is True:
+            status_json.update(
+                {
+                    'last_refresh': datetime.datetime.utcnow().isoformat(),
+                }
+            )
+        update_and_write_status(stream_harvest, status_json)
+        return final_path
+    except Exception as e:
+        status_json.update(
+            {
+                'process_status': 'failed',
+                'processed_at': datetime.datetime.utcnow().isoformat(),
+            }
+        )
+        update_and_write_status(stream_harvest, status_json)
+        exc_dict = parse_exception(e)
+        raise Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+
+
+@task
+def data_availability(
+    nc_files_dict, stream_harvest, export=False, gh_write=False
+):
+    name = nc_files_dict['stream']['table_name']
+    inst_rd = nc_files_dict['stream']['reference_designator']
+    stream_rd = '-'.join(
+        [nc_files_dict['stream']['method'], nc_files_dict['stream']['stream']]
+    )
+    logger = get_run_logger()
+    logger.info(f"Data availability for {name}.")
+
+    url = nc_files_dict['final_bucket']
+    mapper = fsspec.get_mapper(
+        url, **stream_harvest.harvest_options.path_settings
+    )
+    try:
+        za = zarr.open_consolidated(mapper)['time']
+        calendar = za.attrs.get(
+            'calendar', harvest_settings.ooi_config.time['calendar']
+        )
+        units = za.attrs.get(
+            'units', harvest_settings.ooi_config.time['units']
+        )
+
+        if any(np.isnan(za)):
+            logger.info(f"Null values found. Skipping {name}")
+        else:
+            logger.info(
+                f"Total time bytes: {dask.utils.memory_repr(za.nbytes)}"
+            )
+            darr = da.from_zarr(za)
+
+            darr_dt = darr.map_blocks(
+                xr.coding.times.decode_cf_datetime,
+                units=units,
+                calendar=calendar,
+            )
+
+            ddf = darr_dt.to_dask_dataframe(['dtindex']).set_index('dtindex')
+            ddf['count'] = 0
+
+            resolutions = {'hourly': 'H', 'daily': 'D', 'monthly': 'M'}
+            result_dict = {}
+            for k, v in resolutions.items():
+                try:
+                    result = _fetch_avail_dict(ddf, resolution=v)
+                    result_dict.update({ k: result })
+                except Exception as e:
+                    if k == 'daily':
+                        raise e
+                    logger.warning(f"ERROR: Creation of {k} data availability :: {e}")
+
+            avail_dict = {
+                'data_stream': stream_rd,
+                'inst_rd': inst_rd,
+                'results': result_dict,
+            }
+            if export:
+                _write_data_avail(avail_dict, gh_write=gh_write)
+
+            return avail_dict
+    except Exception as e:
+        exc_dict = parse_exception(e)
+        raise Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)

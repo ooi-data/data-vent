@@ -23,6 +23,8 @@ from data_vent.tasks import (
     get_stream,
     setup_process,
     data_processing,
+    finalize_data_stream,
+    data_availability
 )
 
 from data_vent.test_configs import FlowParameters, my_params
@@ -41,6 +43,8 @@ def stream_ingest(
     max_data_chunk: str = "100MB",
     error_test: bool = False,
     target_bucket: str = "s3://ooi-data",
+    export_da: bool = False, # TODO at least for testing
+    gh_write_da: bool = False # TODO at least for testing
 ):
     logger = get_run_logger()
     logger.info("Running a toy flow!?")
@@ -111,7 +115,49 @@ def stream_ingest(
             #     "state_handlers": state_handlers,
             # },
         )
-        
+
+        # Finalize data and transfer to final
+        final_path = finalize_data_stream(
+            stores_dict,
+            stream_harvest,
+            max_data_chunk,
+            # task_args={
+            #     "state_handlers": state_handlers,
+            # },
+        )
+
+        # TODO: Add data validation step here!
+
+        # Data availability
+        availability = data_availability(
+            nc_files_dict,
+            stream_harvest,
+            export_da,
+            gh_write_da,
+            # TODO figure out what to do with task args
+            # task_args={
+            #     "state_handlers": state_handlers,
+            # },
+            wait_for=final_path # TODO 
+        )
+
+        # in prefect 1.0 this sets the provided task as an upstream dependency of `availability` in this case
+        # availability = set_upstream(final_path)
+
+        #TODO I think this saves logs as files to s3 - will have to find alternative or alter for prefect 2.0?
+        # task_names = [t.name for t in stream_ingest.tasks]
+        # if isinstance(log_settings, dict):
+        #     log_settings = LogHandlerSettings(**log_settings)
+        # elif isinstance(log_settings, LogHandlerSettings):
+        #     ...
+        # else:
+        #     raise TypeError("log_settings must be type LogHandlerSettings or Dict")
+
+        # flow_logger = get_logger()
+        # flow_logger.addHandler(
+        #     HarvestFlowLogHandler(task_names, **log_settings.dict())
+        # )
+        # return flow
 
 
 stream_ingest(my_params)

@@ -355,6 +355,7 @@ def perform_request(
                 send_request(req["url"], params=req["params"])
             )
         else:
+            # TODO when this chunk is reached no data is saved?
             logger.info("Cache found in OOI Thredds, using those!")
         
         response = dict(

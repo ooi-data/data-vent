@@ -27,6 +27,20 @@ from .utils import (
 )
 
 
+def _update_time_coverage(store: fsspec.mapping.FSMap) -> None:
+    """Updates start and end date in global attributes"""
+    zg = zarr.open_group(store, mode='r+')
+    calendar = zg.time.attrs.get('calendar', 'gregorian')
+    units = zg.time.attrs.get('units', 'seconds since 1900-01-01 0:0:0')
+    start, end = xr.coding.times.decode_cf_datetime(
+        [zg.time[0], zg.time[-1]], units=units, calendar=calendar
+    )
+    zg.attrs['time_coverage_start'] = str(start)
+    zg.attrs['time_coverage_end'] = str(end)
+    zarr.consolidate_metadata(store)
+    return str(start), str(end)
+
+
 def get_logger():
     from loguru import logger
 
