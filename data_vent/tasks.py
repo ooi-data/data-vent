@@ -144,6 +144,7 @@ def check_requested(stream_harvest):
         # Skip discontinued stuff forever
         # TODO: Find way to turn off the scheduled flow all together
         #raise SKIP("Stream is discontinued. Finished.")
+        logger.warning("Stream is discontinued. Finished")
         return Completed(message="Stream is discontinued. Finished.")
 
     if stream_harvest.harvest_options.refresh is True:
@@ -170,6 +171,7 @@ def check_requested(stream_harvest):
                 return False
             else:
                 #raise SKIP("Skipping harvest. No new data needed.")
+                logger.warning("Skipping harvest. No new data needed.")
                 return Completed(message="Skipping harvest. No new data needed.")
         # data is ready for processing!
         return True
@@ -182,6 +184,7 @@ def _check_stream(stream_harvest):
     from data_vent.settings.main import harvest_settings
 
     session = HTMLSession()
+    logger = get_run_logger()
 
     site, subsite, port, inst = stream_harvest.instrument.split('-')
     resp = session.get(
@@ -208,6 +211,7 @@ def _check_stream(stream_harvest):
             if 'maintenance' in html_title:
                 # if there's maintainance then skip
                 # raise SKIP("OOI is under maintenance!")
+                logger.warning("OOI is under maintenance!")
                 return Completed(message="OOI is under maintenance!")
     #TODO not sure what this did
     #raise SKIP("OOINet is currently down.")
@@ -235,6 +239,7 @@ def setup_harvest(stream_harvest: StreamHarvest):
         update_and_write_status(stream_harvest, status_json)
         # raise SKIP(
         #     message=message, result={"status": status_json, "message": message})
+        logger.warning(message)
         return Cancelled(message=message, result={"status": status_json, "message": message})
         
     if stream_harvest.harvest_options.goldcopy:
@@ -304,6 +309,7 @@ def request_data(
             #     message=message,
             #     result={"status": status_json, "message": message},
             # )
+            logger.warning(message)
             return Failed(message=message, result={"status": status_json, "message": message})
         else:
             status_json.update(
@@ -327,6 +333,7 @@ def request_data(
         #     result={"status": status_json, "message": message},
         # )
         # TODO another prefect 1.0 engine signal 
+        logger.warning(message)
         return Cancelled(message="No data is available for harvesting.",
                          result={"status": status_json, "message": message})
 
@@ -378,6 +385,7 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
         update_and_write_status(stream_harvest, status_json)
         
         # TODO engine.signal - cannot Raise these prefect 2.0 functions
+        logger.warning(message)
         return Cancelled(
             message=message,
             result={"status": status_json, "message": message},
@@ -444,6 +452,7 @@ def check_data(data_response, stream_harvest):
                     )
                     update_and_write_status(stream_harvest, status_json)
                     #TODO is this the right prefect 2.0 signal?
+                    logger.warning(message)
                     return Cancelled(
                         message=message,
                         result={"status": status_json, "message": message},
@@ -462,6 +471,7 @@ def check_data(data_response, stream_harvest):
                 )
                 update_and_write_status(stream_harvest, status_json)
                 #TODO is the the right prefect 2.0 signal?
+                logger.warning(message)
                 return Cancelled(
                     message=message,
                     result={"status": status_json, "message": message},
@@ -616,10 +626,12 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, error_test):
                 exc_dict = parse_exception(e)
                 # TODO engine signal migration
                 # raise FAIL(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+                logger.warning(exc_dict.get('traceback', str(e)))
                 return Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)
     else:
         # TODO engine signal migraiont
         #raise SKIP("No datasets to process. Skipping...")
+        logger.warning("No datasets to process. Skipping...")
         return Cancelled("No datasets to process. Skipping...")
     return {
         "final_path": nc_files_dict.get("final_bucket"),

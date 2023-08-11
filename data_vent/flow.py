@@ -159,5 +159,5 @@ def stream_ingest(
         # )
         # return flow
 
-
-stream_ingest(my_params)
+if __name__ == '__main__':
+    stream_ingest(my_params)

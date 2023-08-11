@@ -356,6 +356,7 @@ def perform_request(
             )
         else:
             # TODO when this chunk is reached no data is saved?
+            # TODO what is this chunk/Thredds purpose?
             logger.info("Cache found in OOI Thredds, using those!")
         
         response = dict(
