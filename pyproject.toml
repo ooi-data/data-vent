@@ -19,7 +19,7 @@ requires-python = ">=3.8"
 dependencies = [
   "fsspec",
   "requests",
-  "s3fs<2022.8.0",
+  "s3fs",
   "dask",
   "loguru",
   "pandas",

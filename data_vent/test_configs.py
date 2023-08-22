@@ -20,7 +20,7 @@ class FlowParameters(BaseModel):
     gh_write_da: bool = False
     error_test: bool = False
 
-config_path = os.path.join(os.getcwd(), 'data_vent', 'stream_configs', 'CE01ISSM-MFD35-01-VEL3DD000-telemetered-vel3d_cd_dcl_velocity_data.yaml')
+config_path = os.path.join(os.getcwd(), 'data_vent', 'test_yaml', 'CE01ISSM-MFD35-01-VEL3DD000-telemetered-vel3d_cd_dcl_velocity_data.yaml')
 config_json = yaml.safe_load(Path(config_path).open())
 
 my_params = {
