@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE01ISSM-RID16-01-OPTAAD000
+stream:
+  method: telemetered
+  name: optaa_dj_dcl_instrument
+workflow_config:
+  schedule: 0 0 * * *

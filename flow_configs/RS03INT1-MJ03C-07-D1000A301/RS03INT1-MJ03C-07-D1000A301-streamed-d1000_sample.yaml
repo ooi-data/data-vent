@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS03INT1-MJ03C-07-D1000A301
+stream:
+  method: streamed
+  name: d1000_sample
+workflow_config:
+  schedule: 0 0 * * *

@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS01SLBS-MJ01A-12-VEL3DB101
+stream:
+  method: streamed
+  name: vel3d_b_sample
+workflow_config:
+  schedule: 0 0 * * *

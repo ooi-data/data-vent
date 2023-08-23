@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS03ASHS-MJ03B-09-BOTPTA304
+stream:
+  method: streamed
+  name: botpt_lily_sample
+workflow_config:
+  schedule: 0 0 * * *

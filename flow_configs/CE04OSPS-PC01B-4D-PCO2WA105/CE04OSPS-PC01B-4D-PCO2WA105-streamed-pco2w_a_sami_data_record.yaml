@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE04OSPS-PC01B-4D-PCO2WA105
+stream:
+  method: streamed
+  name: pco2w_a_sami_data_record
+workflow_config:
+  schedule: 0 0 * * *

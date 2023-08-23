@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS01SLBS-LJ01A-05-HPIESA101
+stream:
+  method: streamed
+  name: echo_sounding
+workflow_config:
+  schedule: 0 0 * * *

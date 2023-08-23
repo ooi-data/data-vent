@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE06ISSM-MFD35-06-PHSEND000
+stream:
+  method: recovered_host
+  name: phsen_abcdef_dcl_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *

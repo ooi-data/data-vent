@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS01SLBS-LJ01A-10-ADCPTE101
+stream:
+  method: streamed
+  name: adcp_velocity_beam
+workflow_config:
+  schedule: 0 0 * * *

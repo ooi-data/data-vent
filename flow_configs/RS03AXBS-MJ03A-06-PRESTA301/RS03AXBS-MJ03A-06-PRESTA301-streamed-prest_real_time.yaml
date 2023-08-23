@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS03AXBS-MJ03A-06-PRESTA301
+stream:
+  method: streamed
+  name: prest_real_time
+workflow_config:
+  schedule: 0 0 * * *

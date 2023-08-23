@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE04OSSM-SBD12-04-PCO2AA000
+stream:
+  method: telemetered
+  name: pco2a_a_dcl_instrument_air
+workflow_config:
+  schedule: 0 0 * * *

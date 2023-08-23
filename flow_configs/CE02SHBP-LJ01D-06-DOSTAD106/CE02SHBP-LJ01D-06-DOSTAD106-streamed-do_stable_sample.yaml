@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE02SHBP-LJ01D-06-DOSTAD106
+stream:
+  method: streamed
+  name: do_stable_sample
+workflow_config:
+  schedule: 0 0 * * *

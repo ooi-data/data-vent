@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE07SHSM-SBD12-05-WAVSSA000
+stream:
+  method: telemetered
+  name: wavss_a_dcl_fourier
+workflow_config:
+  schedule: 0 0 * * *

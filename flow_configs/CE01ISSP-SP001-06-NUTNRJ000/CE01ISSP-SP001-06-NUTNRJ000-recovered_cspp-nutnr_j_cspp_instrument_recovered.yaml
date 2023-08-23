@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE01ISSP-SP001-06-NUTNRJ000
+stream:
+  method: recovered_cspp
+  name: nutnr_j_cspp_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *

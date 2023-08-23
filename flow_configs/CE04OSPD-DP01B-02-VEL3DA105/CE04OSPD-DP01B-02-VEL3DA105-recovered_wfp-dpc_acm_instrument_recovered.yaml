@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE04OSPD-DP01B-02-VEL3DA105
+stream:
+  method: recovered_wfp
+  name: dpc_acm_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *

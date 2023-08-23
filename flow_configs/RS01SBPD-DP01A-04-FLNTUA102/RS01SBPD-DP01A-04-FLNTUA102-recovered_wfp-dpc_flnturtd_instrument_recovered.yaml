@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS01SBPD-DP01A-04-FLNTUA102
+stream:
+  method: recovered_wfp
+  name: dpc_flnturtd_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *

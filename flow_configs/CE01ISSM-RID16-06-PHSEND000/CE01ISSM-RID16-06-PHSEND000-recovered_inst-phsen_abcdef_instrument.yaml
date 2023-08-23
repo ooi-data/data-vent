@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE01ISSM-RID16-06-PHSEND000
+stream:
+  method: recovered_inst
+  name: phsen_abcdef_instrument
+workflow_config:
+  schedule: 0 0 * * *

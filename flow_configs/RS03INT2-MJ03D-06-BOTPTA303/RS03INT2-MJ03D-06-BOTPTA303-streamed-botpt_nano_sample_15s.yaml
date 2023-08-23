@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS03INT2-MJ03D-06-BOTPTA303
+stream:
+  method: streamed
+  name: botpt_nano_sample_15s
+workflow_config:
+  schedule: 0 0 * * *

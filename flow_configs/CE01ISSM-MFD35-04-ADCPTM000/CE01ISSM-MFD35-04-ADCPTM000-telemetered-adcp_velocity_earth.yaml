@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE01ISSM-MFD35-04-ADCPTM000
+stream:
+  method: telemetered
+  name: adcp_velocity_earth
+workflow_config:
+  schedule: 0 0 * * *

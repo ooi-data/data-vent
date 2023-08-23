@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE09OSPM-WFP01-05-PARADK000
+stream:
+  method: recovered_wfp
+  name: parad_k__stc_imodem_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *

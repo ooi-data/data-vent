@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE09OSSM-MFD35-02-PRESFC000
+stream:
+  method: recovered_inst
+  name: presf_abc_tide_measurement_recovered
+workflow_config:
+  schedule: 0 0 * * *

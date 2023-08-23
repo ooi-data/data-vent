@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: RS03AXPS-SF03A-3D-SPKIRA301
+stream:
+  method: streamed
+  name: spkir_data_record
+workflow_config:
+  schedule: 0 0 * * *

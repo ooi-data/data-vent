@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE06ISSM-MFD35-04-ADCPTM000
+stream:
+  method: recovered_inst
+  name: adcpt_m_instrument_log9_recovered
+workflow_config:
+  schedule: 0 0 * * *

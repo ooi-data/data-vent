@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE06ISSM-RID16-05-PCO2WB000
+stream:
+  method: telemetered
+  name: pco2w_abc_dcl_instrument_blank
+workflow_config:
+  schedule: 0 0 * * *

@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE02SHSM-RID27-01-OPTAAD000
+stream:
+  method: recovered_host
+  name: optaa_dj_dcl_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *

@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: true
+  test: false
+instrument: CE06ISSP-SP001-09-CTDPFJ000
+stream:
+  method: recovered_cspp
+  name: ctdpf_j_cspp_instrument_recovered
+workflow_config:
+  schedule: 0 0 * * *
