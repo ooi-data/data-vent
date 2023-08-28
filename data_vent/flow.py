@@ -8,6 +8,7 @@ from dateutil import parser
 from pathlib import Path
 from pydantic import BaseModel
 from prefect import flow, get_run_logger
+from prefect.deployments import run_deployment
 
 import fsspec
 from data_vent.producer.models import StreamHarvest
@@ -36,18 +37,17 @@ from data_vent.test_configs import DEV_PATH_SETTINGS
 @flow
 # TODO need to make sure these parameters are equivilant to prefect 1.0 version 
 def stream_ingest(
-    default_params: dict, 
+    config: Dict,
     harvest_options: Dict[str, Any] = {},
-    issue_config: Dict[str, Any] = {},
+    #issue_config: Dict[str, Any] = {},
     force_harvest: bool = False,
-    max_data_chunk: str = "100MB",
+    max_chunk: str = "100MB",
     error_test: bool = False,
     target_bucket: str = "s3://ooi-data",
     export_da: bool = False, # TODO at least for testing
     gh_write_da: bool = False # TODO at least for testing
 ):
     logger = get_run_logger()
-    logger.info("Running a toy flow!?")
 
     # TODO automated github things - are these all deprecated??
     # default_gh_org = harvest_settings.github.data_org
@@ -55,20 +55,26 @@ def stream_ingest(
     # state_handlers = [github_issue_notifier(**issue_config)]
     
     # Check default_params
-    if isinstance(default_params, dict):
-        default_params = FlowParameters(**default_params)
+    flow_params = FlowParameters(
+        config=config,
+        target_bucket=target_bucket,
+        max_chunk=max_chunk,
+        export_da=export_da,
+        gh_write_da=gh_write_da,
+        error_test=error_test,
+    )
 
     # Sets the defaults for flow config
     #config_required = False
     # if default_params.config is None:
     #     config_required = True
 
-    default_dict = default_params.dict()
+    flow_dict = flow_params.dict()
 
     #config = Parameter("config", required=config_required, default=default_dict.get("config", no_default),)
     #harvest_options = Parameter("harvest_options", default={})
 
-    stream_harvest = get_stream_harvest(default_dict.get("config"), harvest_options)
+    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options)
     # TODO how do you actually set these path settings - it is confusing
     stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
 
@@ -108,7 +114,7 @@ def stream_ingest(
         stores_dict = data_processing(
             nc_files_dict,
             stream_harvest,
-            max_data_chunk,
+            max_chunk,
             error_test,
             # TODO figure out what to do with task args
             # task_args={
@@ -120,7 +126,7 @@ def stream_ingest(
         final_path = finalize_data_stream(
             stores_dict,
             stream_harvest,
-            max_data_chunk,
+            max_chunk,
             # task_args={
             #     "state_handlers": state_handlers,
             # },
@@ -159,5 +165,72 @@ def stream_ingest(
         # )
         # return flow
 
+@flow
+def run_stream_ingest(
+    test_run: bool=True,
+    run_in_cloud: bool=True,
+):
+
+    logger = get_run_logger()
+    logger.info("Starting parent flow...")
+
+    config_dir = os.path.join(os.getcwd(), "flow_configs")
+
+
+    if test_run:
+
+        # TODO this are some "small data" streams for the sake of building out the new prefect 2 pipeline
+        all_paths = [
+            os.path.join(config_dir, 'CE04OSPS-SF01B-2B-PHSENA108', 'CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record.yaml'),
+            os.path.join(config_dir, 'CE04OSPS-SF01B-4F-PCO2WA102', 'CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record.yaml'),
+            os.path.join(config_dir, 'CE04OSPS-SF01B-4A-NUTNRA102', 'CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample.yaml')
+        ]
+        logger.info(f"Using the following paths for this test run {all_paths}")
+
+    else: # grabs all config yamls
+        fs = fsspec.filesystem('')
+        glob_path = config_dir + '/**/*.yaml'   
+        logger.info(f"Searching for config yamls at path: {glob_path}")
+        all_paths = fs.glob(glob_path)
+
+
+    for config_path in all_paths:
+        config_json = yaml.safe_load(Path(config_path).open())
+        run_name = "-".join(
+            [
+                config_json['instrument'],
+                config_json['stream']['method'],
+                config_json['stream']['name'],
+            ]
+        )
+
+        flow_params = {
+        'config': config_json,
+        'target_bucket': "s3://ooi-data",
+        'max_chunk': "100MB",
+        'export_da': False,
+        'gh_write_da': False,
+        'error_test': False,
+        }
+
+        logger.info(f"Launching child flow: {run_name}")
+        logger.info(f"configs: {config_json}")
+
+        # run stream_ingest in parallel on ECS instances?
+        if run_in_cloud:
+            run_deployment(
+                name="stream-ingest/stream-ingest-deployment",
+                parameters=flow_params,
+                flow_run_name=run_name,
+                timeout=10 #TODO what makes sense for this timeout, should the parent flow complete even if child flows fail?
+            )
+        
+        # run stream_ingest in sequence on local
+        else:
+            stream_ingest(**flow_params)
+
+    logger.warning("Parent flow complete - this is a test")
+
+
 if __name__ == '__main__':
-    stream_ingest(my_params)
+    run_stream_ingest()
