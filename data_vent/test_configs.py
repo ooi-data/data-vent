@@ -28,6 +28,6 @@ my_params = {
     'target_bucket': "s3://ooi-data",
     'max_chunk': "100MB",
     'export_da': False,
-    'gh_wrtie_da': False,
+    'gh_write_da': False,
     'error_test': False,
 }

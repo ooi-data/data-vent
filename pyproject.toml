@@ -36,6 +36,7 @@ dependencies = [
   "pendulum",
   "siphon",
   "prefect>2",
+  "prefect-aws",
   "requests-html",
   "rechunker",
   "pydantic<2",
