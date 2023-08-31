@@ -54,110 +54,110 @@ def fetch_streams_list(stream_harvest: StreamHarvest) -> list:
     return streams_list
 
 
-def request_axiom_catalog(stream_dct):
-    axiom_ooi_catalog = TDSCatalog(
-        'http://thredds.dataexplorer.oceanobservatories.org/thredds/catalog/ooigoldcopy/public/catalog.xml'  # noqa
-    )
-    stream_name = stream_dct['table_name']
-    ref = axiom_ooi_catalog.catalog_refs[stream_name]
-    catalog_dict = get_catalog_meta((stream_name, ref))
-    return catalog_dict
+# def request_axiom_catalog(stream_dct):
+#     axiom_ooi_catalog = TDSCatalog(
+#         'http://thredds.dataexplorer.oceanobservatories.org/thredds/catalog/ooigoldcopy/public/catalog.xml'  # noqa
+#     )
+#     stream_name = stream_dct['table_name']
+#     ref = axiom_ooi_catalog.catalog_refs[stream_name]
+#     catalog_dict = get_catalog_meta((stream_name, ref))
+#     return catalog_dict
 
 
-def create_catalog_request(
-    stream_dct: dict,
-    start_dt: Optional[str] = None,
-    end_dt: Optional[str] = None,
-    refresh: bool = False,
-    existing_data_path: Optional[str] = None,
-    client_kwargs: dict = {},
-):
-    """Creates a catalog request to the gold copy"""
-    beginTime = np.datetime64(parser.parse(stream_dct['beginTime']))
-    endTime = np.datetime64(parser.parse(stream_dct['endTime']))
+# def create_catalog_request(
+#     stream_dct: dict,
+#     start_dt: Optional[str] = None,
+#     end_dt: Optional[str] = None,
+#     refresh: bool = False,
+#     existing_data_path: Optional[str] = None,
+#     client_kwargs: dict = {},
+# ):
+#     """Creates a catalog request to the gold copy"""
+#     beginTime = np.datetime64(parser.parse(stream_dct['beginTime']))
+#     endTime = np.datetime64(parser.parse(stream_dct['endTime']))
 
-    filter_ds = False
-    zarr_exists = False
-    if not refresh:
-        if existing_data_path is not None:
-            storage_options = dict(
-                client_kwargs=client_kwargs,
-                **get_storage_options(existing_data_path),
-            )
-            zarr_exists, last_time = check_zarr(
-                os.path.join(existing_data_path, stream_dct['table_name']),
-                storage_options,
-            )
-        else:
-            raise ValueError(
-                "Please provide existing data path when not refreshing."
-            )
+#     filter_ds = False
+#     zarr_exists = False
+#     if not refresh:
+#         if existing_data_path is not None:
+#             storage_options = dict(
+#                 client_kwargs=client_kwargs,
+#                 **get_storage_options(existing_data_path),
+#             )
+#             zarr_exists, last_time = check_zarr(
+#                 os.path.join(existing_data_path, stream_dct['table_name']),
+#                 storage_options,
+#             )
+#         else:
+#             raise ValueError(
+#                 "Please provide existing data path when not refreshing."
+#             )
 
-    if zarr_exists:
-        start_dt = last_time
-        end_dt = np.datetime64(datetime.datetime.utcnow())
+#     if zarr_exists:
+#         start_dt = last_time
+#         end_dt = np.datetime64(datetime.datetime.utcnow())
 
-    if start_dt:
-        beginTime = (
-            np.datetime64(start_dt) if isinstance(start_dt, str) else start_dt
-        )
-        filter_ds = True
-    if end_dt:
-        endTime = np.datetime64(end_dt) if isinstance(end_dt, str) else end_dt
-        filter_ds = True
+#     if start_dt:
+#         beginTime = (
+#             np.datetime64(start_dt) if isinstance(start_dt, str) else start_dt
+#         )
+#         filter_ds = True
+#     if end_dt:
+#         endTime = np.datetime64(end_dt) if isinstance(end_dt, str) else end_dt
+#         filter_ds = True
 
-    catalog_dict = request_axiom_catalog(stream_dct)
-    filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
+#     catalog_dict = request_axiom_catalog(stream_dct)
+#     filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
 
-    if not refresh or filter_ds:
-        filtered_datasets = filter_datasets_by_time(
-            filtered_catalog_dict['datasets'], beginTime, endTime
-        )
-        total_bytes = np.sum([d['size_bytes'] for d in filtered_datasets])
-        deployments = list({d['deployment'] for d in filtered_datasets})
-        filtered_provenance = [
-            p
-            for p in filtered_catalog_dict['provenance']
-            if p['deployment'] in deployments
-        ]
-        filtered_catalog_dict.update(
-            {
-                'datasets': filtered_datasets,
-                'provenance': filtered_provenance,
-                'total_data_size': memory_repr(total_bytes),
-                'total_data_bytes': total_bytes,
-            }
-        )
+#     if not refresh or filter_ds:
+#         filtered_datasets = filter_datasets_by_time(
+#             filtered_catalog_dict['datasets'], beginTime, endTime
+#         )
+#         total_bytes = np.sum([d['size_bytes'] for d in filtered_datasets])
+#         deployments = list({d['deployment'] for d in filtered_datasets})
+#         filtered_provenance = [
+#             p
+#             for p in filtered_catalog_dict['provenance']
+#             if p['deployment'] in deployments
+#         ]
+#         filtered_catalog_dict.update(
+#             {
+#                 'datasets': filtered_datasets,
+#                 'provenance': filtered_provenance,
+#                 'total_data_size': memory_repr(total_bytes),
+#                 'total_data_bytes': total_bytes,
+#             }
+#         )
 
-    download_cat = os.path.join(
-        catalog_dict['base_tds_url'],
-        'thredds/fileServer/ooigoldcopy/public',
-        catalog_dict['stream_name'],
-    )
-    result_dict = {
-        'thredds_catalog': catalog_dict['catalog_url'],
-        'download_catalog': download_cat,
-        'status_url': os.path.join(download_cat, 'status.txt'),
-        'request_dt': catalog_dict['retrieved_dt'],
-        'data_size': filtered_catalog_dict['total_data_bytes'],
-        'units': {'data_size': 'bytes', 'request_dt': 'UTC'},
-    }
-    return {
-        "stream_name": catalog_dict["stream_name"],
-        "catalog_url": catalog_dict["catalog_url"],
-        "base_tds_url": catalog_dict["base_tds_url"],
-        "async_url": download_cat,
-        "result": result_dict,
-        "stream": stream_dct,
-        "zarr_exists": zarr_exists,
-        "datasets": filtered_catalog_dict['datasets'],
-        "provenance": filtered_catalog_dict['provenance'],
-        "params": {
-            "beginDT": str(beginTime),
-            "endDT": str(endTime),
-            "include_provenance": True,
-        },
-    }
+#     download_cat = os.path.join(
+#         catalog_dict['base_tds_url'],
+#         'thredds/fileServer/ooigoldcopy/public',
+#         catalog_dict['stream_name'],
+#     )
+#     result_dict = {
+#         'thredds_catalog': catalog_dict['catalog_url'],
+#         'download_catalog': download_cat,
+#         'status_url': os.path.join(download_cat, 'status.txt'),
+#         'request_dt': catalog_dict['retrieved_dt'],
+#         'data_size': filtered_catalog_dict['total_data_bytes'],
+#         'units': {'data_size': 'bytes', 'request_dt': 'UTC'},
+#     }
+#     return {
+#         "stream_name": catalog_dict["stream_name"],
+#         "catalog_url": catalog_dict["catalog_url"],
+#         "base_tds_url": catalog_dict["base_tds_url"],
+#         "async_url": download_cat,
+#         "result": result_dict,
+#         "stream": stream_dct,
+#         "zarr_exists": zarr_exists,
+#         "datasets": filtered_catalog_dict['datasets'],
+#         "provenance": filtered_catalog_dict['provenance'],
+#         "params": {
+#             "beginDT": str(beginTime),
+#             "endDT": str(endTime),
+#             "include_provenance": True,
+#         },
+#     }
 
 
 def create_request_estimate(
