@@ -2,6 +2,7 @@ import datetime
 from loguru import logger
 import os
 import re
+import json
 
 import zarr
 import fsspec
@@ -155,7 +156,7 @@ def send_request(url, params=None, username=None, token=None):
             }
         result.setdefault('request_dt', request_dt)
         return result
-    except Exception as e:
+    except json.JSONDecodeError as e:
         logger.warning(e)
         return None
     
