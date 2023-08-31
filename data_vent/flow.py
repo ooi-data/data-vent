@@ -28,11 +28,12 @@ from data_vent.tasks import (
     data_availability
 )
 
-from data_vent.test_configs import FlowParameters, my_params
+from data_vent.test_configs import FlowParameters
 from data_vent.settings.main import harvest_settings
 from data_vent.pipelines.notifications import github_issue_notifier
 
-from data_vent.test_configs import DEV_PATH_SETTINGS
+#from data_vent.test_configs import DEV_PATH_SETTINGS
+from data_vent.config import STORAGE_OPTIONS
 
 @flow
 # TODO need to make sure these parameters are equivilant to prefect 1.0 version 
@@ -43,7 +44,7 @@ def stream_ingest(
     force_harvest: bool = False,
     max_chunk: str = "100MB",
     error_test: bool = False,
-    target_bucket: str = "s3://ooi-data",
+    target_bucket: str = "s3://ooi-data-prod",
     export_da: bool = False, # TODO at least for testing
     gh_write_da: bool = False # TODO at least for testing
 ):
@@ -73,10 +74,14 @@ def stream_ingest(
 
     #config = Parameter("config", required=config_required, default=default_dict.get("config", no_default),)
     #harvest_options = Parameter("harvest_options", default={})
+    
 
     stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options)
+    logger.info(f"stream harvest object retrieved: {stream_harvest}")
     # TODO how do you actually set these path settings - it is confusing
-    stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
+    # stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
+    stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS['aws']
+    logger.info(f"stream harvest harvest_options.path_settings set: {stream_harvest}")
 
     is_requested = check_requested(stream_harvest)
 
@@ -168,7 +173,7 @@ def stream_ingest(
 @flow
 def run_stream_ingest(
     test_run: bool=True,
-    run_in_cloud: bool=True,
+    run_in_cloud: bool=False,
 ):
 
     logger = get_run_logger()
@@ -206,7 +211,7 @@ def run_stream_ingest(
 
         flow_params = {
         'config': config_json,
-        'target_bucket': "s3://ooi-data",
+        'target_bucket': "s3://ooi-data-prod",
         'max_chunk': "100MB",
         'export_da': False,
         'gh_write_da': False,
@@ -222,7 +227,7 @@ def run_stream_ingest(
                 name="stream-ingest/stream-ingest-deployment",
                 parameters=flow_params,
                 flow_run_name=run_name,
-                timeout=10 #TODO what makes sense for this timeout, should the parent flow complete even if child flows fail?
+                timeout=5 #TODO what makes sense for this timeout, should the parent flow complete even if child flows fail?
             )
         
         # run stream_ingest in sequence on local

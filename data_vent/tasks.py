@@ -46,13 +46,15 @@ from data_vent.utils.parser import (
 
 from data_vent.settings import harvest_settings
 # TODO dev path settings
-from data_vent.test_configs import DEV_PATH_SETTINGS, FLOW_PROCESS_BUCKET
+from data_vent.test_configs import FLOW_PROCESS_BUCKET
+# from data_vent.test_configs import DEV_PATH_SETTINGS
+from data_vent.config import STORAGE_OPTIONS
 
 def setup_status_s3fs(
     stream_harvest: StreamHarvest,
 ):
     fs = fsspec.filesystem(
-        's3', **DEV_PATH_SETTINGS["aws"] #**stream_harvest.harvest_options.path_settings
+        's3', **STORAGE_OPTIONS['aws'] #**stream_harvest.harvest_options.path_settings
     )
     status_file = (
         f"{FLOW_PROCESS_BUCKET}/harvest-status/{stream_harvest.table_name}"
@@ -197,6 +199,7 @@ def _check_stream(stream_harvest):
     if resp.status_code == 200:
         try:
             all_streams = resp.json()
+            logger.info(f"all streams: {all_streams}")
             current_end_dt = next(
                 filter(
                     lambda s: s['stream'] == stream_harvest.stream.name
@@ -204,6 +207,7 @@ def _check_stream(stream_harvest):
                     all_streams,
                 )
             )['endTime']
+            logger.info(f"current_end_dt: {current_end_dt}")
             return parser.parse(current_end_dt)
         except json.JSONDecodeError:
             # If it's not JSON, get the title of the page
@@ -753,7 +757,7 @@ def data_availability(
         [nc_files_dict['stream']['method'], nc_files_dict['stream']['stream']]
     )
     logger = get_run_logger()
-    logger.info(f"Data availability for {name}.")
+    logger.info(f"ailability for {name}.")
 
     url = nc_files_dict['final_bucket']
     mapper = fsspec.get_mapper(

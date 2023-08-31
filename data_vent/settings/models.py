@@ -65,8 +65,8 @@ class AWSConfig(BaseSettings):
 
 
 class S3Buckets(BaseModel):
-    metadata: str = 'ooi-metadata'
-    harvest_cache: str = 'io2data-harvest-cache'
+    metadata: str = 'ooi-metadata-prod'
+    harvest_cache: str = 'flow-process-bucket'
 
     @validator('*', pre=True, always=True)
     def add_s3(cls, v):
