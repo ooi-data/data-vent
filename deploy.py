@@ -9,7 +9,7 @@ def deploy_parent_and_child_flows() -> None:
     stream_ingest_deployment = Deployment.build_from_flow(
         flow=stream_ingest,
         name="stream-ingest-deployment",
-        output="./deployments/stream-ingest-deployment.yaml",
+        #output="./deployments/stream-ingest-deployment.yaml",
         infrastructure=ECSTask.load("my-ecs-task"),
         storage=S3Bucket.load("my-s3-bucket"),
     )
@@ -20,7 +20,7 @@ def deploy_parent_and_child_flows() -> None:
     run_stream_ingest_deployment = Deployment.build_from_flow(
         flow=run_stream_ingest,
         name="run-stream-ingest-deployment",
-        output="./deployments/run-stream-ingest-deployment.yaml",
+        #output="./deployments/run-stream-ingest-deployment.yaml",
         infrastructure=ECSTask.load("my-ecs-task"),
         storage=S3Bucket.load("my-s3-bucket"),
     )
