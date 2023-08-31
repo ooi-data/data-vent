@@ -289,7 +289,7 @@ def filter_datasets_by_time(
     return filtered_datasets
 
 
-def setup_etl(stream, source='ooinet', target_bucket='s3://ooi-data'):
+def setup_etl(stream, source='ooinet', target_bucket='s3://ooi-data-prod'):
     name = stream['stream_name']
 
     harvest_location = os.path.expanduser('~/.ooi-harvester')
@@ -303,7 +303,7 @@ def setup_etl(stream, source='ooinet', target_bucket='s3://ooi-data'):
         os.mkdir(temp_fold)
 
     # Setup S3 Bucket
-    temp_s3_fold = f"s3://temp-ooi-data/{name}.zarr"
+    temp_s3_fold = f"s3://temp-ooi-data-prod/{name}.zarr"
     final_s3_fold = f"{target_bucket}/{name}"
 
     if source == 'ooinet':
