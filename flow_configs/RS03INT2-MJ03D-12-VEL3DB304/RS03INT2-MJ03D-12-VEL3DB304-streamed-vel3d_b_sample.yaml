@@ -1,7 +1,7 @@
 assigness: []
 harvest_options:
   goldcopy: false
-  path: s3://ooi-data
+  path: s3://ooi-data-prod
   refresh: true
   test: false
 instrument: RS03INT2-MJ03D-12-VEL3DB304
