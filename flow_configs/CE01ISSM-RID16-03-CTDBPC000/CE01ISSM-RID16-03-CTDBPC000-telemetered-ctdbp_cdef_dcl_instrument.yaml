@@ -1,7 +1,7 @@
 assigness: []
 harvest_options:
   goldcopy: false
-  path: s3://ooi-data
+  path: s3://ooi-data-prod
   refresh: true
   test: false
 instrument: CE01ISSM-RID16-03-CTDBPC000
