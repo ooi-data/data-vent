@@ -4,6 +4,7 @@ import datetime
 import json
 import os 
 import yaml 
+import pandas as pd
 from dateutil import parser
 from pathlib import Path
 from pydantic import BaseModel
@@ -34,6 +35,7 @@ from data_vent.pipelines.notifications import github_issue_notifier
 
 #from data_vent.test_configs import DEV_PATH_SETTINGS
 from data_vent.config import STORAGE_OPTIONS
+
 
 @flow
 # TODO need to make sure these parameters are equivilant to prefect 1.0 version 
@@ -77,11 +79,9 @@ def stream_ingest(
     
 
     stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options)
-    logger.info(f"stream harvest object retrieved: {stream_harvest}")
     # TODO how do you actually set these path settings - it is confusing
     # stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS['aws']
-    logger.info(f"stream harvest harvest_options.path_settings set: {stream_harvest}")
 
     is_requested = check_requested(stream_harvest)
 
@@ -172,12 +172,18 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    test_run: bool=True,
-    run_in_cloud: bool=False,
+    test_run: bool=False,
+    priority_only: bool=True,
+    run_in_cloud: bool=True,
 ):
 
     logger = get_run_logger()
     logger.info("Starting parent flow...")
+
+    priority_df = pd.read_csv(
+        'https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionaryPanel.csv'  # noqa
+    )
+    priority_instruments = sorted(priority_df.refDes.unique())
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
 
@@ -198,6 +204,9 @@ def run_stream_ingest(
         logger.info(f"Searching for config yamls at path: {glob_path}")
         all_paths = fs.glob(glob_path)
 
+        if priority_only:
+            # instrument ref_des is first 27 characters of stream
+            all_paths = [f for f in all_paths if os.path.basename(f)[:27] in priority_instruments]
 
     for config_path in all_paths:
         config_json = yaml.safe_load(Path(config_path).open())
