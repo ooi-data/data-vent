@@ -38,3 +38,4 @@ PROCESS_COMMIT_MESSAGE_TEMPLATE = (
 )
 
 STATUS_EMOJIS = harvest_settings.github.defaults.status_emojis
+FLOW_PROCESS_BUCKET = 'flow-process-bucket'
