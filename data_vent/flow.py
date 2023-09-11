@@ -30,12 +30,19 @@ from data_vent.tasks import (
     data_availability
 )
 
-from data_vent.test_configs import FlowParameters
 from data_vent.settings.main import harvest_settings
 from data_vent.pipelines.notifications import github_issue_notifier
 
-#from data_vent.test_configs import DEV_PATH_SETTINGS
 from data_vent.config import STORAGE_OPTIONS
+
+
+class FlowParameters(BaseModel):
+    config: Optional[Dict[str, Any]]
+    target_bucket: str = "s3://ooi-data-prod"
+    max_chunk: str = "100MB"
+    export_da: bool = False
+    gh_write_da: bool = False
+    error_test: bool = False
 
 
 @flow
@@ -181,7 +188,7 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    test_run: bool=False,
+    test_run: bool=True,
     priority_only: bool=True,
     run_in_cloud: bool=True,
 ):

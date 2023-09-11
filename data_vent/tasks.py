@@ -46,8 +46,7 @@ from data_vent.utils.parser import (
 
 from data_vent.settings import harvest_settings
 # TODO dev path settings
-from data_vent.test_configs import FLOW_PROCESS_BUCKET
-# from data_vent.test_configs import DEV_PATH_SETTINGS
+from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
 
 def setup_status_s3fs(
