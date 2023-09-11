@@ -15,7 +15,7 @@ def deploy_parent_and_child_flows() -> None:
     )
 
     stream_ingest_deployment.apply()
-    logger.info("Deployed child flow: see 'data_vent/deployments/stream-ingest-deployment.yaml'")
+    logger.info("Deployed child flow to s3 storage")
 
     run_stream_ingest_deployment = Deployment.build_from_flow(
         flow=run_stream_ingest,
@@ -26,7 +26,7 @@ def deploy_parent_and_child_flows() -> None:
     )
 
     run_stream_ingest_deployment.apply()
-    logger.info("Deployed parent flow: see 'data_vent/deployments/run-stream-ingest-deployment.yaml'")
+    logger.info("Deployed parent flow to s3 storage")
 
 
 if __name__ == "__main__":
