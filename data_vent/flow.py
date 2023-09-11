@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+import asyncio
 import datetime
 import json
 import os 
@@ -8,7 +9,7 @@ import pandas as pd
 from dateutil import parser
 from pathlib import Path
 from pydantic import BaseModel
-from prefect import flow, get_run_logger
+from prefect import flow, get_run_logger, get_client
 from prefect.deployments import run_deployment
 
 import fsspec
@@ -170,6 +171,14 @@ def stream_ingest(
         # )
         # return flow
 
+
+# async def is_flowrun_running(run_name: str) -> bool:
+#     async with get_client() as client:
+#         flow_runs = await client.read_flow_runs()
+#         for run in flow_runs: print(run.state)
+#         running_runs = [run for run in flow_runs if run.state==Running()]
+
+
 @flow
 def run_stream_ingest(
     test_run: bool=False,
@@ -232,15 +241,17 @@ def run_stream_ingest(
 
         # run stream_ingest in parallel on ECS instances?
         if run_in_cloud:
+            #asyncio.run(is_flowrun_running(run_name))
             run_deployment(
                 name="stream-ingest/stream-ingest-deployment",
                 parameters=flow_params,
                 flow_run_name=run_name,
-                timeout=5 #TODO what makes sense for this timeout, should the parent flow complete even if child flows fail?
+                timeout=10 #TODO what makes sense for this timeout, should the parent flow complete even if child flows fail?
             )
         
         # run stream_ingest in sequence on local
         else:
+            #asyncio.run(is_flowrun_running(run_name))
             stream_ingest(**flow_params)
 
     logger.warning("Parent flow complete - this is a test")
