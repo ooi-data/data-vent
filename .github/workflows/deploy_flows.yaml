@@ -39,6 +39,9 @@ jobs:
         run: |
           conda info
           conda list
+          echo "secrets debug ====================="
+          echo "${{secrets.PREFECT_KEY}}"
+          echo "${{secrets.OOI_USERNAME}}"
       - name: Install package
         run: |
           pip install .
