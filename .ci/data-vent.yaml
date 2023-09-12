@@ -24,5 +24,5 @@ dependencies:
   - rechunker
   - flatten-dict
   - pydantic<2
-  - pip:
-      - git+https://github.com/ooi-data/data-vent.git@main
+  # - pip:
+  #     - git+https://github.com/ooi-data/data-vent.git@main
