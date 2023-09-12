@@ -43,7 +43,7 @@ jobs:
           pip install .
       - name: Authenticate Prefect Cloud
         run: |
-          prefect cloud login -k ${{ env.PREFECT_KEY }} 
+          prefect cloud login -k "${{ env.PREFECT_KEY }}" 
       - name: Deploy Prefect Flows
         run: |
           pwd
