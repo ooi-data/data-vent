@@ -1,6 +1,7 @@
 name: data-vent
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - boltons=23.0.0=py311hecd8cb5_0
   - brotlipy=0.7.0=py311h6c40b1e_1002
