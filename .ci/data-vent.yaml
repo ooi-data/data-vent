@@ -1,0 +1,28 @@
+name: data-vent
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.8
+  - pip=22
+  - fsspec
+  - s3fs
+  - dask
+  - loguru
+  - pandas
+  - progressbar2
+  - typer
+  - zarr
+  - xarray
+  - lxml
+  - gspread
+  - fastparquet
+  - pygithub
+  - siphon
+  - prefect>2
+  - requests-html
+  - rechunker
+  - flatten-dict
+  - pydantic<2
+  - pip:
+      - git+https://github.com/ooi-data/data-vent.git@main
