@@ -10,6 +10,7 @@ env:
     ENV_FILE: .ci/data-vent.yaml
     CONDA_ENV: data-vent
     CACHE_NUMBER: 0
+    PREFECT_WORKSPACE: ooi-rca-prefect2
 
 jobs:
   deploy:
@@ -43,7 +44,7 @@ jobs:
           pip install .
       - name: Authenticate Prefect Cloud
         run: |
-          prefect cloud login -k "${{ env.PREFECT_KEY }}" 
+          prefect cloud login -k "${{ env.PREFECT_KEY }}" -w "${{ env.PREFECT_WORKSPACE }}"
       - name: Deploy Prefect Flows
         run: |
           pwd
