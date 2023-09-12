@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-    ENV_FILE: .ci/data-vent.yml
+    ENV_FILE: .ci/data-vent.yaml
     CONDA_ENV: data-vent
     CACHE_NUMBER: 0
 
