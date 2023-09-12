@@ -21,8 +21,7 @@ jobs:
      AWS_KEY: ${{ secrets.AWS_KEY }}
      AWS_SECRET: ${{ secrets.AWS_SECRET }}
      PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
-     #GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
-     #GH_PAT: ${{ secrets.GH_PAT }}
+     GH_PAT: ${{ secrets.GH_PAT }}
     defaults:
       run:
         shell: bash -l {0}
