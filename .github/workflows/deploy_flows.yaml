@@ -43,7 +43,8 @@ jobs:
         run: |
           pip install .
       - name: Authenticate Prefect Cloud
-        env: PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
+        env: 
+          PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
         run: |
           echo "${{ secrets.PREFECT_KEY }}"
           echo "${{ env.PREFECT_KEY }}"
