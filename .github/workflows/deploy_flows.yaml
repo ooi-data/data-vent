@@ -11,6 +11,12 @@ env:
     CONDA_ENV: data-vent
     CACHE_NUMBER: 0
     PREFECT_WORKSPACE: ooi-rca-prefect2
+    OOI_USERNAME: ${{ secrets.OOI_USERNAME }}
+    OOI_TOKEN: ${{ secrets.OOI_TOKEN }}
+    AWS_KEY: ${{ secrets.AWS_KEY }}
+    AWS_SECRET: ${{ secrets.AWS_SECRET }}
+    PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
+    GH_PAT: ${{ secrets.GH_PAT }}
 
 jobs:
   deploy:
@@ -19,13 +25,13 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
-    env:
-      OOI_USERNAME: ${{ secrets.OOI_USERNAME }}
-      OOI_TOKEN: ${{ secrets.OOI_TOKEN }}
-      AWS_KEY: ${{ secrets.AWS_KEY }}
-      AWS_SECRET: ${{ secrets.AWS_SECRET }}
-      PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
-      GH_PAT: ${{ secrets.GH_PAT }}
+    # env:
+    #   OOI_USERNAME: ${{ secrets.OOI_USERNAME }}
+    #   OOI_TOKEN: ${{ secrets.OOI_TOKEN }}
+    #   AWS_KEY: ${{ secrets.AWS_KEY }}
+    #   AWS_SECRET: ${{ secrets.AWS_SECRET }}
+    #   PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
+    #   GH_PAT: ${{ secrets.GH_PAT }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
