@@ -10,7 +10,7 @@ env:
     ENV_FILE: .ci/data-vent.yaml
     CONDA_ENV: data-vent
     CACHE_NUMBER: 0
-    PREFECT_WORKSPACE: ooi-rca-prefect2
+    PREFECT_WORKSPACE: jdupreyuwedu/ooi-rca-prefect2
     OOI_USERNAME: ${{ secrets.OOI_USERNAME }}
     OOI_TOKEN: ${{ secrets.OOI_TOKEN }}
     AWS_KEY: ${{ secrets.AWS_KEY }}
