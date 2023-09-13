@@ -26,30 +26,30 @@ jobs:
       AWS_SECRET: ${{ secrets.AWS_SECRET }}
       PREFECT_KEY: ${{ secrets.PREFECT_KEY }}
       GH_PAT: ${{ secrets.GH_PAT }}
-        steps:
-          - name: checkout
-            uses: actions/checkout@v3
-          - name: Setup micromamba
-            uses: mamba-org/provision-with-micromamba@v14
-            with:
-              environment-file: ${{ env.ENV_FILE }}
-              environment-name: ${{ env.CONDA_ENV }}
-              cache-env: false
-          - name: Print conda env
-            run: |
-              conda info
-              conda list
-          - name: Install package
-            run: |
-              pip install .
-          - name: Authenticate Prefect Cloud
-            run: |
-              echo "${{ env.PREFECT_WORKSPACE}}"
-              echo "${{ env.PREFECT_KEY }}"
-              prefect cloud login --key "${{ env.PREFECT_KEY }}" --workspace "${{ env.PREFECT_WORKSPACE }}"
-          - name: Deploy Prefect Flows
-            run: |
-              pwd
-              python ./deploy.py
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Setup micromamba
+        uses: mamba-org/provision-with-micromamba@v14
+        with:
+          environment-file: ${{ env.ENV_FILE }}
+          environment-name: ${{ env.CONDA_ENV }}
+          cache-env: false
+      - name: Print conda env
+        run: |
+          conda info
+          conda list
+      - name: Install package
+        run: |
+          pip install .
+      - name: Authenticate Prefect Cloud
+        run: |
+          echo "${{ env.PREFECT_KEY }}"
+          echo "${{ env.PREFECT_KEY }}"
+          prefect cloud login --key "${{ env.PREFECT_KEY }}" --workspace "${{ env.PREFECT_WORKSPACE }}"
+      - name: Deploy Prefect Flows
+        run: |
+          pwd
+          python ./deploy.py
    
       
