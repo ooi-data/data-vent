@@ -1,12 +1,9 @@
 from typing import Any, Dict, Optional
 
 import asyncio
-import datetime
-import json
 import os 
 import yaml 
 import pandas as pd
-from dateutil import parser
 from pathlib import Path
 from pydantic import BaseModel
 from prefect import flow, get_run_logger, get_client
@@ -32,7 +29,6 @@ from data_vent.tasks import (
 
 from data_vent.settings.main import harvest_settings
 from data_vent.pipelines.notifications import github_issue_notifier
-
 from data_vent.config import STORAGE_OPTIONS
 
 
@@ -46,7 +42,7 @@ class FlowParameters(BaseModel):
 
 
 @flow
-# TODO need to make sure these parameters are equivilant to prefect 1.0 version 
+# TODO these parameters should be equivilant to prefect 1.0 version 
 def stream_ingest(
     config: Dict,
     harvest_options: Dict[str, Any] = {},
@@ -192,7 +188,26 @@ def run_stream_ingest(
     priority_only: bool=True,
     run_in_cloud: bool=True,
 ):
+    """
+    Launches a data harvest for each specified OOI-RCA instrument streams
 
+    In production setting harvesters run in parallel on AWS Fargate instances.
+
+    Args:
+        test_run (bool): If true, only launch harvesters for 3 small test instrument streams
+        priority_only (bool): If true, launch harvesters for instrument streams defined as 
+            priority in the OOI-RCA priority instrument csv, overides `test_run`
+        run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargated instances orchestrated
+            by a prefect deployment. Set to false to run harvesters in series on local machine. This 
+            can be useful for debugging.
+
+    As configured, harvesters will output array data stored as .zarr files to the following s3 buckets:
+    
+    flow-process-bucket: stores json-like harvest status to inform harvest logic
+    temp-ooi-data-prod: temporary array storage for processing steps?
+    ooi-data-prod: final storage for processed array data - saved as .zarr
+
+    """
     logger = get_run_logger()
     logger.info("Starting parent flow...")
 
@@ -203,10 +218,9 @@ def run_stream_ingest(
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
 
-
     if test_run:
 
-        # TODO this are some "small data" streams for the sake of building out the new prefect 2 pipeline
+        # these are some "small data" streams that are useful for small test runs
         all_paths = [
             os.path.join(config_dir, 'CE04OSPS-SF01B-2B-PHSENA108', 'CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record.yaml'),
             os.path.join(config_dir, 'CE04OSPS-SF01B-4F-PCO2WA102', 'CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record.yaml'),
@@ -246,14 +260,15 @@ def run_stream_ingest(
         logger.info(f"Launching child flow: {run_name}")
         logger.info(f"configs: {config_json}")
 
-        # run stream_ingest in parallel on ECS instances?
+        # run stream_ingest in parallel using AWS ECS fargate - this infrastructure is tied to 
+        # the prefect deployment
         if run_in_cloud:
             #asyncio.run(is_flowrun_running(run_name))
             run_deployment(
                 name="stream-ingest/stream-ingest-deployment",
                 parameters=flow_params,
                 flow_run_name=run_name,
-                timeout=10 #TODO what makes sense for this timeout, should the parent flow complete even if child flows fail?
+                timeout=10 #TODO timeout might need to be increase if we have race condition errors
             )
         
         # run stream_ingest in sequence on local
