@@ -39,15 +39,12 @@ jobs:
         run: |
           conda info
           conda list
-          echo "secrets debug ====================="
-          echo "${{secrets.PREFECT_KEY}}"
-          echo "${{secrets.OOI_USERNAME}}"
       - name: Install package
         run: |
           pip install .
       - name: Authenticate Prefect Cloud
         run: |
-          prefect cloud login --key "${{ secrets.PREFECT_KEY }}" --workspace "${{ env.PREFECT_WORKSPACE }}"
+          prefect cloud login --key "$PREFECT_KEY" --workspace "${{ env.PREFECT_WORKSPACE }}"
       - name: Deploy Prefect Flows
         run: |
           pwd
