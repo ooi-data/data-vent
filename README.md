@@ -6,6 +6,7 @@
 This repo contains code migrated from OOI-RCA data-harvest and ooi-harvester.
 
 https://github.com/ooi-data/ooi-harvester
+
 https://github.com/ooi-data/data-harvest
 
 This migration has two aims:
@@ -34,7 +35,9 @@ This agent was set up in-part following this tutorial:
 https://discourse.prefect.io/t/how-to-deploy-a-prefect-2-0-agent-to-an-ec2-instance-as-your-execution-layer/551
 
 The agent environment is managed using miniconda, with the following required packages:
+
 prefect==#TODO
+
 prefect-aws==#TODO
 
 On reboot the agent process can be restarted with `supervisord -c ./supervisord.conf`
@@ -43,6 +46,9 @@ On reboot the agent process can be restarted with `supervisord -c ./supervisord.
 
 # Development Environment 
 With data-vent as cwd:
+
 `conda create --name data-vent --clone base`
+
 `conda activate data-vent`
+
 `pip install -e .`
