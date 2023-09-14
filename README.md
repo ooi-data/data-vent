@@ -16,7 +16,7 @@ This migration has two aims:
 
 This repo's structure has been copied over from ooi-harvester. 
 `tasks.py` contains the harvest's workhorse functions decorated as prefect @tasks 
-`flow.py` contains the complete orchestration and logic of the harvest process
+`flow.py` contains the complete orchestration and logic of the harvest process.
 
 # Infrastructure
 ## Flow deployment
