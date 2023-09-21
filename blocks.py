@@ -4,12 +4,14 @@ from loguru import logger
 
 AWS_CLUSTER_NAME = 'flapjack-octopus'
 CPU = 2048 #2 vCPU
-MEM = 16384 #26384 MiB
+MEM = 16384 #16384 MiB
 
 def set_aws_block() -> None:
     aws_key = os.environ.get('AWS_KEY')
     aws_secret = os.environ.get('AWS_SECRET')
 
+    if aws_key is None or aws_secret is None:
+        raise ValueError('environmental secret variables cannot be None')
 
     AwsCredentials(
         aws_access_key_id=aws_key,
