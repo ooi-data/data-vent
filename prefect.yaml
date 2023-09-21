@@ -1,0 +1,58 @@
+# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# configuration for deploying your flows. We recommend committing this file to source
+# control along with your flow code.
+
+# Generic metadata about this project
+name: data-vent
+prefect-version: 2.13.0
+
+# build section allows you to manage and build docker images
+build:
+
+# push section allows you to manage if and how this project is uploaded to remote locations
+push:
+
+# pull section allows you to provide instructions for cloning this project in remote locations
+pull:
+- prefect.deployments.steps.git_clone:
+    repository: https://github.com/ooi-data/data-vent.git
+    branch: main
+    access_token: '{{ prefect.blocks.secret.deployment-stream-ingest-deployment-v2-stream-ingest-repo-token
+      }}'
+
+# the deployments section allows you to provide configuration for deploying flows
+deployments:
+- name: stream-ingest-deployment-v2
+  version:
+  tags: []
+  description:
+  entrypoint: data_vent/flow.py:stream_ingest
+  parameters: {}
+  work_pool:
+    name: ECS-fargate-pool-test
+    work_queue_name:
+    job_variables: {}
+  schedule:
+- name: run-stream-ingest-deployment-v2
+  version:
+  tags: []
+  description: "Launches a data harvest for each specified OOI-RCA instrument streams\n\
+    \nIn production setting harvesters run in parallel on AWS Fargate instances.\n\
+    \nArgs:\n    test_run (bool): If true, only launch harvesters for 3 small test\
+    \ instrument streams\n    priority_only (bool): If true, launch harvesters for\
+    \ instrument streams defined as \n        priority in the OOI-RCA priority instrument\
+    \ csv, overides `test_run`\n    run_in_cloud (bool): If true, harvesters run in\
+    \ parallel on AWS Fargated instances orchestrated\n        by a prefect deployment.\
+    \ Set to false to run harvesters in series on local machine. This \n        can\
+    \ be useful for debugging.\n\nAs configured, harvesters will output array data\
+    \ stored as .zarr files to the following s3 buckets:\n\nflow-process-bucket: stores\
+    \ json-like harvest status to inform harvest logic\ntemp-ooi-data-prod: temporary\
+    \ array storage for processing steps?\nooi-data-prod: final storage for processed\
+    \ array data - saved as .zarr"
+  entrypoint: data_vent/flow.py:run_stream_ingest
+  parameters: {}
+  work_pool:
+    name: ECS-fargate-pool-test
+    work_queue_name:
+    job_variables: {}
+  schedule:

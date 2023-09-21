@@ -184,7 +184,7 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    test_run: bool=True,
+    test_run: bool=False,
     priority_only: bool=True,
     run_in_cloud: bool=True,
 ):
@@ -196,8 +196,8 @@ def run_stream_ingest(
     Args:
         test_run (bool): If true, only launch harvesters for 3 small test instrument streams
         priority_only (bool): If true, launch harvesters for instrument streams defined as 
-            priority in the OOI-RCA priority instrument csv, overides `test_run`
-        run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargated instances orchestrated
+            priority in the OOI-RCA priority instrument csv
+        run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This 
             can be useful for debugging.
 
@@ -265,7 +265,7 @@ def run_stream_ingest(
         if run_in_cloud:
             #asyncio.run(is_flowrun_running(run_name))
             run_deployment(
-                name="stream-ingest/stream-ingest-deployment",
+                name="stream-ingest/stream-ingest-deployment-v2",
                 parameters=flow_params,
                 flow_run_name=run_name,
                 timeout=10 #TODO timeout might need to be increase if we have race condition errors
@@ -276,7 +276,7 @@ def run_stream_ingest(
             #asyncio.run(is_flowrun_running(run_name))
             stream_ingest(**flow_params)
 
-    logger.warning("Parent flow complete - this is a test")
+    logger.warning("Parent flow complete")
 
 
 if __name__ == '__main__':
