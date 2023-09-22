@@ -25,6 +25,13 @@ using the github workflow <Deploy Flows> associated with the repo. Deployment in
 be found in `blocks.py` and needs to be updated and run manually. 
 
 #TODO migrate to prefect worker orchestration model in place of agent model
+## Prefect worker
+The prefect2 worker is hosted on an OOI-RCA AWS account ECS instance. `molamola-prefect2-worker`
+This worker was set up in-part following this tutorial :
+https://discourse.prefect.io/t/how-to-run-a-prefect-2-worker-as-a-systemd-service-on-linux/1450
+`prefect` and `prefect-aws` are installed into the worker's global environment. The systemd 
+service unite file which controls the prefect-worker service is located at `/etc/systemd/system`
+
 ## Prefect cloud server 
 Deployed prefect flows are hosted on the free prefect2 cloud service, in this workspace: 
 jdupreyuwedu/ooi-rca-prefect2
