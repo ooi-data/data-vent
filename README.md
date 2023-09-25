@@ -24,7 +24,6 @@ Flows are deployed using the helper script `deploy.py`. This script can be run i
 using the github workflow <Deploy Flows> associated with the repo. Deployment infrastructure specification can 
 be found in `blocks.py` and needs to be updated and run manually. 
 
-#TODO migrate to prefect worker orchestration model in place of agent model
 ## Prefect worker
 The prefect2 worker is hosted on an OOI-RCA AWS account ECS instance. `molamola-prefect2-worker`
 This worker was set up in-part following this tutorial :
@@ -36,21 +35,6 @@ service unite file which controls the prefect-worker service is located at `/etc
 Deployed prefect flows are hosted on the free prefect2 cloud service, in this workspace: 
 jdupreyuwedu/ooi-rca-prefect2
 The data harvest is scheduled to run once daily at 6am PST. It has been scheduled using the prefect2 GUI.
-
-## Prefect agent 
-The prefect2 agent is hosted on an OOI-RCA AWS account EC2 instance. `molamola-prefect2-agent`
-This agent was set up in-part following this tutorial: 
-https://discourse.prefect.io/t/how-to-deploy-a-prefect-2-0-agent-to-an-ec2-instance-as-your-execution-layer/551
-
-The agent environment is managed using miniconda, with the following required packages:
-
-prefect==#TODO
-
-prefect-aws==#TODO
-
-On reboot the agent process can be restarted with `supervisord -c ./supervisord.conf`
-
-#TODO have the process restart automatically on instance reboot 
 
 # Development Environment 
 With data-vent as cwd:
