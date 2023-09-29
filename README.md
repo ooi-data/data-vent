@@ -30,6 +30,8 @@ This worker was set up in-part following this tutorial :
 https://discourse.prefect.io/t/how-to-run-a-prefect-2-worker-as-a-systemd-service-on-linux/1450
 `prefect` and `prefect-aws` are installed into the worker's global environment. The systemd 
 service unite file which controls the prefect-worker service is located at `/etc/systemd/system`
+An AMI (amazon machine image) exists of this worker `prefect2-worker-image` in the OOI-RCA
+AWS account.
 
 ## Prefect cloud server 
 Deployed prefect flows are hosted on the free prefect2 cloud service, in this workspace: 
