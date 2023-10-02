@@ -70,6 +70,12 @@ def check_zarr(dest_fold, storage_options={}):
         return False, None
 
 
+def get_global_ranges():
+    logger.info("Fetching global ranges ...")
+    url = "https://raw.githubusercontent.com/ooi-integration/qc-lookup/master/data_qc_global_range_values.csv"  # noqa
+    return parse_global_range_dataframe(pd.read_csv(url))
+
+
 def get_stream(stream):
     url = f"{BASE_URL}/{M2M_PATH}/12575/stream/byname/{stream}"
     stream_dict = send_request(url)
