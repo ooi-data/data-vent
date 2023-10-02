@@ -7,7 +7,6 @@ env:
     ENV_FILE: .ci/data-vent.yaml
     CONDA_ENV: data_vent
     CACHE_NUMBER: 0
-
 jobs:
   harvest:
     runs-on: ubuntu-20.04
