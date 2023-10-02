@@ -77,10 +77,12 @@ def fetch_creds():
     GSPREAD_DIR = os.path.join(os.path.expanduser("~"), ".config", "gspread")
     if not os.path.exists(GSPREAD_DIR):
         os.mkdir(GSPREAD_DIR)
-    FS.get(
-        GOOGLE_SERVICE_JSON,
-        os.path.join(GSPREAD_DIR, "service_account.json"),
-    )
+    # FS.get(
+    #     GOOGLE_SERVICE_JSON,
+    #     os.path.join(GSPREAD_DIR, "service_account.json"),
+    # )
+    with open(os.path.join(GSPREAD_DIR, "service_account.json"), "w") as json_file:
+        json.dump(json.loads(GOOGLE_SERVICE_JSON), json_file)
 
 
 def df2list(df):
