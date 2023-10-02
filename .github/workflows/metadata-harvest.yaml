@@ -1,11 +1,11 @@
 name: Metadata Harvest
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
-  push:
-    branches:
-      - main
+  # schedule:
+  #   - cron: "0 0 * * *"
+  # push:
+  #   branches:
+  #     - main
     paths:
       - data_vent/metadata/**/*
   workflow_dispatch:
@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_PAT }}
       - name: Setup micromamba
         uses: mamba-org/provision-with-micromamba@v14
         with:
@@ -44,7 +46,7 @@ jobs:
           conda list
       - name: Install package
         run: |
-          pip install .
+          pip install git+https://github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
       - name: Run Harvest
         run: |
           ooi-metadata-harvest --cava-assets --ooinet-inventory --ooi-streams --global-ranges --instrument-catalog --legacy-catalog
