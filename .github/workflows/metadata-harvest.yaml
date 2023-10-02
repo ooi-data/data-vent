@@ -27,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ secrets.GH_TOKEN }}
       - name: Setup micromamba
         uses: mamba-org/provision-with-micromamba@v14
         with:
@@ -41,7 +41,7 @@ jobs:
           conda list
       - name: Install package
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           pip install git+https://github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
       - name: Run Harvest
