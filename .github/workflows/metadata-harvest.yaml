@@ -41,7 +41,7 @@ jobs:
           conda list
       - name: Install package
         # env:
-        #   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        #   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} #once again
         run: |
           pip install git+https://github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
       - name: Run Harvest
