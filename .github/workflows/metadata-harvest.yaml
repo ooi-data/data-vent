@@ -41,10 +41,10 @@ jobs:
           conda info
           conda list
       - name: Install package
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} #old style token with expiration date
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} #old style token with expiration date
         run: |
-          pip install git+https://github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
+          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
       - name: Run Harvest
         run: |
           ooi-metadata-harvest --cava-assets --ooinet-inventory --ooi-streams --global-ranges --instrument-catalog --legacy-catalog
