@@ -1,6 +1,9 @@
 name: Metadata Harvest
 
 on:
+  push:
+    branches:
+      - "migrate-cava-metadata-harvest"
   workflow_dispatch:
 
 env:
