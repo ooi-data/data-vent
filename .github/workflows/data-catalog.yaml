@@ -27,13 +27,13 @@ jobs:
       AWS_KEY: ${{ secrets.AWS_KEY }}
       AWS_SECRET: ${{ secrets.AWS_SECRET }}
       GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
-      GH_PAT: $ {{ secrets.GH_TOKEN }}
+      GH_PAT: $ {{ secrets.GH_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           repository: ooi-data/data-vent
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
       - name: Setup micromamba
         uses: mamba-org/provision-with-micromamba@v14
         with:
@@ -47,7 +47,7 @@ jobs:
           conda list
       - name: Install package
         run: |
-          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
+          pip install git+https://${{ secrets.GH_PAT }}@github.com/ooi-data/data-vent.git@main
       - name: Run Catalog Creation
         run: |
           ooi-data-catalog catalog --create
