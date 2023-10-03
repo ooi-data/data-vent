@@ -44,3 +44,4 @@ dependencies = [
 
 [project.scripts]
 ooi-metadata-harvest = "data_vent.metadata.cli:app"
+ooi-data-stats = "data_vent.stats.cli:app"
