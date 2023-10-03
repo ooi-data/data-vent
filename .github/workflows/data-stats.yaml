@@ -5,7 +5,7 @@ on:
     - cron: "0 11 * * *"
   push:
     branches:
-      - "migrate-cava-metadata-harvest"
+      - "main"
     paths:
       - ooi_harvester/stats/**/*
   workflow_dispatch:
@@ -45,7 +45,7 @@ jobs:
           conda list
       - name: Install package
         run: |
-          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
+          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
       - name: Run Stats Creation
         run: |
           ooi-data-stats
