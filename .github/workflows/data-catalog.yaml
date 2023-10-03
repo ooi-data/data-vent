@@ -49,4 +49,4 @@ jobs:
           pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
       - name: Run Catalog Creation
         run: |
-          ooi-data-catalog --create
+          ooi-data-catalog catalog --create
