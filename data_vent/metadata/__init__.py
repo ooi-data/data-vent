@@ -54,7 +54,7 @@ def get_ooi_streams_and_parameters(instruments=None):
     return streams_df, parameters_df
 
 
-def _get_zarr_params(table_name, params, bucket='ooi-data'):
+def _get_zarr_params(table_name, params, bucket='ooi-data-prod'):
     data_stream = f"s3://{bucket}/{table_name}"
     fmap = fsspec.get_mapper(data_stream, **STORAGE_OPTIONS['aws'])
     if fmap.get('.zmetadata') is None:
