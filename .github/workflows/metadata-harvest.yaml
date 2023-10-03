@@ -1,9 +1,9 @@
-name: Metadata Harvest #
+name: Metadata Harvest
 
 on:
   push:
     branches:
-      - "migrate-cava-metadata-harvest"
+      - "main"
   workflow_dispatch:
 
 env:
@@ -42,7 +42,7 @@ jobs:
           conda list
       - name: Install package
         run: |
-          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@migrate-cava-metadata-harvest
+          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
       - name: Run Harvest
         run: |
           ooi-metadata-harvest --cava-assets --ooinet-inventory --ooi-streams --global-ranges --instrument-catalog --legacy-catalog
