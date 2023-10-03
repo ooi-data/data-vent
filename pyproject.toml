@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "data_vent"
-version = "1.1.0"
+version = "1.1.1"
 description = "inital attempt at migrating data-harvest"
 authors = [
   { name = "Joe Duprey", email = "jduprey@uw.edu" },
