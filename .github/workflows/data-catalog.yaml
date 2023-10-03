@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 env:
-  ENV_FILE: .ci/metadata/harvest-environment.yml
-  CONDA_ENV: meta_env
+  ENV_FILE: .ci/data-vent.yaml
+  CONDA_ENV: data-vent
   CACHE_NUMBER: 0
 
 jobs:
