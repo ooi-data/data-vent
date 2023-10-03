@@ -17,8 +17,9 @@ from data_vent.utils.conn import request_data, check_zarr, send_request
 from data_vent.utils.parser import estimate_size_and_time, parse_uframe_response
 #     get_storage_options,
 # )
-# from ..utils.compute import map_concurrency
-# from ooi_harvester.metadata.fetcher import fetch_instrument_streams_list
+
+from data_vent.utils.compute import map_concurrency
+from data_vent.metadata.fetcher import fetch_instrument_streams_list
 # from ooi_harvester.metadata.utils import get_catalog_meta
 from data_vent.utils.conn import get_toc
 from data_vent.metadata import get_ooi_streams_and_parameters
@@ -370,21 +371,33 @@ def perform_request(
     return response
 
 
-# def perform_estimates(instrument_rd, refresh, existing_data_path):
-#     streams_list = fetch_instrument_streams_list(instrument_rd)
-#     estimated_requests = map_concurrency(
-#         create_request_estimate,
-#         streams_list,
-#         func_kwargs=dict(
-#             refresh=refresh,
-#             existing_data_path=existing_data_path,
-#             request_kwargs=dict(provenance=True),
-#         ),
-#         max_workers=50,
-#     )
-#     estimated_dict = _sort_and_filter_estimated_requests(estimated_requests)
-#     success_requests = estimated_dict['success_requests']
-#     return success_requests
+def perform_estimates(instrument_rd, refresh, existing_data_path):
+    streams_list = fetch_instrument_streams_list(instrument_rd)
+    estimated_requests = map_concurrency(
+        create_request_estimate,
+        streams_list,
+        func_kwargs=dict(
+            refresh=refresh,
+            existing_data_path=existing_data_path,
+            request_kwargs=dict(provenance=True),
+        ),
+        max_workers=50,
+    )
+    estimated_dict = _sort_and_filter_estimated_requests(estimated_requests)
+    success_requests = estimated_dict['success_requests']
+    return success_requests
+
+
+def fetch_harvest(instrument_rd, refresh, existing_data_path):
+    success_requests = perform_estimates(
+        instrument_rd, refresh, existing_data_path
+    )
+    request_responses = []
+    if len(success_requests) > 0:
+        request_responses = [
+            perform_request(req, refresh) for req in success_requests
+        ]
+    return request_responses
 
 
 # def fetch_harvest(instrument_rd, refresh, existing_data_path):
