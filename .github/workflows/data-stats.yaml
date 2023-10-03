@@ -1,4 +1,4 @@
-name: Metadata Harvest
+name: Create Data Stats
 
 on:
   schedule:
@@ -7,15 +7,16 @@ on:
     branches:
       - "main"
     paths:
-      - data_vent/metadata/**/*
+      - ooi_harvester/stats/**/*
   workflow_dispatch:
 
 env:
-    ENV_FILE: .ci/data-vent.yaml
-    CONDA_ENV: data_vent
-    CACHE_NUMBER: 0
+  ENV_FILE: .ci/data-vent.yaml
+  CONDA_ENV: data_vent
+  CACHE_NUMBER: 0
+
 jobs:
-  harvest:
+  catalog-creation:
     runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     defaults:
@@ -27,12 +28,10 @@ jobs:
       AWS_KEY: ${{ secrets.AWS_KEY }}
       AWS_SECRET: ${{ secrets.AWS_SECRET }}
       GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
+      GH_PAT: ${{ secrets.GH_PAT }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          repository: ooi-data/data-vent
-          token: ${{ secrets.GH_TOKEN }}
+        uses: actions/checkout@v2
       - name: Setup micromamba
         uses: mamba-org/provision-with-micromamba@v14
         with:
@@ -47,6 +46,6 @@ jobs:
       - name: Install package
         run: |
           pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
-      - name: Run Harvest
+      - name: Run Stats Creation
         run: |
-          ooi-metadata-harvest --cava-assets --ooinet-inventory --ooi-streams --global-ranges --instrument-catalog --legacy-catalog
+          ooi-data-stats
