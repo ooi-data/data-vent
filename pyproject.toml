@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "data_vent"
-version = "1.1.1"
+version = "1.1.2"
 description = "inital attempt at migrating data-harvest"
 authors = [
   { name = "Joe Duprey", email = "jduprey@uw.edu" },
@@ -45,3 +45,4 @@ dependencies = [
 [project.scripts]
   ooi-metadata-harvest = "data_vent.metadata.cli:app"
   ooi-data-stats = "data_vent.stats.cli:app"
+  ooi-data-catalog = "data_vent.cli:app"

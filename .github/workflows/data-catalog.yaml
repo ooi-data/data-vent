@@ -1,0 +1,52 @@
+name: Create Intake Data Catalog
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  push:
+    branches:
+      - "main"
+    paths:
+      - data_vent/metadata/**
+  workflow_dispatch:
+
+env:
+    ENV_FILE: .ci/data-vent.yaml
+    CONDA_ENV: data_vent
+    CACHE_NUMBER: 0
+jobs:
+  catalog-creation:
+    runs-on: ubuntu-20.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    defaults:
+      run:
+        shell: bash -l {0}
+    env:
+      OOI_USERNAME: ${{ secrets.OOI_USERNAME }}
+      OOI_TOKEN: ${{ secrets.OOI_TOKEN }}
+      AWS_KEY: ${{ secrets.AWS_KEY }}
+      AWS_SECRET: ${{ secrets.AWS_SECRET }}
+      GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: ooi-data/data-vent
+          token: ${{ secrets.GH_TOKEN }}
+      - name: Setup micromamba
+        uses: mamba-org/provision-with-micromamba@v14
+        with:
+          environment-file: ${{ env.ENV_FILE }}
+          environment-name: ${{ env.CONDA_ENV }}
+          cache-env: true
+          cache-env-key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
+      - name: Print conda env
+        run: |
+          conda info
+          conda list
+      - name: Install package
+        run: |
+          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
+      - name: Run Catalog Creation
+        run: |
+          ooi-data-catalog --create

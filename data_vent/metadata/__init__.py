@@ -23,11 +23,12 @@ from data_vent.metadata.utils import (
     get_axiom_ooi_catalog,
     write_axiom_catalog,
     create_catalog_item,
+    create_catalog_source,
     json2bucket,
 
 )
 
-from data_vent.config import STORAGE_OPTIONS
+from data_vent.config import STORAGE_OPTIONS, GH_PAT, GH_DATA_ORG
 from data_vent.utils.conn import get_global_ranges, get_toc
 from data_vent.utils.compute import map_concurrency
 
@@ -232,4 +233,62 @@ def create_metadata(
             instrument_catalog_list.append(inst_dict)
         json2bucket(
             instrument_catalog_list, "instruments_catalog.json", bucket
+        )
+
+
+def create_data_catalog(
+    bucket,
+    site_branch,
+):
+    from github import Github
+
+    data_list = list(
+        filter(
+            lambda d: os.path.basename(d)
+            not in ['index.html', 'data_availability'],
+            FS.listdir(bucket, detail=False),
+        )
+    )
+    now = datetime.datetime.utcnow()
+    root_cat_dict = {
+        'name': 'OOI Data Streams Catalog',
+        'description': "OOI Data Intake Catalog. This effort is part of the University of Washington, Regional Cabled Array Value Add Project.",
+        'metadata': {
+            'version': '0.1.0',
+            'last_updated': now.isoformat(),
+            'owner': 'University of Washington, Regional Cabled Array',
+        },
+        'sources': {},
+    }
+
+    sources = map_concurrency(
+        create_catalog_source, data_list, func_args=(FS,)
+    )
+    for source in sources:
+        root_cat_dict['sources'].update(source)
+
+    gh = Github(GH_PAT)
+    site_repo_path = os.path.join(GH_DATA_ORG, f"{GH_DATA_ORG}.github.io")
+    repo = gh.get_repo(site_repo_path)
+    catalog_file_name = 'catalog.yaml'
+    file_contents = [
+        c
+        for c in repo.get_contents('.', ref=site_branch)
+        if c.path == catalog_file_name
+    ]
+    if len(file_contents) == 1:
+        content = file_contents[0]
+        repo.update_file(
+            path=content.path,
+            message=f"⬆️ Data Catalog updated at {now.isoformat()}",
+            content=yaml.dump(root_cat_dict),
+            sha=content.sha,
+            branch=site_branch,
+        )
+    else:
+        repo.create_file(
+            catalog_file_name,
+            f"🪄 Data Catalog created at {now.isoformat()}",
+            yaml.dump(root_cat_dict),
+            branch=site_branch,
         )
