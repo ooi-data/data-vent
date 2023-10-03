@@ -1,3 +1,6 @@
+# *** DEPRECATED *** prefect.yaml will automatically pull from 
+# most recent commit of @main when created flow_runs, making this 
+# gh workflow unnecesary
 name: Deploy Flows
 
 on:

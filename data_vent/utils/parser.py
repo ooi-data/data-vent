@@ -319,3 +319,18 @@ def setup_etl(stream, source='ooinet', target_bucket='s3://ooi-data-prod'):
         **stream,
     )
 
+
+def get_items(keys, orig_dict):
+    new_dict = {}
+    for k, v in orig_dict.items():
+        if k in keys:
+            new_dict[k] = v
+    return new_dict
+
+
+def rename_item(old_key, new_key, orig_dict):
+    new_dict = orig_dict.copy()
+    if old_key in new_dict:
+        new_dict.update({new_key: new_dict[old_key]})
+        del new_dict[old_key]
+    return new_dict
