@@ -14,25 +14,25 @@ app.add_typer(stats_cli.app, name="stats")
 @app.command()
 def catalog(
     create: bool = False,
-    s3_bucket: str = "ooi-data",
+    s3_bucket: str = "ooi-data-prod",
     site_branch: str = "gh-pages",
 ):
-    try:
-        if create:
-            typer.echo("Creating/Updating data catalog ...")
-            create_data_catalog(s3_bucket, site_branch)
-        else:
-            typer.echo("Please add --create to run catalog creation")
-    except Exception as e:
-        typer.echo(f"Error found: {e}")
-        sys.exit(1)
+    # try:
+    if create:
+        typer.echo("Creating/Updating data catalog ...")
+        create_data_catalog(s3_bucket, site_branch)
+    else:
+        typer.echo("Please add --create to run catalog creation")
+    # except Exception as e:
+    #     typer.echo(f"Error found: {e}")
+    #     sys.exit(1)
 
 
 @app.command()
 def producer(
     instrument_rd: str,
     refresh: bool = False,
-    existing_data_path: str = "s3://ooi-data",
+    existing_data_path: str = "s3://ooi-data-prod",
 ):
     request_responses = fetch_harvest(
         instrument_rd, refresh, existing_data_path
