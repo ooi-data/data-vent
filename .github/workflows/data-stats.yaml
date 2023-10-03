@@ -7,7 +7,7 @@ on:
     branches:
       - "main"
     paths:
-      - data_vent/stats/**/*
+      - data_vent/stats/**
   workflow_dispatch:
 
 env:
