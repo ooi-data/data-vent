@@ -187,7 +187,7 @@ def run_stream_ingest(
     test_run: bool=False,
     priority_only: bool=True,
     run_in_cloud: bool=True,
-    # pipeline behavior args
+    # legacy pipeline behavior args
     export_da: Optional[bool]=False,
     gh_write_da: Optional[bool]=False,
 ):
@@ -203,6 +203,8 @@ def run_stream_ingest(
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This 
             can be useful for debugging.
+        export_da (Optional[bool]) arg from legacy pipeline, possibly relevant to CAVA front-end/API
+        gh_write_da (Optional[bool]) arg from legacy pipeline, possibly relevant to CAVA front-end/API
 
     As configured, harvesters will output array data stored as .zarr files to the following s3 buckets:
     
