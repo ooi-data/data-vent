@@ -157,7 +157,7 @@ def stream_ingest(
         )
 
         # in prefect 1.0 this sets the provided task as an upstream dependency of `availability` in this case
-        # availability = set_upstream(final_path)
+        # availability.set_upstream(final_path)
 
         #TODO I think this saves logs as files to s3 - will have to find alternative or alter for prefect 2.0?
         # task_names = [t.name for t in stream_ingest.tasks]
@@ -187,6 +187,9 @@ def run_stream_ingest(
     test_run: bool=False,
     priority_only: bool=True,
     run_in_cloud: bool=True,
+    # pipeline behavior args
+    export_da: Optional[bool]=False,
+    gh_write_da: Optional[bool]=False,
 ):
     """
     Launches a data harvest for each specified OOI-RCA instrument streams
@@ -252,8 +255,8 @@ def run_stream_ingest(
         'config': config_json,
         'target_bucket': "s3://ooi-data-prod",
         'max_chunk': "100MB",
-        'export_da': False,
-        'gh_write_da': False,
+        'export_da': export_da,
+        'gh_write_da': gh_write_da,
         'error_test': False,
         }
 
