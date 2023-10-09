@@ -48,6 +48,7 @@ from data_vent.settings import harvest_settings
 # TODO dev path settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
+from data_vent.exceptions import DataNotReadyError
 
 def setup_status_s3fs(
     stream_harvest: StreamHarvest,
@@ -474,11 +475,12 @@ def check_data(data_response, stream_harvest):
                 )
                 update_and_write_status(stream_harvest, status_json)
                 #TODO is the the right prefect 2.0 signal?
-                logger.warning(message)
-                return AwaitingRetry(
-                    message=message,
-                    result={"status": status_json, "message": message},
-                )
+                # logger.warning(message)
+                # return AwaitingRetry(
+                #     message=message,
+                #     result={"status": status_json, "message": message},
+                # )
+                raise DataNotReadyError
 
 
 @task
