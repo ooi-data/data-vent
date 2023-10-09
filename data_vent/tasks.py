@@ -15,7 +15,7 @@ from dateutil import parser
 
 import prefect
 from prefect import task, get_run_logger
-from prefect.states import Completed, Cancelled, Failed
+from prefect.states import Completed, Cancelled, Failed, AwaitingRetry
 
 # TODO sort out imports and __init__ structure
 from data_vent.producer import (
@@ -475,7 +475,7 @@ def check_data(data_response, stream_harvest):
                 update_and_write_status(stream_harvest, status_json)
                 #TODO is the the right prefect 2.0 signal?
                 logger.warning(message)
-                return Cancelled(
+                return AwaitingRetry(
                     message=message,
                     result={"status": status_json, "message": message},
                 )
