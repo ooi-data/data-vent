@@ -24,7 +24,8 @@ from data_vent.tasks import (
     setup_process,
     data_processing,
     finalize_data_stream,
-    data_availability
+    data_availability,
+    read_status_json
 )
 
 from data_vent.settings.main import harvest_settings
@@ -89,72 +90,64 @@ def stream_ingest(
 
     is_requested = check_requested(stream_harvest)
 
-    if is_requested == False:
-    #with case(is_requested, False):
+    while is_requested == False:
         # Run the data request here
-        estimated_request = setup_harvest(
-            stream_harvest,
-            #TODO task_args necessary?
-            # task_args={
-            #     "state_handlers": state_handlers,
-            # },
-        )
+        estimated_request = setup_harvest(stream_harvest)
+
         request_response = request_data(estimated_request, stream_harvest, force_harvest)
 
-    if is_requested == True:
-    #with case(is_requested, True):
-        # Get request response directly here
-        request_response = get_request_response(stream_harvest)
-        # Now run the data check
-        data_readiness = check_data(
-            request_response,
-            stream_harvest,
-            # TODO task_args necessary?
-            # task_args={
-            #     "state_handlers": state_handlers,
-            # },
-        )
+        logger.info("Confirming data has been succesfully requested")
+        read_status_json(stream_harvest)
 
-        response_json = get_response(data_readiness)
-        stream_harvest = get_stream(data_readiness)
+        is_requested = check_requested(stream_harvest)
+    
 
-        # Process data to temp
-        nc_files_dict = setup_process(response_json, target_bucket)
-        stores_dict = data_processing(
-            nc_files_dict,
-            stream_harvest,
-            max_chunk,
-            error_test,
-            # TODO figure out what to do with task args
-            # task_args={
-            #     "state_handlers": state_handlers,
-            # },
-        )
+    logger.info("Data succesfully requested - checking data readiness")
+    # Get request response directly here
+    request_response = get_request_response(stream_harvest)
+    # Now run the data check - #TODO may need to adjust retries based on new harvest logic
+    data_readiness = check_data(request_response, stream_harvest)
 
-        # Finalize data and transfer to final
-        final_path = finalize_data_stream(
-            stores_dict,
-            stream_harvest,
-            max_chunk,
-            # task_args={
-            #     "state_handlers": state_handlers,
-            # },
-        )
+    response_json = get_response(data_readiness)
+    stream_harvest = get_stream(data_readiness)
 
-        # TODO: Add data validation step here!
+    # Process data to temp
+    nc_files_dict = setup_process(response_json, target_bucket)
+    stores_dict = data_processing(
+        nc_files_dict,
+        stream_harvest,
+        max_chunk,
+        error_test,
+        # TODO figure out what to do with task args
+        # task_args={
+        #     "state_handlers": state_handlers,
+        # },
+    )
 
-        # Data availability
-        availability = data_availability(
-            nc_files_dict,
-            stream_harvest,
-            export_da,
-            gh_write_da,
-            # TODO figure out what to do with task args
-            # task_args={
-            #     "state_handlers": state_handlers,
-            # },
-            wait_for=final_path # TODO 
-        )
+    # Finalize data and transfer to final
+    final_path = finalize_data_stream(
+        stores_dict,
+        stream_harvest,
+        max_chunk,
+        # task_args={
+        #     "state_handlers": state_handlers,
+        # },
+    )
+
+    # TODO: Add data validation step here!
+
+    # Data availability
+    availability = data_availability(
+        nc_files_dict,
+        stream_harvest,
+        export_da,
+        gh_write_da,
+        # TODO figure out what to do with task args
+        # task_args={
+        #     "state_handlers": state_handlers,
+        # },
+        wait_for=final_path # TODO 
+    )
 
         # in prefect 1.0 this sets the provided task as an upstream dependency of `availability` in this case
         # availability.set_upstream(final_path)
@@ -281,7 +274,7 @@ def run_stream_ingest(
             #asyncio.run(is_flowrun_running(run_name))
             stream_ingest(**flow_params)
 
-    logger.warning("Parent flow complete")
+    logger.info("Parent flow complete")
 
 
 if __name__ == '__main__':
