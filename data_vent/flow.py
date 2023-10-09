@@ -273,7 +273,7 @@ def run_stream_ingest(
                 name="stream-ingest/stream-ingest-deployment-v2",
                 parameters=flow_params,
                 flow_run_name=run_name,
-                timeout=10 #TODO timeout might need to be increase if we have race condition errors
+                timeout=20 #TODO timeout might need to be increase if we have race condition errors
             )
         
         # run stream_ingest in sequence on local
