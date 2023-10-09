@@ -33,6 +33,8 @@ service unite file which controls the prefect-worker service is located at `/etc
 An AMI (amazon machine image) exists of this worker `prefect2-worker-image` in the OOI-RCA
 AWS account.
 
+To check the status of the worker run `sudo systemctl status prefect-worker`
+
 ## Prefect cloud server 
 Deployed prefect flows are hosted on the free prefect2 cloud service, in this workspace: 
 jdupreyuwedu/ooi-rca-prefect2
