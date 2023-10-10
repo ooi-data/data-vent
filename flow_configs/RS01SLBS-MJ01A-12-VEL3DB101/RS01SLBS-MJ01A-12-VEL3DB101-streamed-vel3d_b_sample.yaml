@@ -2,7 +2,7 @@ assigness: []
 harvest_options:
   goldcopy: false
   path: s3://ooi-data-prod
-  refresh: true
+  refresh: false
   test: false
 instrument: RS01SLBS-MJ01A-12-VEL3DB101
 stream:

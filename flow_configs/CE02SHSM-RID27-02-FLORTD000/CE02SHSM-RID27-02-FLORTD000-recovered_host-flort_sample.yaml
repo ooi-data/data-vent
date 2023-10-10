@@ -2,7 +2,7 @@ assigness: []
 harvest_options:
   goldcopy: false
   path: s3://ooi-data-prod
-  refresh: true
+  refresh: false
   test: false
 instrument: CE02SHSM-RID27-02-FLORTD000
 stream:
