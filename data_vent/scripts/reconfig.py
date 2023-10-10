@@ -1,3 +1,4 @@
+from typing import Any
 import os
 import fsspec
 from loguru import logger
@@ -5,7 +6,7 @@ import yaml
 from pathlib import Path
 
 
-def change_target_bucket(target_bucket_name: str):
+def change_config_param(new_config_param: Any):
     config_dir = os.path.join(os.getcwd(), "flow_configs")
     fs = fsspec.filesystem('')
     glob_path = config_dir + '/**/*.yaml'   
@@ -14,15 +15,15 @@ def change_target_bucket(target_bucket_name: str):
 
     for path in all_paths:
         config_json = yaml.safe_load(Path(path).open())
-        if config_json['harvest_options']['path'] != target_bucket_name:
-            config_json['harvest_options']['path'] = target_bucket_name
+        if config_json['harvest_options']['refresh'] != new_config_param:
+            config_json['harvest_options']['refresh'] = new_config_param
 
             with open(path, 'w') as file:
                     yaml.safe_dump(config_json, file)
-            logger.info('Bucket changed!')
+            logger.info('param changed!')
         else:
             logger.info('no change needed')
 
 
 if __name__ == "__main__":
-    change_target_bucket('s3://ooi-data-prod')
+    change_config_param(new_config_param=False)
