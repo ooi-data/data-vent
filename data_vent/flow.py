@@ -180,9 +180,9 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    test_run: bool=True,
+    test_run: bool=False,
     priority_only: bool=True,
-    run_in_cloud: bool=False,
+    run_in_cloud: bool=True,
     # pipeline behavior args
     refresh: Optional[bool]=False,
     export_da: Optional[bool]=False,
