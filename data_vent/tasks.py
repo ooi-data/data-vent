@@ -113,16 +113,17 @@ def update_and_write_status(
 
 @task
 def get_stream_harvest(
-    config_json: Dict[str, Any], harvest_options: Dict[str, Any] = {}
+    config_json: Dict[str, Any], harvest_options: Dict[str, Any] = {}, refresh: bool=False,
 ):
     logger = get_run_logger()
     config_json['harvest_options'].update(harvest_options)
     stream_harvest = StreamHarvest(**config_json)
     stream_harvest = read_status_json(stream_harvest)
-    if stream_harvest.status.last_refresh is not None:
-        logger.info(
-            f"Cloud data last refreshed on {stream_harvest.status.last_refresh}"
-        )
+    # TODO tidy comments
+    # if stream_harvest.status.last_refresh is not None:
+    logger.info(
+        f"Cloud data last refreshed on {stream_harvest.status.last_refresh}"
+    )
         # 11/28/2022 Don.S: Comment out this section to prevent auto refresh.
         # refresh = harvest_options.get('refresh', None)
         # last_refresh = parser.parse(stream_harvest.status.last_refresh)
@@ -132,10 +133,11 @@ def get_stream_harvest(
         #         stream_harvest.harvest_options.refresh = False
         # elif refresh is None:
         #     stream_harvest.harvest_options.refresh = True
-        stream_harvest.harvest_options.refresh = False
-    else:
+    #     stream_harvest.harvest_options.refresh = False
+    if refresh:
         stream_harvest.harvest_options.refresh = True
-    logger.info(f"Refresh flag: {stream_harvest.harvest_options.refresh}")
+
+    logger.warning(f"Refresh flag: {stream_harvest.harvest_options.refresh}")
     return stream_harvest
 
 @task#(log_stdout=True)
@@ -474,7 +476,7 @@ def check_data(data_response, stream_harvest):
                     }
                 )
                 update_and_write_status(stream_harvest, status_json)
-                
+
                 raise DataNotReadyError
 
 

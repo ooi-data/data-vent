@@ -36,6 +36,7 @@ from data_vent.config import STORAGE_OPTIONS
 class FlowParameters(BaseModel):
     config: Optional[Dict[str, Any]]
     target_bucket: str = "s3://ooi-data-prod"
+    refresh: bool = False
     max_chunk: str = "100MB"
     export_da: bool = False
     gh_write_da: bool = False
@@ -48,12 +49,13 @@ def stream_ingest(
     config: Dict,
     harvest_options: Dict[str, Any] = {},
     #issue_config: Dict[str, Any] = {},
-    force_harvest: bool = False,
-    max_chunk: str = "100MB",
-    error_test: bool = False,
-    target_bucket: str = "s3://ooi-data-prod",
-    export_da: bool = False, # TODO at least for testing
-    gh_write_da: bool = False # TODO at least for testing
+    force_harvest: bool=False,
+    refresh: bool=False,
+    max_chunk: str="100MB",
+    error_test: bool=False,
+    target_bucket: str="s3://ooi-data-prod",
+    export_da: bool=False, # TODO at least for testing
+    gh_write_da: bool=False # TODO at least for testing
 ):
     logger = get_run_logger()
 
@@ -66,6 +68,7 @@ def stream_ingest(
     flow_params = FlowParameters(
         config=config,
         target_bucket=target_bucket,
+        refresh=refresh,
         max_chunk=max_chunk,
         export_da=export_da,
         gh_write_da=gh_write_da,
@@ -83,7 +86,7 @@ def stream_ingest(
     #harvest_options = Parameter("harvest_options", default={})
     
 
-    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options)
+    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, refresh)
     # TODO how do you actually set these path settings - it is confusing
     # stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS['aws']
@@ -177,10 +180,11 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    test_run: bool=False,
+    test_run: bool=True,
     priority_only: bool=True,
-    run_in_cloud: bool=True,
-    # legacy pipeline behavior args
+    run_in_cloud: bool=False,
+    # pipeline behavior args
+    refresh: Optional[bool]=False,
     export_da: Optional[bool]=False,
     gh_write_da: Optional[bool]=False,
 ):
@@ -196,6 +200,8 @@ def run_stream_ingest(
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This 
             can be useful for debugging.
+        refresh (Optional[bool]) whether to refresh stream data from t0, previously default to `False` but
+            was set to `True` once per month
         export_da (Optional[bool]) arg from legacy pipeline, possibly relevant to CAVA front-end/API
         gh_write_da (Optional[bool]) arg from legacy pipeline, possibly relevant to CAVA front-end/API
 
@@ -249,6 +255,7 @@ def run_stream_ingest(
         flow_params = {
         'config': config_json,
         'target_bucket': "s3://ooi-data-prod",
+        'refresh': refresh,
         'max_chunk': "100MB",
         'export_da': export_da,
         'gh_write_da': gh_write_da,
