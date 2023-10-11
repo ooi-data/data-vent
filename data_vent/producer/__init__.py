@@ -12,7 +12,7 @@ import numpy as np
 from dateutil import parser
 from uuid import uuid4
 
-from data_vent.config import HARVEST_CACHE_BUCKET
+from data_vent.config import HARVEST_CACHE_BUCKET, OOI_EMAIL
 from data_vent.utils.conn import request_data, check_zarr, send_request
 from data_vent.utils.parser import estimate_size_and_time, parse_uframe_response
 #     get_storage_options,
@@ -283,7 +283,7 @@ def check_thredds_cache(stream_name: str):
     stream_name : str
         stream table name
     """
-    ooi_email = os.environ.get('OOI_EMAIL', 'ooicatest@gmail.com')
+    ooi_email = os.environ.get('OOI_EMAIL', OOI_EMAIL)
     catalog = TDSCatalog(
         f"{BASE_THREDDS}/{ooi_email}/catalog.html".replace('.html', '.xml')
     )
