@@ -5,6 +5,7 @@ OOI_USERNAME = harvest_settings.ooi_config.username
 OOI_TOKEN = harvest_settings.ooi_config.token
 BASE_URL = harvest_settings.ooi_config.base_urls.get('ooinet')
 M2M_PATH = harvest_settings.ooi_config.paths.get('m2m')
+OOI_EMAIL = "jduprey@uw.edu"
 
 # OOI Raw Config
 RAW_BASE_URL = harvest_settings.ooi_config.base_urls.get('raw')
@@ -15,6 +16,7 @@ STORAGE_OPTIONS = harvest_settings.storage_options.dict()
 
 METADATA_BUCKET = harvest_settings.s3_buckets.metadata
 HARVEST_CACHE_BUCKET = harvest_settings.s3_buckets.harvest_cache
+FLOW_PROCESS_BUCKET = 'flow-process-bucket'
 
 # Github
 GH_PAT = harvest_settings.github.pat
@@ -38,4 +40,3 @@ PROCESS_COMMIT_MESSAGE_TEMPLATE = (
 )
 
 STATUS_EMOJIS = harvest_settings.github.defaults.status_emojis
-FLOW_PROCESS_BUCKET = 'flow-process-bucket'
