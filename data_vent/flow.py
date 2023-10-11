@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import asyncio
 import os 
@@ -180,6 +180,7 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
+    streams: Optional[List[str]]=None,
     test_run: bool=False,
     priority_only: bool=True,
     run_in_cloud: bool=True,
@@ -222,15 +223,22 @@ def run_stream_ingest(
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
 
-    if test_run:
+    if streams:
+        all_paths = []
+        for stream in streams:
+            fpath = os.path.join(config_dir, stream[:27], stream)
+            all_paths.append(fpath)
 
+        logger.info(f"Running specified streams at the following paths: {all_paths}")
+
+    elif test_run:
         # these are some "small data" streams that are useful for small test runs
         all_paths = [
             os.path.join(config_dir, 'CE04OSPS-SF01B-2B-PHSENA108', 'CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record.yaml'),
             os.path.join(config_dir, 'CE04OSPS-SF01B-4F-PCO2WA102', 'CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record.yaml'),
             os.path.join(config_dir, 'CE04OSPS-SF01B-4A-NUTNRA102', 'CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample.yaml')
         ]
-        logger.info(f"Using the following paths for this test run {all_paths}")
+        logger.info(f"Using the following paths for this TEST RUN: {all_paths}")
 
     else: # grabs all config yamls
         fs = fsspec.filesystem('')
