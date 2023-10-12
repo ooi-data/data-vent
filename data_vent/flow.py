@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Dict, Optional, List
 
 import asyncio
 import os 
@@ -180,7 +180,7 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    streams: Optional[Union[List[str], str]]=None,
+    streams: Optional[List[str]]=None,
     test_run: bool=False,
     priority_only: bool=True,
     run_in_cloud: bool=True,
@@ -226,7 +226,7 @@ def run_stream_ingest(
     if streams:
         all_paths = []
         for stream in streams:
-            fpath = os.path.join(config_dir, stream[:27], stream)
+            fpath = os.path.join(config_dir, stream[:27], f"{stream}.yaml")
             all_paths.append(fpath)
 
         logger.info(f"Running specified streams at the following paths: {all_paths}")
