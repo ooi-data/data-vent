@@ -46,3 +46,4 @@ dependencies = [
   ooi-metadata-harvest = "data_vent.metadata.cli:app"
   ooi-data-stats = "data_vent.stats.cli:app"
   ooi-data-catalog = "data_vent.cli:app"
+  annotations-harvest = "data_vent.metadata.annotations:harvest_annotations"
