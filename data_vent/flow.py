@@ -36,6 +36,7 @@ from data_vent.config import STORAGE_OPTIONS
 class FlowParameters(BaseModel):
     config: Optional[Dict[str, Any]]
     target_bucket: str = "s3://ooi-data-prod"
+    force_harvest: bool = False
     refresh: bool = False
     max_chunk: str = "100MB"
     export_da: bool = False
@@ -68,6 +69,7 @@ def stream_ingest(
     flow_params = FlowParameters(
         config=config,
         target_bucket=target_bucket,
+        force_harvest=force_harvest,
         refresh=refresh,
         max_chunk=max_chunk,
         export_da=export_da,
@@ -185,6 +187,7 @@ def run_stream_ingest(
     priority_only: bool=True,
     run_in_cloud: bool=True,
     # pipeline behavior args
+    force_harvest: Optional[bool]=False,
     refresh: Optional[bool]=False,
     export_da: Optional[bool]=False,
     gh_write_da: Optional[bool]=False,
@@ -201,6 +204,7 @@ def run_stream_ingest(
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This 
             can be useful for debugging.
+        force_harvest (Optional[bool]): if `True` force pipeline to make harvest request of m2m
         refresh (Optional[bool]): whether to refresh stream data from t0, previously default to `False` but
             was set to `True` once per month
         export_da (Optional[bool]): arg from legacy pipeline, possibly relevant to CAVA front-end/API
@@ -263,6 +267,7 @@ def run_stream_ingest(
         flow_params = {
         'config': config_json,
         'target_bucket': "s3://ooi-data-prod",
+        'force_harvest' : force_harvest,
         'refresh': refresh,
         'max_chunk': "100MB",
         'export_da': export_da,
