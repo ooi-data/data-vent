@@ -66,6 +66,7 @@ def preproc(ds):
             not np.issubdtype(var.dtype, np.number)
             and not np.issubdtype(var.dtype, np.datetime64)
             and not np.issubdtype(var.dtype, np.bool_)
+            and not "qartod_executed" in v # keep qartod_executed variable
         ):
             if (
                 not coding.strings.is_unicode_dtype(var.dtype)
