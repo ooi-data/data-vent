@@ -755,7 +755,7 @@ def data_availability(
         [nc_files_dict['stream']['method'], nc_files_dict['stream']['stream']]
     )
     logger = get_run_logger()
-    logger.info(f"ailability for {name}.")
+    logger.info(f"availability for {name}.")
 
     url = nc_files_dict['final_bucket']
     mapper = fsspec.get_mapper(
