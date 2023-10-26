@@ -189,8 +189,8 @@ def run_stream_ingest(
     # pipeline behavior args
     force_harvest: Optional[bool]=False,
     refresh: Optional[bool]=False,
-    export_da: Optional[bool]=False,
-    gh_write_da: Optional[bool]=False,
+    export_da: Optional[bool]=True,
+    gh_write_da: Optional[bool]=True,
 ):
     """
     Launches a data harvest for each specified OOI-RCA instrument streams
@@ -207,8 +207,10 @@ def run_stream_ingest(
         force_harvest (Optional[bool]): if `True` force pipeline to make harvest request of m2m
         refresh (Optional[bool]): whether to refresh stream data from t0, previously default to `False` but
             was set to `True` once per month
-        export_da (Optional[bool]): arg from legacy pipeline, possibly relevant to CAVA front-end/API
-        gh_write_da (Optional[bool]): arg from legacy pipeline, possibly relevant to CAVA front-end/API
+        export_da (Optional[bool]): arg from legacy pipeline, controls the uploading of data availability. 
+            Relevant to CAVA frontend/API.
+        gh_write_da (Optional[bool]): arg from legacy pipeline, controls the uploading of data availability
+            to gihub. Relevant to CAVA frontend/API.
 
     As configured, harvesters will output array data stored as .zarr files to the following s3 buckets:
     
