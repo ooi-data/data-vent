@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data-prod
+  refresh: false
+  test: false
+instrument: RS03CCAL-MJ03F-12-CTDPFB305
+stream:
+  method: streamed
+  name: ctdpf_optode_sample
+workflow_config:
+  schedule: 0 0 * * *
