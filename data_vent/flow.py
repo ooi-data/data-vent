@@ -223,7 +223,7 @@ def run_stream_ingest(
     logger.info("Starting parent flow...")
 
     priority_df = pd.read_csv(
-        'https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionaryPanel.csv'  # noqa
+        'https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv'  # noqa
     )
     priority_instruments = sorted(priority_df.refDes.unique())
 
