@@ -195,7 +195,7 @@ def create_request_estimate(
             beginTime = np.datetime64(start_dt)
         elif isinstance(start_dt, np.datetime64):
             beginTime = start_dt
-        else:
+        else: ## string and np.datetime64 could be causing trouble?
             raise TypeError("start_dt must be a string or np.datetime64!")
     if end_dt is not None:
         if isinstance(end_dt, str):
@@ -205,6 +205,7 @@ def create_request_estimate(
         else:
             raise TypeError("end_dt must be a string or np.datetime64!")
 
+    # form the actual request dictionary
     response, request_dict = request_data(
         stream_dct['platform_code'],
         stream_dct['mooring_code'],
