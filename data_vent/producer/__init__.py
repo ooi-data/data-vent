@@ -326,6 +326,11 @@ def check_thredds_cache(stream_name: str):
 def perform_request(
     req, refresh=False, logger=logger, storage_options={}, force=False
 ):
+    '''
+    req : dict
+        GET request sent to OOI m2m API requesting data for specified reference designator,
+        for specified time period.
+    '''
     TODAY_DATE = datetime.datetime.utcnow()
     name = req['stream']['table_name']
 
