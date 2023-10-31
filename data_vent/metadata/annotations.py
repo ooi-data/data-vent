@@ -35,7 +35,7 @@ def request_annotations(refdes):
 def harvest_annotations():
 
     priority_df = pd.read_csv(
-        'https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionaryPanel.csv'  # noqa
+        'https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv'  # noqa
     )
     priority_instruments = sorted(priority_df.refDes.unique())
 
