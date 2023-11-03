@@ -81,6 +81,8 @@ def fetch_creds():
     #     GOOGLE_SERVICE_JSON,
     #     os.path.join(GSPREAD_DIR, "service_account.json"),
     # )
+    # NOTE GOOGLE_SERVICE_JSON should be a google cloud service account auth
+    # json set to an environmental variable export GOOGLE_SERVICE_JSON='{json_goes_here}'
     with open(os.path.join(GSPREAD_DIR, "service_account.json"), "w") as json_file:
         json.dump(json.loads(GOOGLE_SERVICE_JSON), json_file)
 
