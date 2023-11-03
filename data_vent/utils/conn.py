@@ -167,7 +167,7 @@ def send_request(url, params=None, username=None, token=None):
         return None
     
 
-def get_toc():
+def get_toc(): # get table of contents
     url = f"{BASE_URL}/{M2M_PATH}/12576/sensor/inv/toc"
     return send_request(url)
 
