@@ -140,7 +140,7 @@ def get_stream_harvest(
     logger.warning(f"Refresh flag: {stream_harvest.harvest_options.refresh}")
     return stream_harvest
 
-@task#(log_stdout=True)
+@task
 def check_requested(stream_harvest):
     logger = get_run_logger()
     status_json = stream_harvest.status.dict()
@@ -149,7 +149,7 @@ def check_requested(stream_harvest):
         # TODO: Find way to turn off the scheduled flow all together
         #raise SKIP("Stream is discontinued. Finished.")
         logger.warning("Stream is discontinued. Finished")
-        return Completed(message="Stream is discontinued. Finished.")
+        return "SKIPPED"
 
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
@@ -174,13 +174,11 @@ def check_requested(stream_harvest):
                 # request new data
                 return False
             else:
-                #raise SKIP("Skipping harvest. No new data needed.")
-                logger.warning("Skipping harvest. No new data needed.")
-                return Completed(message="Skipping harvest. No new data needed.")
+                return "SKIPPED" #Skipping harvest. No new data needed.
         # data is ready for processing!
         return True
-    # else:
-    #     return False
+    else:
+        return False
 
 def _check_stream(stream_harvest):
     import json
