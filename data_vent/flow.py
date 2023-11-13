@@ -8,6 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from prefect import flow, get_run_logger, get_client
 from prefect.deployments import run_deployment
+from prefect.states import Completed
 
 import fsspec
 from data_vent.producer.models import StreamHarvest
@@ -93,7 +94,8 @@ def stream_ingest(
     # stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS['aws']
 
-    is_requested = check_requested(stream_harvest)
+    is_requested = check_requested(stream_harvest) #TODO return a string that determines fate of parent flow?
+    logger.info(f"is_requested {is_requested}")
 
     while is_requested == False:
         # Run the data request here
@@ -105,8 +107,11 @@ def stream_ingest(
         read_status_json(stream_harvest)
 
         is_requested = check_requested(stream_harvest)
-    
 
+    logger.info(f"is_requested: {is_requested}")
+    if is_requested == "SKIPPED":
+        return Completed("Skipping harvest. No new data needed.")
+    
     logger.info("Data succesfully requested - checking data readiness")
     # Get request response directly here
     request_response = get_request_response(stream_harvest)
