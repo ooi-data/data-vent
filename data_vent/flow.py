@@ -110,7 +110,7 @@ def stream_ingest(
 
     logger.info(f"is_requested: {is_requested}")
     if is_requested == "SKIPPED":
-        return Completed("Skipping harvest. No new data needed.")
+        return Completed(message="Skipping harvest. No new data needed.")
     
     logger.info("Data succesfully requested - checking data readiness")
     # Get request response directly here
