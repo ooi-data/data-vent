@@ -15,7 +15,7 @@ from dateutil import parser
 
 import prefect
 from prefect import task, get_run_logger
-from prefect.states import Completed, Cancelled, Failed, AwaitingRetry
+from prefect.states import Cancelled, Failed
 
 # TODO sort out imports and __init__ structure
 from data_vent.producer import (
@@ -216,7 +216,7 @@ def _check_stream(stream_harvest):
                 # if there's maintainance then skip
                 # raise SKIP("OOI is under maintenance!")
                 logger.warning("OOI is under maintenance!")
-                return Completed(message="OOI is under maintenance!")
+                return Cancelled(message="OOI is under maintenance!")
     #TODO not sure what this did
     #raise SKIP("OOINet is currently down.")
 
