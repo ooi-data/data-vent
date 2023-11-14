@@ -95,7 +95,6 @@ def stream_ingest(
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS['aws']
 
     is_requested = check_requested(stream_harvest) #TODO return a string that determines fate of parent flow?
-    logger.info(f"is_requested {is_requested}")
 
     while is_requested == False:
         # Run the data request here
@@ -108,7 +107,6 @@ def stream_ingest(
 
         is_requested = check_requested(stream_harvest)
 
-    logger.info(f"is_requested: {is_requested}")
     if is_requested == "SKIPPED":
         return Completed(message="Skipping harvest. No new data needed.")
     
@@ -187,10 +185,10 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    streams: Optional[List[str]]=None,
+    streams: Optional[List[str]]=["CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record"],
     test_run: bool=False,
     priority_only: bool=True,
-    run_in_cloud: bool=True,
+    run_in_cloud: bool=False,
     # pipeline behavior args
     force_harvest: Optional[bool]=False,
     refresh: Optional[bool]=False,
