@@ -1,6 +1,5 @@
 import datetime
 from typing import Any, Dict
-from unittest import result
 import xarray as xr
 import dask
 import json
@@ -13,11 +12,9 @@ import numpy as np
 import dask.array as da
 from dateutil import parser
 
-import prefect
 from prefect import task, get_run_logger
 from prefect.states import Cancelled, Failed
 
-# TODO sort out imports and __init__ structure
 from data_vent.producer import (
     StreamHarvest,
     fetch_streams_list,
@@ -43,9 +40,9 @@ from data_vent.utils.parser import (
     filter_and_parse_datasets,
     setup_etl,
 )
+from data_vent.utils.validate import check_for_timestamp_duplicates
 
 from data_vent.settings import harvest_settings
-# TODO dev path settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
 from data_vent.exceptions import DataNotReadyError
@@ -504,7 +501,7 @@ def setup_process(response_json, target_bucket):
 
 
 @task
-def data_processing(nc_files_dict, stream_harvest, max_chunk, error_test):
+def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_test):
     logger = get_run_logger()
     stream = nc_files_dict.get("stream")
     name = stream.get("table_name")
@@ -573,6 +570,9 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, error_test):
                                 nc_files_dict.get('retrieved_dt'),
                             )
                         )
+                        # only check for duplicate timestamps during daily appends
+                        if refresh == False:
+                            check_for_timestamp_duplicates(ds) 
                         logger.info("Finished preprocessing dataset.")
 
                         # Chunk dataset and write to zarr
