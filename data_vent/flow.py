@@ -185,10 +185,10 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    streams: Optional[List[str]]=["CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record"],
+    streams: Optional[List[str]]=None,
     test_run: bool=False,
     priority_only: bool=True,
-    run_in_cloud: bool=False,
+    run_in_cloud: bool=True,
     # pipeline behavior args
     force_harvest: Optional[bool]=False,
     refresh: Optional[bool]=False,
