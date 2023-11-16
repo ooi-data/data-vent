@@ -125,11 +125,8 @@ def stream_ingest(
         nc_files_dict,
         stream_harvest,
         max_chunk,
+        refresh,
         error_test,
-        # TODO figure out what to do with task args
-        # task_args={
-        #     "state_handlers": state_handlers,
-        # },
     )
 
     # Finalize data and transfer to final
