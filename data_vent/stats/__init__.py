@@ -11,15 +11,16 @@ from dask.utils import memory_repr
 import numpy as np
 from loguru import logger
 from xarray.coding.times import decode_cf_datetime
+from data_vent.config import DATA_BUCKET
 from data_vent.utils.compute import map_concurrency
 from data_vent.settings.main import harvest_settings
 
 
 FS = fsspec.filesystem('s3', **harvest_settings.storage_options.aws.dict())
 
-
+# TODO how can I avoid hard-coding this bucket reference?
 def parse_inst_ref(name):
-    m = re.findall(r'ooi-data-prod/(\w+-\w+-\w+-\w+)-\w+-\w+', name)
+    m = re.findall(fr'{DATA_BUCKET}/(\w+-\w+-\w+-\w+)-\w+-\w+', name)
     if len(m) == 1:
         inst_ref = m[0]
         return inst_ref
@@ -90,7 +91,7 @@ def create_stream_dct(data_stream):
         logger.warning(f"Issues found for {data_stream['zarr_file']}: {e}")
 
 
-def create_stats(s3_bucket: str = 'ooi-data-prod'):
+def create_stats(s3_bucket: str = DATA_BUCKET):
     resp = requests.get(
         'https://api.ooica.net/metadata/instruments'
     )

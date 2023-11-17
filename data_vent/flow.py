@@ -31,12 +31,12 @@ from data_vent.tasks import (
 
 from data_vent.settings.main import harvest_settings
 from data_vent.pipelines.notifications import github_issue_notifier
-from data_vent.config import STORAGE_OPTIONS
+from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET
 
 
 class FlowParameters(BaseModel):
     config: Optional[Dict[str, Any]]
-    target_bucket: str = "s3://ooi-data-prod"
+    target_bucket: str = f"s3://{DATA_BUCKET}"
     force_harvest: bool = False
     refresh: bool = False
     max_chunk: str = "100MB"
@@ -55,7 +55,7 @@ def stream_ingest(
     refresh: bool=False,
     max_chunk: str="100MB",
     error_test: bool=False,
-    target_bucket: str="s3://ooi-data-prod",
+    target_bucket: str=f"s3://{DATA_BUCKET}",
     export_da: bool=False, # TODO at least for testing
     gh_write_da: bool=False # TODO at least for testing
 ):
@@ -268,7 +268,7 @@ def run_stream_ingest(
 
         flow_params = {
         'config': config_json,
-        'target_bucket': "s3://ooi-data-prod",
+        'target_bucket': f"s3://{DATA_BUCKET}",
         'force_harvest' : force_harvest,
         'refresh': refresh,
         'max_chunk': "100MB",
