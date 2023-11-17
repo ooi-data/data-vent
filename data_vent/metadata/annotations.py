@@ -5,12 +5,12 @@ import requests
 
 import pandas as pd
 
+from data_vent.config import DATA_BUCKET
 from data_vent.settings.main import harvest_settings
 from loguru import logger
 
 ANNOTATIONS_ENDPOINT = "https://ooinet.oceanobservatories.org/api/m2m/12580/anno/find"
 FS = fsspec.filesystem('s3', **harvest_settings.storage_options.aws.dict())
-PROD_BUCKET = "ooi-data-prod"
 
 
 def request_annotations(refdes):
@@ -42,7 +42,7 @@ def harvest_annotations():
     for instrument in priority_instruments: # ie: "CE04OSPS-SF01B-2B-PHSENA108"
         annotation_json = request_annotations(instrument)
 
-        with FS.open(f"s3://{PROD_BUCKET}/annotations/{instrument}.json", "w") as s3_file:
+        with FS.open(f"s3://{DATA_BUCKET}/annotations/{instrument}.json", "w") as s3_file:
             s3_file.write(annotation_json)
         logger.info(f"annotation saved to s3 for {instrument}")
     

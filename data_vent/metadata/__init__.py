@@ -28,7 +28,7 @@ from data_vent.metadata.utils import (
 
 )
 
-from data_vent.config import STORAGE_OPTIONS, GH_PAT, GH_DATA_ORG
+from data_vent.config import STORAGE_OPTIONS, GH_PAT, GH_DATA_ORG, DATA_BUCKET
 from data_vent.utils.conn import get_global_ranges, get_toc
 from data_vent.utils.compute import map_concurrency
 
@@ -55,7 +55,7 @@ def get_ooi_streams_and_parameters(instruments=None):
     return streams_df, parameters_df
 
 
-def _get_zarr_params(table_name, params, bucket='ooi-data-prod'):
+def _get_zarr_params(table_name, params, bucket=DATA_BUCKET):
     data_stream = f"s3://{bucket}/{table_name}"
     fmap = fsspec.get_mapper(data_stream, **STORAGE_OPTIONS['aws'])
     if fmap.get('.zmetadata') is None:

@@ -2,6 +2,7 @@ import typer
 import sys
 import textwrap
 
+from data_vent.config import DATA_BUCKET
 from data_vent.producer import fetch_harvest
 from data_vent.metadata import cli as metadata_cli, create_data_catalog
 from data_vent.stats import cli as stats_cli
@@ -14,7 +15,7 @@ app.add_typer(stats_cli.app, name="stats")
 @app.command()
 def catalog(
     create: bool = False,
-    s3_bucket: str = "ooi-data-prod",
+    s3_bucket: str = DATA_BUCKET,
     site_branch: str = "gh-pages",
 ):
     # try:
@@ -32,7 +33,7 @@ def catalog(
 def producer(
     instrument_rd: str,
     refresh: bool = False,
-    existing_data_path: str = "s3://ooi-data-prod",
+    existing_data_path: str = f"s3://{DATA_BUCKET}",
 ):
     request_responses = fetch_harvest(
         instrument_rd, refresh, existing_data_path
