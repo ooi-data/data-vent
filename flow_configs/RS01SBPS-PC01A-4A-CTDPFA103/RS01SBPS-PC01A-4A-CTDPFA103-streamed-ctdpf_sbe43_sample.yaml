@@ -1,7 +1,7 @@
 assigness: []
 harvest_options:
   goldcopy: false
-  path: s3://ooi-data-prod
+  path: s3://ooi-data
   refresh: false
   test: false
 instrument: RS01SBPS-PC01A-4A-CTDPFA103
