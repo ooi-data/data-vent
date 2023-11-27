@@ -15,8 +15,8 @@ def change_config_param(new_config_param: Any):
 
     for path in all_paths:
         config_json = yaml.safe_load(Path(path).open())
-        if config_json['harvest_options']['refresh'] != new_config_param:
-            config_json['harvest_options']['refresh'] = new_config_param
+        if config_json['harvest_options']['path'] != new_config_param:
+            config_json['harvest_options']['path'] = new_config_param
 
             with open(path, 'w') as file:
                     yaml.safe_dump(config_json, file)
@@ -26,4 +26,4 @@ def change_config_param(new_config_param: Any):
 
 
 if __name__ == "__main__":
-    change_config_param(new_config_param=False)
+    change_config_param(new_config_param="s3://ooi-data")
