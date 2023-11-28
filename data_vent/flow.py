@@ -185,6 +185,7 @@ def run_stream_ingest(
     streams: Optional[List[str]]=None,
     test_run: bool=False,
     priority_only: bool=True,
+    non_priority: bool=False,
     run_in_cloud: bool=True,
     # pipeline behavior args
     force_harvest: Optional[bool]=False,
@@ -201,6 +202,7 @@ def run_stream_ingest(
         test_run (bool): If true, only launch harvesters for 3 small test instrument streams
         priority_only (bool): If true, launch harvesters for instrument streams defined as 
             priority in the OOI-RCA priority instrument csv
+        non_priority (bool): if true, launch harvesters for all non-priority instruments
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This 
             can be useful for debugging.
@@ -216,11 +218,14 @@ def run_stream_ingest(
     
     flow-process-bucket: stores json-like harvest status to inform harvest logic
     temp-ooi-data-prod: temporary array storage for processing steps?
-    ooi-data-prod: final storage for processed array data - saved as .zarr
+    ooi-data: final storage for processed array data - saved as .zarr
 
     """
     logger = get_run_logger()
     logger.info("Starting parent flow...")
+    # validate arguments 
+    if priority_only and non_priority:
+        raise ValueError("non_priority must be `False` if priority only is `True` (or visa-versa)")
 
     priority_df = pd.read_csv(
         'https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv'  # noqa
@@ -255,6 +260,9 @@ def run_stream_ingest(
         if priority_only:
             # instrument ref_des is first 27 characters of stream
             all_paths = [f for f in all_paths if os.path.basename(f)[:27] in priority_instruments]
+        
+        elif non_priority:
+            all_paths = [f for f in all_paths if os.path.base(f)[:27] not in priority_instruments]
 
     for config_path in all_paths:
         config_json = yaml.safe_load(Path(config_path).open())
