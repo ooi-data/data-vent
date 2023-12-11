@@ -301,7 +301,6 @@ def request_data(
                 message = "Error found with ooi-harvester during request"
             else:
                 message = f"Error found with OOI M2M during request: ({result.get('status_code')}) {result.get('reason')}"
-            # TODO here the prefect 1.0 flag is FAIL
             # raise FAIL(
             #     message=message,
             #     result={"status": status_json, "message": message},

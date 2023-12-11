@@ -3,7 +3,7 @@ from prefect.deployments import Deployment
 from prefect_aws import ECSTask, S3Bucket
 
 from loguru import logger
-#TODO maybe use github as storage?
+'''DEPRECATED - but may be helpful for future use-case'''
 
 def deploy_parent_and_child_flows() -> None:
     stream_ingest_deployment = Deployment.build_from_flow(

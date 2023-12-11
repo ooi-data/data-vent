@@ -46,7 +46,6 @@ class FlowParameters(BaseModel):
 
 
 @flow
-# TODO these parameters should be equivilant to prefect 1.0 version
 def stream_ingest(
     config: Dict,
     harvest_options: Dict[str, Any] = {},
@@ -56,8 +55,8 @@ def stream_ingest(
     max_chunk: str = "100MB",
     error_test: bool = False,
     target_bucket: str = f"s3://{DATA_BUCKET}",
-    export_da: bool = False,  # TODO at least for testing
-    gh_write_da: bool = False,  # TODO at least for testing
+    export_da: bool = True,
+    gh_write_da: bool = True,
 ):
     logger = get_run_logger()
 
@@ -93,9 +92,7 @@ def stream_ingest(
     # stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
 
-    is_requested = check_requested(
-        stream_harvest
-    )  # TODO return a string that determines fate of parent flow?
+    is_requested = check_requested(stream_harvest)
 
     while is_requested == False:
         # Run the data request here
