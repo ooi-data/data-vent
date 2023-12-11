@@ -214,7 +214,6 @@ def _check_stream(stream_harvest):
     # raise SKIP("OOINet is currently down.")
 
 
-# TODO max retries is limited to prefect 1
 @task(retries=6, retry_delay_seconds=600)
 def setup_harvest(stream_harvest: StreamHarvest):
     logger = get_run_logger()
@@ -328,7 +327,6 @@ def request_data(
         #     message="No data is available for harvesting.",
         #     result={"status": status_json, "message": message},
         # )
-        # TODO another prefect 1.0 engine signal
         logger.warning(message)
         return Cancelled(
             message="No data is available for harvesting.",
@@ -384,7 +382,6 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
         )
         update_and_write_status(stream_harvest, status_json)
 
-        # TODO engine.signal - cannot Raise these prefect 2.0 functions
         logger.warning(message)
         return Cancelled(
             message=message,
@@ -444,7 +441,6 @@ def check_data(data_response, stream_harvest):
                         }
                     )
                     update_and_write_status(stream_harvest, status_json)
-                    # TODO is this the right prefect 2.0 signal?
                     logger.warning(message)
                     return Cancelled(
                         message=message,
@@ -600,12 +596,10 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                             logger.warning("SKIPPED: Failed pre processing!")
             except Exception as e:
                 exc_dict = parse_exception(e)
-                # TODO engine signal migration
                 # raise FAIL(message=exc_dict.get('traceback', str(e)), result=exc_dict)
                 logger.warning(exc_dict.get("traceback", str(e)))
                 return Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
     else:
-        # TODO engine signal migraiont
         # raise SKIP("No datasets to process. Skipping...")
         logger.warning("No datasets to process. Skipping...")
         return Cancelled("No datasets to process. Skipping...")
