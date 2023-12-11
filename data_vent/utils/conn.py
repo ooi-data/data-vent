@@ -21,7 +21,8 @@ from data_vent.utils.parser import (
 )
 from data_vent.settings.main import harvest_settings
 
-DEFAULT_TIMEOUT = 5 # seconds
+DEFAULT_TIMEOUT = 5  # seconds
+
 
 class TimeoutHTTPAdapter(HTTPAdapter):
     def __init__(self, *args, **kwargs):
@@ -37,6 +38,7 @@ class TimeoutHTTPAdapter(HTTPAdapter):
             kwargs["timeout"] = self.timeout
         return super().send(request, **kwargs)
 
+
 SESSION = requests.Session()
 # No retries! Just throw failures
 adapter = HTTPAdapter(
@@ -45,23 +47,21 @@ adapter = HTTPAdapter(
     pool_maxsize=1000,
 )
 # Times out after 15 min if no response is received from server!
-timeout_adapter =  TimeoutHTTPAdapter(timeout=900)
+timeout_adapter = TimeoutHTTPAdapter(timeout=900)
 SESSION.mount("https://", adapter)
 SESSION.mount("https://", timeout_adapter)
 
 
 def check_zarr(dest_fold, storage_options={}):
     fsmap = fsspec.get_mapper(dest_fold, **storage_options)
-    if fsmap.get('.zmetadata') is not None:
+    if fsmap.get(".zmetadata") is not None:
         zgroup = zarr.open_consolidated(fsmap)
-        if 'time' not in zgroup:
-            raise ValueError(
-                f"Dimension time is missing from the dataset {dest_fold}!"
-            )
+        if "time" not in zgroup:
+            raise ValueError(f"Dimension time is missing from the dataset {dest_fold}!")
 
-        time_array = zgroup['time']
-        calendar = time_array.attrs.get('calendar', 'gregorian')
-        units = time_array.attrs.get('units', 'seconds since 1900-01-01 0:0:0')
+        time_array = zgroup["time"]
+        calendar = time_array.attrs.get("calendar", "gregorian")
+        units = time_array.attrs.get("units", "seconds since 1900-01-01 0:0:0")
         last_time = xr.coding.times.decode_cf_datetime(
             [time_array[-1]], units=units, calendar=calendar
         )
@@ -89,16 +89,18 @@ def get_stream(stream):
     }
 
 
-def fetch_streams(inst): # instruments
+def fetch_streams(inst):  # instruments
     logger.debug(inst["reference_designator"])
     streams_list = []
-    #excepted_streams_list = []
+    # excepted_streams_list = []
     for stream in inst["streams"]:
         newst = stream.copy()
         try:
             newst.update(get_stream(stream["stream"]))
         except KeyError as e:
-            logger.warning(f"{e} - request for {stream} may have returned code other than 200:")
+            logger.warning(
+                f"{e} - request for {stream} may have returned code other than 200:"
+            )
 
         streams_list.append(
             dict(
@@ -113,10 +115,7 @@ def fetch_streams(inst): # instruments
     return streams_list
 
 
-def fetch_url(
-    prepped_request, session=None, stream=False, **kwargs
-):
-
+def fetch_url(prepped_request, session=None, stream=False, **kwargs):
     session = session or requests.Session()
     r = session.send(prepped_request, stream=stream, **kwargs)
 
@@ -156,18 +155,15 @@ def send_request(url, params=None, username=None, token=None):
         if r.status_code == 200:
             result = r.json()
         else:
-            result = {
-                'status_code': r.status_code,
-                'reason': r.reason
-            }
-        result.setdefault('request_dt', request_dt)
+            result = {"status_code": r.status_code, "reason": r.reason}
+        result.setdefault("request_dt", request_dt)
         return result
     except json.JSONDecodeError as e:
         logger.warning(e)
         return None
-    
 
-def get_toc(): # get table of contents
+
+def get_toc():  # get table of contents
     url = f"{BASE_URL}/{M2M_PATH}/12576/sensor/inv/toc"
     return send_request(url)
 

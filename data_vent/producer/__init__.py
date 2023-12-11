@@ -15,11 +15,13 @@ from uuid import uuid4
 from data_vent.config import HARVEST_CACHE_BUCKET, OOI_EMAIL
 from data_vent.utils.conn import request_data, check_zarr, send_request
 from data_vent.utils.parser import estimate_size_and_time, parse_uframe_response
+
 #     get_storage_options,
 # )
 
 from data_vent.utils.compute import map_concurrency
 from data_vent.metadata.fetcher import fetch_instrument_streams_list
+
 # from ooi_harvester.metadata.utils import get_catalog_meta
 from data_vent.utils.conn import get_toc
 from data_vent.metadata import get_ooi_streams_and_parameters
@@ -29,7 +31,7 @@ from data_vent.utils.parser import (
     filter_datasets_by_time,
     memory_repr,
     filter_ooi_datasets,
-    parse_ooi_data_catalog
+    parse_ooi_data_catalog,
 )
 
 BASE_THREDDS = "https://opendap-west.oceanobservatories.org/thredds/catalog/ooi"
@@ -37,11 +39,9 @@ BASE_ASYNC = "https://downloads-west.oceanobservatories.org/async_results"
 
 
 def fetch_streams_list(stream_harvest: StreamHarvest) -> list:
-    instruments = get_toc()['instruments']
+    instruments = get_toc()["instruments"]
     filtered_instruments = [
-        i
-        for i in instruments
-        if i['reference_designator'] == stream_harvest.instrument
+        i for i in instruments if i["reference_designator"] == stream_harvest.instrument
     ]
     streams_df, _ = get_ooi_streams_and_parameters(filtered_instruments)
     # Only get science stream
@@ -50,7 +50,7 @@ def fetch_streams_list(stream_harvest: StreamHarvest) -> list:
     # ].to_json(orient='records')
     # 09/16/2022 Don.S.: Change to not filter only Science stream
     #                    this should be done upstream.
-    streams_json = streams_df.to_json(orient='records')
+    streams_json = streams_df.to_json(orient="records")
     streams_list = json.loads(streams_json)
     return streams_list
 
@@ -168,23 +168,21 @@ def create_request_estimate(
     refresh: bool = False,
     existing_data_path: str = None,
     request_kwargs: dict = {},
-    storage_options: dict = {}
+    storage_options: dict = {},
 ):
     """Creates an estimated request to OOI M2M"""
-    beginTime = np.datetime64(parser.parse(stream_dct['beginTime']))
-    endTime = np.datetime64(parser.parse(stream_dct['endTime']))
+    beginTime = np.datetime64(parser.parse(stream_dct["beginTime"]))
+    endTime = np.datetime64(parser.parse(stream_dct["endTime"]))
 
     zarr_exists = False
     if not refresh:
         if existing_data_path is not None:
             zarr_exists, last_time = check_zarr(
-                os.path.join(existing_data_path, stream_dct['table_name']),
-                storage_options=storage_options
+                os.path.join(existing_data_path, stream_dct["table_name"]),
+                storage_options=storage_options,
             )
         else:
-            raise ValueError(
-                "Please provide existing data path when not refreshing."
-            )
+            raise ValueError("Please provide existing data path when not refreshing.")
 
     if zarr_exists:
         start_dt = last_time
@@ -195,7 +193,7 @@ def create_request_estimate(
             beginTime = np.datetime64(start_dt)
         elif isinstance(start_dt, np.datetime64):
             beginTime = start_dt
-        else: ## string and np.datetime64 could be causing trouble?
+        else:  ## string and np.datetime64 could be causing trouble?
             raise TypeError("start_dt must be a string or np.datetime64!")
     if end_dt is not None:
         if isinstance(end_dt, str):
@@ -207,11 +205,11 @@ def create_request_estimate(
 
     # form the actual request dictionary
     response, request_dict = request_data(
-        stream_dct['platform_code'],
-        stream_dct['mooring_code'],
-        stream_dct['instrument_code'],
-        stream_dct['method'],
-        stream_dct['stream'],
+        stream_dct["platform_code"],
+        stream_dct["mooring_code"],
+        stream_dct["instrument_code"],
+        stream_dct["method"],
+        stream_dct["stream"],
         parser.parse(str(beginTime)),
         parser.parse(str(endTime)),
         estimate=True,
@@ -251,27 +249,25 @@ def _sort_and_filter_estimated_requests(estimated_requests):
     """Internal sorting function"""
 
     success_requests = sorted(
-        filter(
-            lambda req: "requestUUID" in req['estimated'], estimated_requests
-        ),
-        key=lambda i: i['stream']['count'],
+        filter(lambda req: "requestUUID" in req["estimated"], estimated_requests),
+        key=lambda i: i["stream"]["count"],
     )
     failed_requests = list(
         filter(
-            lambda req: "requestUUID" not in req['estimated'],
+            lambda req: "requestUUID" not in req["estimated"],
             estimated_requests,
         )
     )
 
     return {
-        'success_requests': success_requests,
-        'failed_requests': failed_requests,
+        "success_requests": success_requests,
+        "failed_requests": failed_requests,
     }
 
 
 def check_data_catalog_readiness(datasets):
     try:
-        next(filter(lambda d: 'status.txt' in d['name'], datasets))
+        next(filter(lambda d: "status.txt" in d["name"], datasets))
         return True
     except StopIteration:
         return False
@@ -284,23 +280,25 @@ def check_thredds_cache(stream_name: str):
     stream_name : str
         stream table name
     """
-    ooi_email = os.environ.get('OOI_EMAIL', OOI_EMAIL)
-    catalog = TDSCatalog(
-        f"{BASE_THREDDS}/{ooi_email}/catalog.html".replace('.html', '.xml')
+    ooi_email = os.environ.get("OOI_EMAIL", OOI_EMAIL)
+    catalog = TDSCatalog(f"{BASE_THREDDS}/{ooi_email}/catalog.html".replace(".html", ".xml"))
+    ref_keys = sorted(
+        [ref for ref in catalog.catalog_refs if stream_name in ref], reverse=True
     )
-    ref_keys = sorted([ref for ref in catalog.catalog_refs if stream_name in ref], reverse=True)
     catalog_refs = {}
     result = None
     for ref in ref_keys:
         cat = catalog.catalog_refs[ref]
         catalog_dict = parse_ooi_data_catalog(cat.href)
         catalog_refs[ref] = catalog_dict
-        datasets = catalog_dict['datasets']
+        datasets = catalog_dict["datasets"]
         ready = check_data_catalog_readiness(datasets)
         if ready:
             _, datasets = filter_ooi_datasets(datasets, stream_name)
             if len(datasets) > 0:
-                data_range = parser.parse(datasets[-1]['start_ts']), parser.parse(datasets[0]['end_ts'])
+                data_range = parser.parse(datasets[-1]["start_ts"]), parser.parse(
+                    datasets[0]["end_ts"]
+                )
                 data_timedelta = data_range[-1] - data_range[0]
                 # If the amount of data is greater than 90 days
                 # use it!
@@ -310,45 +308,40 @@ def check_thredds_cache(stream_name: str):
                         "thredds_catalog": cat.href,
                         "download_catalog": f"{BASE_ASYNC}/{ooi_email}/{cat.title}",
                         "status_url": f"{BASE_ASYNC}/{ooi_email}/{cat.title}/status.txt",
-                        "data_size": sum(d['size_bytes'] for d in datasets),
+                        "data_size": sum(d["size_bytes"] for d in datasets),
                         "estimated_time": 0,
                         "units": {
                             "data_size": "bytes",
                             "estimated_time": "seconds",
-                            "request_dt": "UTC"
+                            "request_dt": "UTC",
                         },
-                        "request_dt": datetime.datetime.utcnow().isoformat()
+                        "request_dt": datetime.datetime.utcnow().isoformat(),
                     }
                     break
     return result
 
 
-def perform_request(
-    req, refresh=False, logger=logger, storage_options={}, force=False
-):
-    '''
+def perform_request(req, refresh=False, logger=logger, storage_options={}, force=False):
+    """
     req : dict
         GET request sent to OOI m2m API requesting data for specified reference designator,
         for specified time period.
-    '''
+    """
     TODAY_DATE = datetime.datetime.utcnow()
-    name = req['stream']['table_name']
+    name = req["stream"]["table_name"]
 
-    refresh_text = 'refresh' if refresh else 'daily'
+    refresh_text = "refresh" if refresh else "daily"
     datestr = f"{TODAY_DATE:%Y%m}" if refresh else f"{TODAY_DATE:%Y%m%dT%H%M}"
     fname = f"{name}__{datestr}__{refresh_text}"
     fs = fsspec.filesystem(
         HARVEST_CACHE_BUCKET.split(":")[0],
         **storage_options,
     )
-    fpath = os.path.join(HARVEST_CACHE_BUCKET, 'ooinet-requests', fname)
+    fpath = os.path.join(HARVEST_CACHE_BUCKET, "ooinet-requests", fname)
 
     if fs.exists(fpath):
-        logger.info(
-            f"Already requested {name} on "
-            f"{datestr} for {refresh_text} ({fpath})"
-        )
-        with fs.open(fpath, mode='r') as f:
+        logger.info(f"Already requested {name} on " f"{datestr} for {refresh_text} ({fpath})")
+        with fs.open(fpath, mode="r") as f:
             response = json.load(f)
     else:
         result = None
@@ -358,19 +351,17 @@ def perform_request(
 
         if result is None:
             logger.info(f"Requesting {name}")
-            result=parse_uframe_response(
-                send_request(req["url"], params=req["params"])
-            )
+            result = parse_uframe_response(send_request(req["url"], params=req["params"]))
         else:
             # TODO when this chunk is reached no data is saved?
             # TODO what is this chunk/Thredds purpose?
             logger.info("Cache found in OOI Thredds, using those!")
-        
+
         response = dict(
             result=result,
             **req,
         )
-        with fs.open(fpath, mode='w') as f:
+        with fs.open(fpath, mode="w") as f:
             json.dump(response, f)
 
     response.setdefault("file_path", fpath)
@@ -390,19 +381,15 @@ def perform_estimates(instrument_rd, refresh, existing_data_path):
         max_workers=50,
     )
     estimated_dict = _sort_and_filter_estimated_requests(estimated_requests)
-    success_requests = estimated_dict['success_requests']
+    success_requests = estimated_dict["success_requests"]
     return success_requests
 
 
 def fetch_harvest(instrument_rd, refresh, existing_data_path):
-    success_requests = perform_estimates(
-        instrument_rd, refresh, existing_data_path
-    )
+    success_requests = perform_estimates(instrument_rd, refresh, existing_data_path)
     request_responses = []
     if len(success_requests) > 0:
-        request_responses = [
-            perform_request(req, refresh) for req in success_requests
-        ]
+        request_responses = [perform_request(req, refresh) for req in success_requests]
     return request_responses
 
 

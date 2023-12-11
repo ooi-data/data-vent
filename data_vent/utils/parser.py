@@ -13,13 +13,14 @@ import numpy as np
 from dateutil import parser
 
 from data_vent.config import DATA_BUCKET, TEMP_DATA_BUCKET
-#from data_vent.settings import harvest_settings
+
+# from data_vent.settings import harvest_settings
 
 
 def estimate_size_and_time(raw):
     m = ""
     if "requestUUID" in raw:
-        est_size = raw["sizeCalculation"] / 1024 ** 2
+        est_size = raw["sizeCalculation"] / 1024**2
         size_txt = "MB"
         if (est_size / 1024) >= 1.0:
             est_size = est_size / 1024
@@ -33,7 +34,7 @@ def estimate_size_and_time(raw):
             if est_time == 1:
                 time_txt = "Minute"
         elif (est_time / 60) >= 60.0:
-            est_time = math.floor(est_time / 60 ** 2)
+            est_time = math.floor(est_time / 60**2)
             time_txt = "Hours"
             if est_time == 1:
                 time_txt = "Hour"
@@ -73,12 +74,10 @@ def parse_uframe_response(resp):
 
 def parse_exception(exception):
     exc_dict = {
-        'type': type(exception).__name__,
-        'value': str(exception),
-        'traceback': "".join(
-            traceback.format_exception(
-                type(exception), exception, exception.__traceback__
-            )
+        "type": type(exception).__name__,
+        "value": str(exception),
+        "traceback": "".join(
+            traceback.format_exception(type(exception), exception, exception.__traceback__)
         ),
     }
     return exc_dict
@@ -90,8 +89,8 @@ def param_change(name):
     https://oceanobservatories.org/renaming-data-stream-parameters/
     """
 
-    if name == 'pressure_depth':
-        return 'pressure'
+    if name == "pressure_depth":
+        return "pressure"
     else:
         return name
 
@@ -120,7 +119,7 @@ def parse_param_dict(param_dict):
         "standard_name": param_dict["standard_name"],
         "description": param_dict["description"],
         "unit": unit,
-        "data_level": param_dict['data_level'],
+        "data_level": param_dict["data_level"],
         "data_product_type": product_type,
         "data_product_identifier": param_dict["data_product_identifier"],
         "last_updated": datetime.datetime.utcnow().isoformat(),
@@ -143,49 +142,50 @@ def parse_global_range_dataframe(global_ranges):
 
 
 def parse_response_thredds(response) -> Dict[Any, Any]:
-    stream_name = response['stream']['table_name']
-    catalog_dict = parse_ooi_data_catalog(response['result']['thredds_catalog'])
-    catalog_dict.update({
-        'stream_name': stream_name,
-        'async_url': response['result']['download_catalog'],
-    })
+    stream_name = response["stream"]["table_name"]
+    catalog_dict = parse_ooi_data_catalog(response["result"]["thredds_catalog"])
+    catalog_dict.update(
+        {
+            "stream_name": stream_name,
+            "async_url": response["result"]["download_catalog"],
+        }
+    )
     return catalog_dict
 
 
 def filter_ooi_datasets(datasets, stream_name):
     import re
+
     provenance_files = []
     filtered_datasets = []
     for d in datasets:
         m = re.search(
-            r'(deployment(\d{4})_(%s)_(\d{4}\d{2}\d{2}T\d+.\d+)-(\d{4}\d{2}\d{2}T\d+.\d+).nc)'  # noqa
+            r"(deployment(\d{4})_(%s)_(\d{4}\d{2}\d{2}T\d+.\d+)-(\d{4}\d{2}\d{2}T\d+.\d+).nc)"  # noqa
             % (stream_name),
-            str(d['name']),
+            str(d["name"]),
         )
         prov = re.search(
-            r'(deployment(\d{4})_(%s)_aggregate_provenance.json)' % (stream_name),
-            str(d['name']),
+            r"(deployment(\d{4})_(%s)_aggregate_provenance.json)" % (stream_name),
+            str(d["name"]),
         )
         if m:
             _, dep_num, _, start, end = m.groups()
-            dataset = dict(
-                deployment=int(dep_num), start_ts=start, end_ts=end, **d
-            )
+            dataset = dict(deployment=int(dep_num), start_ts=start, end_ts=end, **d)
             filtered_datasets.append(dataset)
         elif prov:
             _, dep_num, _ = prov.groups()
             provenance = dict(deployment=int(dep_num), **d)
             provenance_files.append(provenance)
-    
+
     return provenance_files, filtered_datasets
 
 
 def get_bytes(value, unit):
     bytes_map = {
-        'bytes': 1,
-        'Kbytes': 1024 ** 1,
-        'Mbytes': 1024 ** 2,
-        'Gbytes': 1024 ** 3,
+        "bytes": 1,
+        "Kbytes": 1024**1,
+        "Mbytes": 1024**2,
+        "Gbytes": 1024**3,
     }
     return value * bytes_map[unit]
 
@@ -193,33 +193,27 @@ def get_bytes(value, unit):
 def parse_dataset_element(d, namespace):
     dataset_dict = {}
     for i in d.getiterator():
-        clean_tag = i.tag.replace('{' + namespace + '}', '')
-        if clean_tag == 'dataset':
+        clean_tag = i.tag.replace("{" + namespace + "}", "")
+        if clean_tag == "dataset":
             dataset_dict = dict(**i.attrib)
 
-        if clean_tag == 'dataSize':
+        if clean_tag == "dataSize":
+            dataset_dict = dict(data_size=float(i.text), **i.attrib, **dataset_dict)
             dataset_dict = dict(
-                data_size=float(i.text), **i.attrib, **dataset_dict
-            )
-            dataset_dict = dict(
-                size_bytes=get_bytes(
-                    dataset_dict['data_size'], dataset_dict['units']
-                ),
+                size_bytes=get_bytes(dataset_dict["data_size"], dataset_dict["units"]),
                 **dataset_dict,
             )
 
-        if clean_tag == 'date':
+        if clean_tag == "date":
             dataset_dict = dict(date_modified=i.text, **dataset_dict)
     return dataset_dict
 
 
 def parse_ooi_data_catalog(catalog_url) -> Dict[Any, Any]:
-    catalog = TDSCatalog(
-        catalog_url.replace('.html', '.xml')
-    )
+    catalog = TDSCatalog(catalog_url.replace(".html", ".xml"))
     catalog_dict = {
-        'catalog_url': catalog.catalog_url,
-        'base_tds_url': catalog.base_tds_url,
+        "catalog_url": catalog.catalog_url,
+        "base_tds_url": catalog.base_tds_url,
     }
 
     req = requests.get(catalog.catalog_url)
@@ -228,30 +222,28 @@ def parse_ooi_data_catalog(catalog_url) -> Dict[Any, Any]:
     namespaces = {}
     for k, v in catalog_root.nsmap.items():
         if k is None:
-            namespaces['cat'] = v
+            namespaces["cat"] = v
         else:
             namespaces[k] = v
     dataset_elements = catalog_root.xpath(
-        '/cat:catalog/cat:dataset/cat:dataset', namespaces=namespaces
+        "/cat:catalog/cat:dataset/cat:dataset", namespaces=namespaces
     )
-    datasets = [
-        parse_dataset_element(i, namespaces['cat']) for i in dataset_elements
-    ]
-    catalog_dict['datasets'] = datasets
+    datasets = [parse_dataset_element(i, namespaces["cat"]) for i in dataset_elements]
+    catalog_dict["datasets"] = datasets
 
     return catalog_dict
 
 
 def filter_and_parse_datasets(cat):
     stream_cat = cat.copy()
-    name = stream_cat['stream_name']
-    provenance_files, filtered_datasets = filter_ooi_datasets(stream_cat['datasets'], name)
+    name = stream_cat["stream_name"]
+    provenance_files, filtered_datasets = filter_ooi_datasets(stream_cat["datasets"], name)
 
-    total_bytes = np.sum([d['size_bytes'] for d in filtered_datasets])
-    stream_cat['datasets'] = filtered_datasets
-    stream_cat['provenance'] = provenance_files
-    stream_cat['total_data_size'] = memory_repr(total_bytes)
-    stream_cat['total_data_bytes'] = total_bytes
+    total_bytes = np.sum([d["size_bytes"] for d in filtered_datasets])
+    stream_cat["datasets"] = filtered_datasets
+    stream_cat["provenance"] = provenance_files
+    stream_cat["total_data_size"] = memory_repr(total_bytes)
+    stream_cat["total_data_bytes"] = total_bytes
     return stream_cat
 
 
@@ -281,19 +273,17 @@ def filter_datasets_by_time(
     """
     filtered_datasets = []
     for d in datasets:
-        start_d = np.datetime64(parser.parse(d['start_ts']))
-        end_d = np.datetime64(parser.parse(d['end_ts']))
-        if start_d >= start_dt.astype(
-            start_d.dtype
-        ) and end_d <= end_dt.astype(start_d.dtype):
+        start_d = np.datetime64(parser.parse(d["start_ts"]))
+        end_d = np.datetime64(parser.parse(d["end_ts"]))
+        if start_d >= start_dt.astype(start_d.dtype) and end_d <= end_dt.astype(start_d.dtype):
             filtered_datasets.append(d)
     return filtered_datasets
 
 
-def setup_etl(stream, source='ooinet', target_bucket=f's3://{DATA_BUCKET}'):
-    name = stream['stream_name']
+def setup_etl(stream, source="ooinet", target_bucket=f"s3://{DATA_BUCKET}"):
+    name = stream["stream_name"]
 
-    harvest_location = os.path.expanduser('~/.ooi-harvester')
+    harvest_location = os.path.expanduser("~/.ooi-harvester")
 
     # Setup Local temp folder for netcdf
     temp_fold = os.path.join(harvest_location, name)
@@ -307,11 +297,11 @@ def setup_etl(stream, source='ooinet', target_bucket=f's3://{DATA_BUCKET}'):
     temp_s3_fold = f"s3://{TEMP_DATA_BUCKET}/{name}.zarr"
     final_s3_fold = f"{target_bucket}/{name}"
 
-    if source == 'ooinet':
-        retrieved_dt = stream['result']['request_dt']
+    if source == "ooinet":
+        retrieved_dt = stream["result"]["request_dt"]
     else:
-        retrieved_dt = stream['retrieved_dt']
-        del stream['retrieved_dt']
+        retrieved_dt = stream["retrieved_dt"]
+        del stream["retrieved_dt"]
     return dict(
         temp_fold=temp_fold,
         temp_bucket=temp_s3_fold,

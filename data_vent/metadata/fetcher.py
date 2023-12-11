@@ -17,17 +17,15 @@ def fetch_instrument_streams_list(refdes_list=[]) -> List[dict]:
     """
     streams_list = []
     if isinstance(refdes_list, str):
-        refdes_list = refdes_list.split(',')
+        refdes_list = refdes_list.split(",")
 
     if len(refdes_list) > 0:
-        instruments = get_toc()['instruments']
+        instruments = get_toc()["instruments"]
         filtered_instruments = [
-            i for i in instruments if i['reference_designator'] in refdes_list
+            i for i in instruments if i["reference_designator"] in refdes_list
         ]
         if len(filtered_instruments) > 0:
-            filtered_df, _ = get_ooi_streams_and_parameters(
-                filtered_instruments
-            )
-            streams_json = filtered_df.to_json(orient='records')
+            filtered_df, _ = get_ooi_streams_and_parameters(filtered_instruments)
+            streams_json = filtered_df.to_json(orient="records")
             streams_list = json.loads(streams_json)
     return streams_list

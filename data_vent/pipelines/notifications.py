@@ -40,16 +40,16 @@ def get_issue(stream_name, flow_name, flow_run_id, task_name, exc_dict, now):
         """
     ).format
     issue_body = issue_body_template(
-        exc_type=exc_dict['type'],
+        exc_type=exc_dict["type"],
         task_name=task_name,
         now=now,
         flow_name=flow_name,
         flow_run_id=flow_run_id,
-        exc_value=exc_dict['value'],
-        exc_traceback=exc_dict['traceback'],
+        exc_value=exc_dict["value"],
+        exc_traceback=exc_dict["traceback"],
         stream_name=stream_name,
     )
-    return {'title': issue_title, 'body': issue_body}
+    return {"title": issue_title, "body": issue_body}
 
 
 def github_task_issue_formatter(
@@ -64,9 +64,7 @@ def github_task_issue_formatter(
     task_name = task_obj.name
     if isinstance(state.result, Exception):
         exc_dict = parse_exception(result)
-        issue = get_issue(
-            stream_name, flow_name, flow_run_id, task_name, exc_dict, now
-        )
+        issue = get_issue(stream_name, flow_name, flow_run_id, task_name, exc_dict, now)
         return issue
     return None
 
@@ -90,26 +88,20 @@ def github_issue_notifier(
     harvest_config = run_params.get("config", {})
     stream_name = gh_repo or "-".join(
         [
-            harvest_config['instrument'],
-            harvest_config['stream']['method'],
-            harvest_config['stream']['name'],
+            harvest_config["instrument"],
+            harvest_config["stream"]["method"],
+            harvest_config["stream"]["name"],
         ]
     )
     if new_state.is_failed():
         now = datetime.datetime.utcnow().isoformat()
 
-        issue = github_task_issue_formatter(
-            task_obj, new_state, stream_name, now
-        )
+        issue = github_task_issue_formatter(task_obj, new_state, stream_name, now)
         if issue is not None:
-            issue.setdefault(
-                "assignees", assignees or harvest_config.get("assignees", [])
-            )
-            issue.setdefault(
-                "labels", labels or harvest_config.get("labels", [])
-            )
+            issue.setdefault("assignees", assignees or harvest_config.get("assignees", []))
+            issue.setdefault("labels", labels or harvest_config.get("labels", []))
 
             gh = Github(GH_PAT)
-            repo = gh.get_repo('/'.join([gh_org, stream_name]))
+            repo = gh.get_repo("/".join([gh_org, stream_name]))
             repo.create_issue(**issue)
     return new_state
