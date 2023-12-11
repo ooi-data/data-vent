@@ -19,7 +19,6 @@ from data_vent.settings.main import harvest_settings
 FS = fsspec.filesystem("s3", **harvest_settings.storage_options.aws.dict())
 
 
-# TODO how can I avoid hard-coding this bucket reference?
 def parse_inst_ref(name):
     m = re.findall(rf"{DATA_BUCKET}/(\w+-\w+-\w+-\w+)-\w+-\w+", name)
     if len(m) == 1:

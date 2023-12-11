@@ -353,8 +353,6 @@ def perform_request(req, refresh=False, logger=logger, storage_options={}, force
             logger.info(f"Requesting {name}")
             result = parse_uframe_response(send_request(req["url"], params=req["params"]))
         else:
-            # TODO when this chunk is reached no data is saved?
-            # TODO what is this chunk/Thredds purpose?
             logger.info("Cache found in OOI Thredds, using those!")
 
         response = dict(
