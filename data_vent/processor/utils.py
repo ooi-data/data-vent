@@ -10,8 +10,6 @@ from pathlib import Path
 from github import Github
 
 from data_vent.utils.encoders import NumpyEncoder
-
-# TODO tidy up this import
 from data_vent.settings.main import harvest_settings
 
 
