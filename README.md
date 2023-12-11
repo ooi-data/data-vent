@@ -48,3 +48,6 @@ With data-vent as cwd:
 `conda activate data-vent`
 
 `pip install -e .`
+
+Linting uses black to 95 line length:
+`black --line-length 95 data_vent/`

@@ -9,10 +9,10 @@ class Stream(BaseModel):
     method: str
     name: str
 
-    @validator('*')
+    @validator("*")
     def must_exists(cls, v):
         if not v.strip():
-            raise ValueError('Stream method or name cannot be empty')
+            raise ValueError("Stream method or name cannot be empty")
         return v
 
 
@@ -20,7 +20,7 @@ class HarvestRange(BaseModel):
     start: Optional[str]
     end: Optional[str]
 
-    @validator('start')
+    @validator("start")
     def start_isoformat(cls, v):
         try:
             if v:
@@ -28,10 +28,10 @@ class HarvestRange(BaseModel):
             return v
         except Exception:
             raise ValueError(
-                'start custom range is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)'
+                "start custom range is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
-    @validator('end')
+    @validator("end")
     def end_isoformat(cls, v):
         try:
             if v:
@@ -39,7 +39,7 @@ class HarvestRange(BaseModel):
             return v
         except Exception:
             raise ValueError(
-                'end custom range is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSSZ)'
+                "end custom range is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSSZ)"
             )
 
 
@@ -51,10 +51,10 @@ class HarvestOptions(BaseModel):
     path_settings: dict = {}
     custom_range: HarvestRange = HarvestRange()
 
-    @validator('path')
+    @validator("path")
     def path_must_exists(cls, v):
         if not v.strip():
-            raise ValueError('Harvest destination path cannot be empty')
+            raise ValueError("Harvest destination path cannot be empty")
         return v
 
 
@@ -84,7 +84,7 @@ class HarvestStatus(BaseModel):
         super().__init__(**data)
         self.last_updated = datetime.utcnow().isoformat()
 
-    @validator('processed_at')
+    @validator("processed_at")
     def processed_at_isoformat(cls, v):
         try:
             if v:
@@ -92,10 +92,10 @@ class HarvestStatus(BaseModel):
             return v
         except Exception:
             raise ValueError(
-                'processed_at is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)'
+                "processed_at is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
-    @validator('last_refresh')
+    @validator("last_refresh")
     def last_refresh_isoformat(cls, v):
         try:
             if v:
@@ -103,10 +103,10 @@ class HarvestStatus(BaseModel):
             return v
         except Exception:
             raise ValueError(
-                'last_refresh is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)'
+                "last_refresh is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
-    @validator('requested_at')
+    @validator("requested_at")
     def requested_at_isoformat(cls, v):
         try:
             if v:
@@ -114,7 +114,7 @@ class HarvestStatus(BaseModel):
             return v
         except Exception:
             raise ValueError(
-                'requested_at is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)'
+                "requested_at is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
 
@@ -141,20 +141,20 @@ class StreamHarvest(BaseModel):
         new_status.update(status_input)
         self._status = HarvestStatus(**new_status)
 
-    @validator('instrument')
+    @validator("instrument")
     def instrument_must_exists(cls, v):
         if not v.strip():
-            raise ValueError('Instrument cannot be empty')
+            raise ValueError("Instrument cannot be empty")
         return v
 
     @validator("table_name", always=True)
     def set_table_name(cls, v, values):
-        if 'instrument' in values and 'stream' in values:
+        if "instrument" in values and "stream" in values:
             return "-".join(
                 [
-                    values['instrument'],
-                    values['stream'].method,
-                    values['stream'].name,
+                    values["instrument"],
+                    values["stream"].method,
+                    values["stream"].name,
                 ]
             )
 

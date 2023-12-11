@@ -10,6 +10,7 @@ from pathlib import Path
 from github import Github
 
 from data_vent.utils.encoders import NumpyEncoder
+
 # TODO tidy up this import
 from data_vent.settings.main import harvest_settings
 
@@ -17,34 +18,32 @@ from data_vent.settings.main import harvest_settings
 def _get_var_encoding(var):
     compress = zarr.Blosc(cname="zstd", clevel=3, shuffle=2)
     enc = {
-        'chunks': getattr(var, '_chunks'),
+        "chunks": getattr(var, "_chunks"),
     }
-    if var.basename != 'time':
+    if var.basename != "time":
         enc = dict(
             **{
-                'compressor': getattr(var, '_compressor', compress),
-                'dtype': getattr(var, '_dtype'),
+                "compressor": getattr(var, "_compressor", compress),
+                "dtype": getattr(var, "_dtype"),
             },
             **enc,
         )
-        fill_value = getattr(var, '_fill_value', None)
+        fill_value = getattr(var, "_fill_value", None)
         if fill_value is not None:
-            enc['_FillValue'] = fill_value
+            enc["_FillValue"] = fill_value
     return enc
 
 
 def _write_data_avail(avail_dict, gh_write=False):
-    for k, v in avail_dict['results'].items():
-        json_path = Path(k, avail_dict['inst_rd'])
-        stream_content = {avail_dict['data_stream']: v}
+    for k, v in avail_dict["results"].items():
+        json_path = Path(k, avail_dict["inst_rd"])
+        stream_content = {avail_dict["data_stream"]: v}
         if gh_write:
             json_path = str(json_path)
             try:
                 gh = Github(harvest_settings.github.pat)
                 repo = gh.get_repo(
-                    os.path.join(
-                        harvest_settings.github.data_org, 'data_availability'
-                    )
+                    os.path.join(harvest_settings.github.data_org, "data_availability")
                 )
                 contents = repo.get_contents(
                     json_path, ref=harvest_settings.github.main_branch
@@ -53,7 +52,7 @@ def _write_data_avail(avail_dict, gh_write=False):
                 resp = requests.get(contents.download_url)
                 if resp.status_code == 200:
                     json_content = resp.json()
-                    if avail_dict['data_stream'] in json_content:
+                    if avail_dict["data_stream"] in json_content:
                         json_content.update(stream_content)
                     else:
                         json_content = dict(**json_content, **stream_content)
@@ -68,7 +67,7 @@ def _write_data_avail(avail_dict, gh_write=False):
             except Exception as e:
                 json_content = stream_content
                 response = e.args[1]
-                if response['message'] == 'Not Found':
+                if response["message"] == "Not Found":
                     repo.create_file(
                         json_path,
                         f"✨ Created {k} data availability for {avail_dict['inst_rd']}",
@@ -80,10 +79,8 @@ def _write_data_avail(avail_dict, gh_write=False):
                 json_path.parent.mkdir(exist_ok=True)
 
             if json_path.exists():
-                json_content = json.loads(
-                    json_path.read_text(encoding='utf-8')
-                )
-                if avail_dict['data_stream'] in json_content:
+                json_content = json.loads(json_path.read_text(encoding="utf-8"))
+                if avail_dict["data_stream"] in json_content:
                     json_content.update(stream_content)
                 else:
                     json_content = dict(**json_content, **stream_content)
@@ -100,13 +97,11 @@ def _validate_dims(ds_to_append, existing_zarr, append_dim):
     for dim, new_size in ds_to_append.sizes.items():
         if any(ds_to_append[dim].isnull()):
             issue_dims.append(dim)
-        if 'time' not in dim:
+        if "time" not in dim:
             existing_var = existing_zarr[dim]
             existing_size = existing_var.shape[0]
             if new_size < existing_size:
-                dim_indexer[dim] = existing_var[:].astype(
-                    ds_to_append[dim].dtype
-                )
+                dim_indexer[dim] = existing_var[:].astype(ds_to_append[dim].dtype)
             elif new_size > existing_size:
                 dim_indexer[dim] = ds_to_append[dim].values
                 modify_zarr_dims = True
@@ -114,35 +109,31 @@ def _validate_dims(ds_to_append, existing_zarr, append_dim):
 
 
 def _prepare_existing_zarr(store, ds_to_append, enc):
-    existing_zarr = zarr.open_group(store, mode='a')
+    existing_zarr = zarr.open_group(store, mode="a")
     for var_name, new_var in ds_to_append.variables.items():
         if var_name not in existing_zarr:
             logger.info(f"{var_name} not in existing zarr ... creating ...")
             existing_arr_shape = tuple(
-                existing_zarr[dim].shape[0]
-                for dim, size in new_var.sizes.items()
+                existing_zarr[dim].shape[0] for dim, size in new_var.sizes.items()
             )
             existing_chunks = tuple(
-                existing_zarr[dim].chunks[0]
-                for dim, size in new_var.sizes.items()
+                existing_zarr[dim].chunks[0] for dim, size in new_var.sizes.items()
             )
             fill_value = None
-            if '_FillValue' in enc[var_name]:
-                fill_value = enc[var_name]['_FillValue']
+            if "_FillValue" in enc[var_name]:
+                fill_value = enc[var_name]["_FillValue"]
 
             za = existing_zarr.create(
                 var_name,
                 shape=existing_arr_shape,
                 chunks=existing_chunks,
-                dtype=enc[var_name]['dtype'],
+                dtype=enc[var_name]["dtype"],
                 fill_value=fill_value,
-                compressor=enc[var_name]['compressor'],
+                compressor=enc[var_name]["compressor"],
             )
 
-            attributes = json.loads(
-                json.dumps(new_var.attrs, cls=NumpyEncoder)
-            )
-            attributes['_ARRAY_DIMENSIONS'] = list(new_var.dims)
+            attributes = json.loads(json.dumps(new_var.attrs, cls=NumpyEncoder))
+            attributes["_ARRAY_DIMENSIONS"] = list(new_var.dims)
 
             za.attrs.put(attributes)
             logger.info(f"{var_name} creation finished.")
@@ -154,7 +145,7 @@ def _prepare_ds_to_append(store, ds_to_append):
     # WARNING: ONLY WORKS FOR FLOATS!!
     from xarray.backends.zarr import ZarrStore
 
-    existing_zarr = zarr.open_group(store, mode='a')
+    existing_zarr = zarr.open_group(store, mode="a")
     zs = ZarrStore(existing_zarr)
     ds_to_append = ds_to_append.unify_chunks()
 
@@ -162,16 +153,12 @@ def _prepare_ds_to_append(store, ds_to_append):
         existing_shape = tuple(
             ds_to_append[dim].shape[0] for dim, size in new_var.sizes.items()
         )
-        existing_chunks = {
-            dim: ds_to_append.chunks.get(dim, None) for dim in new_var.dims
-        }
+        existing_chunks = {dim: ds_to_append.chunks.get(dim, None) for dim in new_var.dims}
         if var_name not in ds_to_append:
             logger.info(f"{var_name} not in ds_to_append ... creating ...")
             new_arr = np.full(
                 existing_shape,
-                new_var.attrs['_FillValue']
-                if '_FillValue' in new_var.attrs
-                else np.nan,
+                new_var.attrs["_FillValue"] if "_FillValue" in new_var.attrs else np.nan,
                 dtype=new_var.dtype,
             )
             if "_FillValue" in new_var.attrs:
@@ -193,9 +180,7 @@ def _prepare_ds_to_append(store, ds_to_append):
                 )
                 new_arr = np.full(
                     existing_shape,
-                    new_var.attrs['_FillValue']
-                    if '_FillValue' in new_var.attrs
-                    else np.nan,
+                    new_var.attrs["_FillValue"] if "_FillValue" in new_var.attrs else np.nan,
                     dtype=new_var.dtype,
                 )
                 if "_FillValue" in new_var.attrs:
@@ -209,27 +194,26 @@ def _prepare_ds_to_append(store, ds_to_append):
     return ds_to_append
 
 
-def _append_zarr(store, ds_to_append, append_dim='time', consolidated=True):
-    existing_zarr = zarr.open_group(store, mode='a')
+def _append_zarr(store, ds_to_append, append_dim="time", consolidated=True):
+    existing_zarr = zarr.open_group(store, mode="a")
 
     for var_name, var_data in ds_to_append.variables.items():
         if any([append_dim in dim for dim in var_data.dims]):
             existing_arr = existing_zarr[var_name]
             existing_arr.append(var_data.values)
-    
+
     if consolidated:
         zarr.consolidate_metadata(store)
 
 
 def _reindex_zarr(store, dim_indexer):
-    existing_zarr = zarr.open_group(store, mode='a')
+    existing_zarr = zarr.open_group(store, mode="a")
     new_dim_sizes = {k: len(v) for k, v in dim_indexer.items()}
     for arr_name, za in existing_zarr.arrays():
-        arr_dims = za.attrs['_ARRAY_DIMENSIONS']
+        arr_dims = za.attrs["_ARRAY_DIMENSIONS"]
         existing_dims = dict(zip(arr_dims, za.shape))
         new_shape = tuple(
-            new_dim_sizes[d] if d in new_dim_sizes else existing_dims[d]
-            for d in arr_dims
+            new_dim_sizes[d] if d in new_dim_sizes else existing_dims[d] for d in arr_dims
         )
         if arr_name in new_dim_sizes:
             za = existing_zarr[arr_name]

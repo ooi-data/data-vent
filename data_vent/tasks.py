@@ -47,15 +47,14 @@ from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
 from data_vent.exceptions import DataNotReadyError
 
+
 def setup_status_s3fs(
     stream_harvest: StreamHarvest,
 ):
     fs = fsspec.filesystem(
-        's3', **STORAGE_OPTIONS['aws'] #**stream_harvest.harvest_options.path_settings
+        "s3", **STORAGE_OPTIONS["aws"]  # **stream_harvest.harvest_options.path_settings
     )
-    status_file = (
-        f"{FLOW_PROCESS_BUCKET}/harvest-status/{stream_harvest.table_name}"
-    )
+    status_file = f"{FLOW_PROCESS_BUCKET}/harvest-status/{stream_harvest.table_name}"
 
     return fs, status_file
 
@@ -66,7 +65,7 @@ def write_status_json(
     fs, status_file = setup_status_s3fs(stream_harvest)
     status_json = stream_harvest.status.dict()
     # write status file from s3 if exists
-    with fs.open(status_file, mode='w') as f:
+    with fs.open(status_file, mode="w") as f:
         json.dump(status_json, f)
 
 
@@ -85,9 +84,7 @@ def read_status_json(
 
 
 def update_and_write_status(
-    stream_harvest: StreamHarvest,
-    status_json: Dict[str, Any],
-    write: bool = True
+    stream_harvest: StreamHarvest, status_json: Dict[str, Any], write: bool = True
 ) -> StreamHarvest:
     """
     Update the StreamHarvest object status attribute,
@@ -110,26 +107,26 @@ def update_and_write_status(
 
 @task
 def get_stream_harvest(
-    config_json: Dict[str, Any], harvest_options: Dict[str, Any] = {}, refresh: bool=False,
+    config_json: Dict[str, Any],
+    harvest_options: Dict[str, Any] = {},
+    refresh: bool = False,
 ):
     logger = get_run_logger()
-    config_json['harvest_options'].update(harvest_options)
+    config_json["harvest_options"].update(harvest_options)
     stream_harvest = StreamHarvest(**config_json)
     stream_harvest = read_status_json(stream_harvest)
     # TODO tidy comments
     # if stream_harvest.status.last_refresh is not None:
-    logger.info(
-        f"Cloud data last refreshed on {stream_harvest.status.last_refresh}"
-    )
-        # 11/28/2022 Don.S: Comment out this section to prevent auto refresh.
-        # refresh = harvest_options.get('refresh', None)
-        # last_refresh = parser.parse(stream_harvest.status.last_refresh)
-        # current_dt = datetime.datetime.utcnow()
-        # if (current_dt - last_refresh) < datetime.timedelta(days=30):
-        #     if refresh is None:
-        #         stream_harvest.harvest_options.refresh = False
-        # elif refresh is None:
-        #     stream_harvest.harvest_options.refresh = True
+    logger.info(f"Cloud data last refreshed on {stream_harvest.status.last_refresh}")
+    # 11/28/2022 Don.S: Comment out this section to prevent auto refresh.
+    # refresh = harvest_options.get('refresh', None)
+    # last_refresh = parser.parse(stream_harvest.status.last_refresh)
+    # current_dt = datetime.datetime.utcnow()
+    # if (current_dt - last_refresh) < datetime.timedelta(days=30):
+    #     if refresh is None:
+    #         stream_harvest.harvest_options.refresh = False
+    # elif refresh is None:
+    #     stream_harvest.harvest_options.refresh = True
     #     stream_harvest.harvest_options.refresh = False
     if refresh:
         stream_harvest.harvest_options.refresh = True
@@ -137,45 +134,44 @@ def get_stream_harvest(
     logger.warning(f"Refresh flag: {stream_harvest.harvest_options.refresh}")
     return stream_harvest
 
+
 @task
 def check_requested(stream_harvest):
     logger = get_run_logger()
     status_json = stream_harvest.status.dict()
-    if status_json.get("status") == 'discontinued':
+    if status_json.get("status") == "discontinued":
         # Skip discontinued stuff forever
         # TODO: Find way to turn off the scheduled flow all together
-        #raise SKIP("Stream is discontinued. Finished.")
+        # raise SKIP("Stream is discontinued. Finished.")
         logger.warning("Stream is discontinued. Finished")
         return "SKIPPED"
 
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
 
-    last_data_date = parser.parse(status_json.get("end_date") + 'Z')
+    last_data_date = parser.parse(status_json.get("end_date") + "Z")
     logger.info(f"Cloud -- Last data point: {last_data_date}")
 
     if stream_harvest.status.data_check is True:
         return True
-    elif (
-        status_json.get("status") == 'success'
-        and status_json.get("data_ready") is True
-    ):
+    elif status_json.get("status") == "success" and status_json.get("data_ready") is True:
         # Get end time from OOI system
         current_end_dt = _check_stream(stream_harvest)
         logger.info(f"OOI -- Last data point: {current_end_dt}")
         data_diff = current_end_dt - last_data_date
-        if status_json.get("process_status") == 'success':
+        if status_json.get("process_status") == "success":
             logger.info(f"Current data difference: {data_diff}")
             if data_diff > datetime.timedelta(minutes=1):
                 # The last time is ready, but now it's been an hour so
                 # request new data
                 return False
             else:
-                return "SKIPPED" #Skipping harvest. No new data needed.
+                return "SKIPPED"  # Skipping harvest. No new data needed.
         # data is ready for processing!
         return True
     else:
         return False
+
 
 def _check_stream(stream_harvest):
     import json
@@ -185,7 +181,7 @@ def _check_stream(stream_harvest):
     session = HTMLSession()
     logger = get_run_logger()
 
-    site, subsite, port, inst = stream_harvest.instrument.split('-')
+    site, subsite, port, inst = stream_harvest.instrument.split("-")
     resp = session.get(
         f"https://ooinet.oceanobservatories.org/api/m2m/12576/sensor/inv/{site}/{subsite}/{port}-{inst}/metadata/times",
         auth=(
@@ -199,25 +195,26 @@ def _check_stream(stream_harvest):
             logger.info(f"all streams: {all_streams}")
             current_end_dt = next(
                 filter(
-                    lambda s: s['stream'] == stream_harvest.stream.name
-                    and s['method'] == stream_harvest.stream.method,
+                    lambda s: s["stream"] == stream_harvest.stream.name
+                    and s["method"] == stream_harvest.stream.method,
                     all_streams,
                 )
-            )['endTime']
+            )["endTime"]
             logger.info(f"current_end_dt: {current_end_dt}")
             return parser.parse(current_end_dt)
         except json.JSONDecodeError:
             # If it's not JSON, get the title of the page
-            html_title = resp.html.find('title', first=True).text.lower()
-            if 'maintenance' in html_title:
+            html_title = resp.html.find("title", first=True).text.lower()
+            if "maintenance" in html_title:
                 # if there's maintainance then skip
                 # raise SKIP("OOI is under maintenance!")
                 logger.warning("OOI is under maintenance!")
                 return Cancelled(message="OOI is under maintenance!")
-    #TODO not sure what this did
-    #raise SKIP("OOINet is currently down.")
+    # TODO not sure what this did
+    # raise SKIP("OOINet is currently down.")
 
-#TODO max retries is limited to prefect 1
+
+# TODO max retries is limited to prefect 1
 @task(retries=6, retry_delay_seconds=600)
 def setup_harvest(stream_harvest: StreamHarvest):
     logger = get_run_logger()
@@ -227,26 +224,22 @@ def setup_harvest(stream_harvest: StreamHarvest):
     request_dt = datetime.datetime.utcnow().isoformat()
     status_json = stream_harvest.status.dict()
     try:
-        stream_dct = next(
-            filter(lambda s: s['table_name'] == table_name, streams_list)
-        )
+        stream_dct = next(filter(lambda s: s["table_name"] == table_name, streams_list))
     except Exception:
         # Check if stream has been dicontinued
         logger.warning("Stream not found in OOI Database.")
         message = f"{table_name} not found in OOI Database. It may be that this stream has been discontinued."
-        status_json.update(
-            {'status': 'discontinued', 'last_refresh': request_dt}
-        )
+        status_json.update({"status": "discontinued", "last_refresh": request_dt})
         update_and_write_status(stream_harvest, status_json)
         # raise SKIP(
         #     message=message, result={"status": status_json, "message": message})
         logger.warning(message)
         return Cancelled(message=message, result={"status": status_json, "message": message})
-        
+
     if stream_harvest.harvest_options.goldcopy:
         message = "Gold Copy Harvest is not currently supported."
         logger.warning(message)
-        status_json.update({'status': 'failed'})
+        status_json.update({"status": "failed"})
         update_and_write_status(stream_harvest, status_json)
         # raise SKIP(message=message, result={"status": status_json, "message": message},)
         return Cancelled(message=message, result={"status": status_json, "message": message})
@@ -259,7 +252,7 @@ def setup_harvest(stream_harvest: StreamHarvest):
             refresh=stream_harvest.harvest_options.refresh,
             existing_data_path=stream_harvest.harvest_options.path,
             request_kwargs=dict(provenance=True),
-            storage_options=stream_harvest.harvest_options.path_settings
+            storage_options=stream_harvest.harvest_options.path_settings,
         )
 
     estimated_request.setdefault("request_dt", request_dt)
@@ -274,12 +267,12 @@ def setup_harvest(stream_harvest: StreamHarvest):
 def request_data(
     estimated_request: Dict[str, Any],
     stream_harvest: StreamHarvest,
-    force_harvest: bool = False
+    force_harvest: bool = False,
 ):
     logger = get_run_logger()
     status_json = stream_harvest.status.dict()
     logger.info("=== Performing data request ===")
-    if "requestUUID" in estimated_request['estimated']:
+    if "requestUUID" in estimated_request["estimated"]:
         logger.info("Continue to actual request ...")
         logger.warning(estimated_request)
         request_response = perform_request(
@@ -287,25 +280,27 @@ def request_data(
             refresh=stream_harvest.harvest_options.refresh,
             logger=logger,
             storage_options=stream_harvest.harvest_options.path_settings,
-            force=force_harvest
+            force=force_harvest,
         )
-        result = request_response.get('result', None)
-        if result is None or 'status_code' in result:
+        result = request_response.get("result", None)
+        if result is None or "status_code" in result:
             logger.info("Writing out data request status to failed ...")
             status_json.update(
                 {
-                    'status': 'failed',
-                    'data_ready': False,
-                    'data_response': request_response.get("file_path"),
-                    'requested_at': datetime.datetime.utcnow() if result is None else result.get("request_dt"),
-                    'data_check': False
+                    "status": "failed",
+                    "data_ready": False,
+                    "data_response": request_response.get("file_path"),
+                    "requested_at": datetime.datetime.utcnow()
+                    if result is None
+                    else result.get("request_dt"),
+                    "data_check": False,
                 }
             )
             update_and_write_status(stream_harvest, status_json)
             if result is None:
-                message="Error found with ooi-harvester during request"
+                message = "Error found with ooi-harvester during request"
             else:
-                message=f"Error found with OOI M2M during request: ({result.get('status_code')}) {result.get('reason')}"
+                message = f"Error found with OOI M2M during request: ({result.get('status_code')}) {result.get('reason')}"
             # TODO here the prefect 1.0 flag is FAIL
             # raise FAIL(
             #     message=message,
@@ -316,28 +311,30 @@ def request_data(
         else:
             status_json.update(
                 {
-                    'status': 'pending',
-                    'data_ready': False,
-                    'data_response': request_response.get("file_path"),
-                    'requested_at': request_response['result']['request_dt'],
-                    'data_check': True
+                    "status": "pending",
+                    "data_ready": False,
+                    "data_response": request_response.get("file_path"),
+                    "requested_at": request_response["result"]["request_dt"],
+                    "data_check": True,
                 }
             )
             update_and_write_status(stream_harvest, status_json)
             return request_response
     else:
         logger.info("Writing out status to failed ...")
-        status_json.update({'status': 'failed'})
+        status_json.update({"status": "failed"})
         update_and_write_status(stream_harvest, status_json)
         message = "No data is available for harvesting."
         # raise SKIP(
         #     message="No data is available for harvesting.",
         #     result={"status": status_json, "message": message},
         # )
-        # TODO another prefect 1.0 engine signal 
+        # TODO another prefect 1.0 engine signal
         logger.warning(message)
-        return Cancelled(message="No data is available for harvesting.",
-                         result={"status": status_json, "message": message})
+        return Cancelled(
+            message="No data is available for harvesting.",
+            result={"status": status_json, "message": message},
+        )
 
 
 @task
@@ -359,40 +356,42 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
         status_json = stream_harvest.status.dict()
 
         # daily harvest
-        if stream_harvest.status.data_response.endswith('daily'):
+        if stream_harvest.status.data_response.endswith("daily"):
             status_json.update(
                 {
-                    'status': 'success',
-                    'process_status': 'success',
-                    'data_check': False,
-                    'data_ready': True,
+                    "status": "success",
+                    "process_status": "success",
+                    "data_check": False,
+                    "data_ready": True,
                 }
             )
         # refresh harvest
-        elif stream_harvest.status.data_response.endswith('refresh'):
+        elif stream_harvest.status.data_response.endswith("refresh"):
             status_json.update(
                 {
-                    'status': 'unknown',
-                    'process_status': None,
-                    'data_check': False,
-                    'last_refresh': None,
-                    'data_ready': False,
+                    "status": "unknown",
+                    "process_status": None,
+                    "data_check": False,
+                    "last_refresh": None,
+                    "data_ready": False,
                 }
             )
         else:
             # if neither daily or refresh raise the exception
             raise e
-        
-        message = "Skipping for now and retrying again later due to missing data response file."
+
+        message = (
+            "Skipping for now and retrying again later due to missing data response file."
+        )
         update_and_write_status(stream_harvest, status_json)
-        
+
         # TODO engine.signal - cannot Raise these prefect 2.0 functions
         logger.warning(message)
         return Cancelled(
             message=message,
             result={"status": status_json, "message": message},
         )
-        
+
     return request_response
 
 
@@ -408,67 +407,58 @@ def check_data(data_response, stream_harvest):
         in_progress = check_in_progress(status_url)
         if not in_progress:
             logger.info("Data available for download.")
-            status_json.update(
-                {'status': 'success', 'data_ready': True}
-            )
-            stream_harvest = update_and_write_status(
-                stream_harvest, status_json
-            )
+            status_json.update({"status": "success", "data_ready": True})
+            stream_harvest = update_and_write_status(stream_harvest, status_json)
             return {
-                'data_response': data_response,
-                'stream_harvest': stream_harvest,
+                "data_response": data_response,
+                "stream_harvest": stream_harvest,
             }
         else:
-            time_since_request = (
-                datetime.datetime.utcnow()
-                - dateutil.parser.parse(data_response['result']['request_dt'])
+            time_since_request = datetime.datetime.utcnow() - dateutil.parser.parse(
+                data_response["result"]["request_dt"]
             )
             if time_since_request >= datetime.timedelta(days=2):
                 try:
                     catalog_dict = parse_response_thredds(data_response)
                     filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
-                    if len(filtered_catalog_dict['datasets']) > 0:
+                    if len(filtered_catalog_dict["datasets"]) > 0:
                         logger.info(
                             "Data request timeout reached. But nc files are still available."
                         )
                         status_json.update(
                             {
-                                'status': 'success',
-                                'data_ready': True,
+                                "status": "success",
+                                "data_ready": True,
                             }
                         )
-                        stream_harvest = update_and_write_status(
-                            stream_harvest, status_json
-                        )
+                        stream_harvest = update_and_write_status(stream_harvest, status_json)
                         return {
-                            'data_response': data_response,
-                            'stream_harvest': stream_harvest,
+                            "data_response": data_response,
+                            "stream_harvest": stream_harvest,
                         }
                 except Exception:
                     message = f"Data request timeout reached. Has been waiting for more than 2 days. ({str(time_since_request)}) | {status_url}"
                     status_json.update(
                         {
-                            'status': 'failed',
-                            'data_ready': False,
+                            "status": "failed",
+                            "data_ready": False,
                         }
                     )
                     update_and_write_status(stream_harvest, status_json)
-                    #TODO is this the right prefect 2.0 signal?
+                    # TODO is this the right prefect 2.0 signal?
                     logger.warning(message)
                     return Cancelled(
                         message=message,
                         result={"status": status_json, "message": message},
                     )
             else:
-                logger.info(
-                    f"Data request time elapsed: {str(time_since_request)}"
-                )
+                logger.info(f"Data request time elapsed: {str(time_since_request)}")
                 message = "Data is not ready for download..."
                 status_json.update(
                     {
-                        'status': 'pending',
-                        'data_ready': False,
-                        'data_check': True,
+                        "status": "pending",
+                        "data_ready": False,
+                        "data_check": True,
                     }
                 )
                 update_and_write_status(stream_harvest, status_json)
@@ -478,12 +468,12 @@ def check_data(data_response, stream_harvest):
 
 @task
 def get_response(data_response):
-    return data_response.get('data_response')
+    return data_response.get("data_response")
 
 
 @task
 def get_stream(data_response):
-    return data_response.get('stream_harvest')
+    return data_response.get("stream_harvest")
 
 
 @task
@@ -494,9 +484,7 @@ def setup_process(response_json, target_bucket):
     filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
     harvest_catalog = dict(**filtered_catalog_dict, **response_json)
     nc_files_dict = setup_etl(harvest_catalog, target_bucket=target_bucket)
-    logger.info(
-        f"{len(nc_files_dict.get('datasets', []))} netcdf files to be processed."
-    )
+    logger.info(f"{len(nc_files_dict.get('datasets', []))} netcdf files to be processed.")
     return nc_files_dict
 
 
@@ -507,11 +495,9 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
     name = stream.get("table_name")
     logger.info(f"=== Processing {name}. ===")
     status_json = stream_harvest.status.dict()
-    status_json.update({'process_status': 'pending'})
+    status_json.update({"process_status": "pending"})
     update_and_write_status(stream_harvest, status_json)
-    dataset_list = sorted(
-        nc_files_dict.get("datasets", []), key=lambda i: i.get('start_ts')
-    )
+    dataset_list = sorted(nc_files_dict.get("datasets", []), key=lambda i: i.get("start_ts"))
     temp_zarr = nc_files_dict.get("temp_bucket")
     temp_store = fsspec.get_mapper(
         temp_zarr,
@@ -540,19 +526,15 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                     # So it's never the first
                     is_first = True
                 if error_test:
-                    status_json.update({'process_status': 'failed'})
+                    status_json.update({"process_status": "failed"})
                     update_and_write_status(stream_harvest, status_json)
-                    raise ValueError(
-                        "Error test in progress! Not actual error found here!"
-                    )
+                    raise ValueError("Error test in progress! Not actual error found here!")
             logger.info(
                 f"*** {name} ({d.get('deployment')}) | {d.get('start_ts')} - {d.get('end_ts')} ***"
             )
             try:
                 with tempfile.TemporaryDirectory() as tmpdir:
-                    source_url = '/'.join(
-                        [nc_files_dict.get('async_url'), d.get('name')]
-                    )
+                    source_url = "/".join([nc_files_dict.get("async_url"), d.get("name")])
                     # Download the netcdf files and read to a xarray dataset obj
                     ncpath = _download(
                         source_url=source_url,
@@ -561,18 +543,16 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                     logger.info(f"Downloaded: {ncpath}")
                     with dask.config.set(scheduler="single-threaded"):
                         ds = (
-                            xr.open_dataset(
-                                ncpath, engine='netcdf4', decode_times=False
-                            )
+                            xr.open_dataset(ncpath, engine="netcdf4", decode_times=False)
                             .pipe(preproc)
                             .pipe(
                                 update_metadata,
-                                nc_files_dict.get('retrieved_dt'),
+                                nc_files_dict.get("retrieved_dt"),
                             )
                         )
                         # only check for duplicate timestamps during daily appends
                         if refresh == False:
-                            check_for_timestamp_duplicates(ds) 
+                            check_for_timestamp_duplicates(ds)
                         logger.info("Finished preprocessing dataset.")
 
                         # Chunk dataset and write to zarr
@@ -581,7 +561,7 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                                 ds,
                                 max_chunk=max_chunk,
                                 existing_enc=existing_enc,
-                                apply=is_first
+                                apply=is_first,
                             )
                             logger.info("Finished chunking dataset.")
 
@@ -591,7 +571,7 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                                     temp_store,
                                     consolidated=True,
                                     compute=True,
-                                    mode='w',
+                                    mode="w",
                                     encoding=enc,
                                 )
                                 succeed = True
@@ -611,12 +591,8 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                                     if is_done:
                                         continue
                                     time.sleep(5)
-                                    logger.info(
-                                        "Waiting for zarr file writing to finish..."
-                                    )
-                                logger.info(
-                                    "SUCCESS: File successfully written to zarr."
-                                )
+                                    logger.info("Waiting for zarr file writing to finish...")
+                                logger.info("SUCCESS: File successfully written to zarr.")
                             else:
                                 logger.warning(
                                     f"SKIPPED: Issues in file found for {d.get('name')}!"
@@ -627,11 +603,11 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                 exc_dict = parse_exception(e)
                 # TODO engine signal migration
                 # raise FAIL(message=exc_dict.get('traceback', str(e)), result=exc_dict)
-                logger.warning(exc_dict.get('traceback', str(e)))
-                return Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+                logger.warning(exc_dict.get("traceback", str(e)))
+                return Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
     else:
         # TODO engine signal migraiont
-        #raise SKIP("No datasets to process. Skipping...")
+        # raise SKIP("No datasets to process. Skipping...")
         logger.warning("No datasets to process. Skipping...")
         return Cancelled("No datasets to process. Skipping...")
     return {
@@ -645,7 +621,7 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
     logger = get_run_logger()
     logger.info("=== Finalizing data stream. ===")
     try:
-        final_path = stores_dict.get('final_path')
+        final_path = stores_dict.get("final_path")
         status_json = stream_harvest.status.dict()
         final_store = fsspec.get_mapper(
             final_path,
@@ -658,7 +634,7 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
         if stream_harvest.harvest_options.refresh:
             # Remove missing groups in the final store
             temp_group = zarr.open_consolidated(temp_store)
-            final_group = zarr.open_group(final_store, mode='a')
+            final_group = zarr.open_group(final_store, mode="a")
             final_modified = False
             for k, _ in final_group.items():
                 if k not in list(temp_group.array_keys()):
@@ -669,7 +645,7 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
                 zarr.consolidate_metadata(final_store)
 
             # Copy over the store, at this point, they should be similar
-            zarr.copy_store(temp_store, final_store, if_exists='replace')
+            zarr.copy_store(temp_store, final_store, if_exists="replace")
         # NOTE: Comment out since append to live data happened during
         # data_processing task
         # else:
@@ -716,18 +692,18 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
         logger.info(f"Data stream finalized: {final_path}")
         status_json.update(
             {
-                'process_status': 'success',
-                'cloud_location': final_path,
-                'start_date': start_dt,
-                'end_date': end_dt,
-                'processed_at': datetime.datetime.utcnow().isoformat(),
-                'data_check': False,
+                "process_status": "success",
+                "cloud_location": final_path,
+                "start_date": start_dt,
+                "end_date": end_dt,
+                "processed_at": datetime.datetime.utcnow().isoformat(),
+                "data_check": False,
             }
         )
         if stream_harvest.harvest_options.refresh is True:
             status_json.update(
                 {
-                    'last_refresh': datetime.datetime.utcnow().isoformat(),
+                    "last_refresh": datetime.datetime.utcnow().isoformat(),
                 }
             )
         update_and_write_status(stream_harvest, status_json)
@@ -735,46 +711,36 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
     except Exception as e:
         status_json.update(
             {
-                'process_status': 'failed',
-                'processed_at': datetime.datetime.utcnow().isoformat(),
+                "process_status": "failed",
+                "processed_at": datetime.datetime.utcnow().isoformat(),
             }
         )
         update_and_write_status(stream_harvest, status_json)
         exc_dict = parse_exception(e)
-        raise Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+        raise Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
 
 
 @task
-def data_availability(
-    nc_files_dict, stream_harvest, export=False, gh_write=False
-):
-    name = nc_files_dict['stream']['table_name']
-    inst_rd = nc_files_dict['stream']['reference_designator']
-    stream_rd = '-'.join(
-        [nc_files_dict['stream']['method'], nc_files_dict['stream']['stream']]
+def data_availability(nc_files_dict, stream_harvest, export=False, gh_write=False):
+    name = nc_files_dict["stream"]["table_name"]
+    inst_rd = nc_files_dict["stream"]["reference_designator"]
+    stream_rd = "-".join(
+        [nc_files_dict["stream"]["method"], nc_files_dict["stream"]["stream"]]
     )
     logger = get_run_logger()
     logger.info(f"availability for {name}.")
 
-    url = nc_files_dict['final_bucket']
-    mapper = fsspec.get_mapper(
-        url, **stream_harvest.harvest_options.path_settings
-    )
+    url = nc_files_dict["final_bucket"]
+    mapper = fsspec.get_mapper(url, **stream_harvest.harvest_options.path_settings)
     try:
-        za = zarr.open_consolidated(mapper)['time']
-        calendar = za.attrs.get(
-            'calendar', harvest_settings.ooi_config.time['calendar']
-        )
-        units = za.attrs.get(
-            'units', harvest_settings.ooi_config.time['units']
-        )
+        za = zarr.open_consolidated(mapper)["time"]
+        calendar = za.attrs.get("calendar", harvest_settings.ooi_config.time["calendar"])
+        units = za.attrs.get("units", harvest_settings.ooi_config.time["units"])
 
         if any(np.isnan(za)):
             logger.info(f"Null values found. Skipping {name}")
         else:
-            logger.info(
-                f"Total time bytes: {dask.utils.memory_repr(za.nbytes)}"
-            )
+            logger.info(f"Total time bytes: {dask.utils.memory_repr(za.nbytes)}")
             darr = da.from_zarr(za)
 
             darr_dt = darr.map_blocks(
@@ -783,24 +749,24 @@ def data_availability(
                 calendar=calendar,
             )
 
-            ddf = darr_dt.to_dask_dataframe(['dtindex']).set_index('dtindex')
-            ddf['count'] = 0
+            ddf = darr_dt.to_dask_dataframe(["dtindex"]).set_index("dtindex")
+            ddf["count"] = 0
 
-            resolutions = {'hourly': 'H', 'daily': 'D', 'monthly': 'M'}
+            resolutions = {"hourly": "H", "daily": "D", "monthly": "M"}
             result_dict = {}
             for k, v in resolutions.items():
                 try:
                     result = _fetch_avail_dict(ddf, resolution=v)
-                    result_dict.update({ k: result })
+                    result_dict.update({k: result})
                 except Exception as e:
-                    if k == 'daily':
+                    if k == "daily":
                         raise e
                     logger.warning(f"ERROR: Creation of {k} data availability :: {e}")
 
             avail_dict = {
-                'data_stream': stream_rd,
-                'inst_rd': inst_rd,
-                'results': result_dict,
+                "data_stream": stream_rd,
+                "inst_rd": inst_rd,
+                "results": result_dict,
             }
             if export:
                 _write_data_avail(avail_dict, gh_write=gh_write)
@@ -808,4 +774,4 @@ def data_availability(
             return avail_dict
     except Exception as e:
         exc_dict = parse_exception(e)
-        raise Failed(message=exc_dict.get('traceback', str(e)), result=exc_dict)
+        raise Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)

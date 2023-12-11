@@ -30,9 +30,7 @@ def create(
         legacy_inst_catalog_refresh=legacy_catalog,
     )
     time_elapsed = datetime.datetime.utcnow() - start_time
-    typer.echo(
-        f"Metadata creation/refresh finished. Process took {str(time_elapsed)}"
-    )
+    typer.echo(f"Metadata creation/refresh finished. Process took {str(time_elapsed)}")
 
 
 if __name__ == "__main__":

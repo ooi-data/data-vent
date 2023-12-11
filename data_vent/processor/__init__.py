@@ -29,14 +29,14 @@ from .utils import (
 
 def _update_time_coverage(store: fsspec.mapping.FSMap) -> None:
     """Updates start and end date in global attributes"""
-    zg = zarr.open_group(store, mode='r+')
-    calendar = zg.time.attrs.get('calendar', 'gregorian')
-    units = zg.time.attrs.get('units', 'seconds since 1900-01-01 0:0:0')
+    zg = zarr.open_group(store, mode="r+")
+    calendar = zg.time.attrs.get("calendar", "gregorian")
+    units = zg.time.attrs.get("units", "seconds since 1900-01-01 0:0:0")
     start, end = xr.coding.times.decode_cf_datetime(
         [zg.time[0], zg.time[-1]], units=units, calendar=calendar
     )
-    zg.attrs['time_coverage_start'] = str(start)
-    zg.attrs['time_coverage_end'] = str(end)
+    zg.attrs["time_coverage_start"] = str(start)
+    zg.attrs["time_coverage_end"] = str(end)
     zarr.consolidate_metadata(store)
     return str(start), str(end)
 
@@ -48,7 +48,7 @@ def get_logger():
 
 
 def is_zarr_ready(store):
-    meta = store.get('.zmetadata')
+    meta = store.get(".zmetadata")
     if meta is None:
         return False
     return True
@@ -56,8 +56,8 @@ def is_zarr_ready(store):
 
 def preproc(ds):
     logger.info("Preprocessing dataset...")
-    if 'obs' in ds.dims:
-        rawds = ds.swap_dims({'obs': 'time'}).reset_coords(drop=True)
+    if "obs" in ds.dims:
+        rawds = ds.swap_dims({"obs": "time"}).reset_coords(drop=True)
     else:
         rawds = ds
     string_variables = []
@@ -66,16 +66,13 @@ def preproc(ds):
             not np.issubdtype(var.dtype, np.number)
             and not np.issubdtype(var.dtype, np.datetime64)
             and not np.issubdtype(var.dtype, np.bool_)
-            and not "qartod_executed" in v # keep qartod_executed variable
+            and not "qartod_executed" in v  # keep qartod_executed variable
         ):
-            if (
-                not coding.strings.is_unicode_dtype(var.dtype)
-                or var.dtype == object
-            ):
+            if not coding.strings.is_unicode_dtype(var.dtype) or var.dtype == object:
                 string_variables.append(v)
     # Drop variables that contains strings.. not necessary data.
     logger.info(f"Removing variables containing strings: {','.join(string_variables)}")
-    rawds = rawds.drop_vars(string_variables, errors='ignore')
+    rawds = rawds.drop_vars(string_variables, errors="ignore")
     return rawds
 
 
@@ -88,14 +85,14 @@ def update_metadata(dstime, download_date, unit=None, extra_attrs={}):
 
         for i, j in att.items():
             if isinstance(j, list) or isinstance(j, np.ndarray):
-                att.update({i: ','.join(map(str, j))})
+                att.update({i: ",".join(map(str, j))})
         var.attrs.update(att)
 
         # unit modifier
-        if 'units' in var.attrs:
-            units = var.attrs['units']
+        if "units" in var.attrs:
+            units = var.attrs["units"]
             if isinstance(units, np.ndarray):
-                unit = ','.join(units)
+                unit = ",".join(units)
             else:
                 unit = units
 
@@ -140,9 +137,7 @@ def update_metadata(dstime, download_date, unit=None, extra_attrs={}):
     dstime.attrs[
         "Notes"
     ] = "This netCDF product is a copy of the data on the University of Washington AWS Cloud Infrastructure."  # noqa
-    dstime.attrs[
-        "Owner"
-    ] = "University of Washington Cabled Array Value Add Team."  # noqa
+    dstime.attrs["Owner"] = "University of Washington Cabled Array Value Add Team."  # noqa
     dstime.attrs["date_downloaded"] = download_date
     dstime.attrs["date_processed"] = datetime.datetime.now().isoformat()
 
@@ -181,7 +176,7 @@ def _meta_cleanup(chunked_ds):
 def append_to_zarr(mod_ds, store, encoding, logger=None):
     if logger is None:
         logger = get_logger()
-    existing_zarr = zarr.open_group(store, mode='a')
+    existing_zarr = zarr.open_group(store, mode="a")
     existing_var_count = len(list(existing_zarr.array_keys()))
     to_append_var_count = len(mod_ds.variables)
 
@@ -191,7 +186,7 @@ def append_to_zarr(mod_ds, store, encoding, logger=None):
         mod_ds = _prepare_ds_to_append(store, mod_ds)
 
     dim_indexer, modify_zarr_dims, issue_dims = _validate_dims(
-        mod_ds, existing_zarr, append_dim='time'
+        mod_ds, existing_zarr, append_dim="time"
     )
 
     if len(issue_dims) > 0:
@@ -208,7 +203,7 @@ def append_to_zarr(mod_ds, store, encoding, logger=None):
         mod_ds = mod_ds.reindex(dim_indexer)
 
     # Remove append_dim duplicates by checking for existing tail
-    append_dim = 'time'
+    append_dim = "time"
     if existing_zarr[append_dim][-1] == mod_ds[append_dim].data[0]:
         mod_ds = mod_ds.drop_isel({append_dim: 0})
 
@@ -220,7 +215,7 @@ def append_to_zarr(mod_ds, store, encoding, logger=None):
             store,
             consolidated=True,
             compute=True,
-            mode='a',
+            mode="a",
             append_dim=append_dim,
             safe_chunks=False,
         )
@@ -238,25 +233,23 @@ def _round_down(to_round: int) -> int:
     return to_round - to_round % digit_round
 
 
-def _calc_chunks(variable: xr.DataArray, max_chunk='100MB'):
+def _calc_chunks(variable: xr.DataArray, max_chunk="100MB"):
     """Dynamically figure out chunk based on max chunk size"""
     max_chunk_size = dask.utils.parse_bytes(max_chunk)
-    dim_shape = {
-        x: y for x, y in zip(variable.dims, variable.shape) if x != 'time'
-    }
-    if 'time' in variable.dims:
+    dim_shape = {x: y for x, y in zip(variable.dims, variable.shape) if x != "time"}
+    if "time" in variable.dims:
         time_chunk = math.ceil(
             max_chunk_size / prod(dim_shape.values()) / variable.dtype.itemsize
         )
-        dim_shape['time'] = _round_down(time_chunk)
+        dim_shape["time"] = _round_down(time_chunk)
     chunks = tuple(dim_shape[d] for d in list(variable.dims))
     return chunks
 
 
 def chunk_ds(
     chunked_ds,
-    max_chunk='100MB',
-    time_max_chunks='100MB',
+    max_chunk="100MB",
+    time_max_chunks="100MB",
     existing_enc=None,
     apply=True,
 ):
@@ -271,14 +264,10 @@ def chunk_ds(
             extra_enc = {}
             if "_FillValue" in v.encoding:
                 extra_enc["_FillValue"] = v.encoding["_FillValue"]
-            raw_enc[k] = dict(
-                compressor=compress, dtype=v.dtype, chunks=chunks, **extra_enc
-            )
+            raw_enc[k] = dict(compressor=compress, dtype=v.dtype, chunks=chunks, **extra_enc)
 
-        if 'time' in chunked_ds:
-            chunks = _calc_chunks(
-                chunked_ds['time'], max_chunk=time_max_chunks
-            )
+        if "time" in chunked_ds:
+            chunks = _calc_chunks(chunked_ds["time"], max_chunk=time_max_chunks)
             raw_enc["time"] = {"chunks": chunks}
     elif isinstance(existing_enc, dict):
         raw_enc = existing_enc
@@ -291,7 +280,7 @@ def chunk_ds(
             encoding = raw_enc.get(k, None)
             var_chunks = {}
             if isinstance(encoding, dict):
-                var_chunks = encoding['chunks']
+                var_chunks = encoding["chunks"]
 
             chunked_ds[k] = chunked_ds[k].chunk(chunks=var_chunks)
 

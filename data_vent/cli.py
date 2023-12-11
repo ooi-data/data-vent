@@ -35,9 +35,7 @@ def producer(
     refresh: bool = False,
     existing_data_path: str = f"s3://{DATA_BUCKET}",
 ):
-    request_responses = fetch_harvest(
-        instrument_rd, refresh, existing_data_path
-    )
+    request_responses = fetch_harvest(instrument_rd, refresh, existing_data_path)
 
     if len(request_responses) == 0:
         typer.echo("WARNING: No requests to be fetched.")
@@ -53,7 +51,7 @@ def producer(
                         """
             )
             all_resp.append(resp_text)
-        typer.echo('\n'.join(all_resp))
+        typer.echo("\n".join(all_resp))
 
 
 if __name__ == "__main__":
