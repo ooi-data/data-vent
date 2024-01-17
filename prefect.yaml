@@ -29,11 +29,9 @@ deployments:
   entrypoint: data_vent/flow.py:stream_ingest
   parameters: {}
   work_pool:
-    name: scope-push-pool
+    name: data-harvest-push-pool
     work_queue_name:
-    job_variables:
-      cpu: 2048
-      memory: 16384
+    job_variables: {}
   schedule:
   is_schedule_active: true
 - name: run_stream_ingest_2vcpu_16gb
@@ -62,10 +60,8 @@ deployments:
   entrypoint: data_vent/flow.py:run_stream_ingest
   parameters: {}
   work_pool:
-    name: scope-push-pool
+    name: data-harvest-push-pool
     work_queue_name:
-    job_variables:
-      cpu: 2048
-      memory: 16384
+    job_variables: {}
   schedule:
   is_schedule_active: true
