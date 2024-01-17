@@ -309,7 +309,7 @@ def run_stream_ingest(
         if run_in_cloud:
             # asyncio.run(is_flowrun_running(run_name))
             run_deployment(
-                name="stream-ingest/stream-ingest-deployment-v2",
+                name="stream-ingest/stream_ingest_2vcpu_16gb",
                 parameters=flow_params,
                 flow_run_name=run_name,
                 timeout=20,  # TODO timeout might need to be increase if we have race condition errors
