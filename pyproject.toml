@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "data_vent"
-version = "1.5.0"
+version = "1.4.1"
 description = "inital attempt at migrating data-harvest"
 authors = [
   { name = "Joe Duprey", email = "jduprey@uw.edu" },
@@ -39,8 +39,7 @@ dependencies = [
   "prefect-aws",
   "requests-html",
   "rechunker",
-  "pydantic",
-  "pydantic-settings",
+  "pydantic<2",
 ]
 
 [project.scripts]

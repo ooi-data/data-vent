@@ -1,7 +1,6 @@
 import os
-from pydantic import BaseModel, Field, PyObject, validator, field_validator
+from pydantic import BaseSettings, BaseModel, Field, PyObject, validator
 from data_vent.utils.core import prefect_version
-from pydantic_settings import BaseSettings
 
 PREFECT_VERSION = prefect_version()
 
@@ -41,12 +40,9 @@ class GithubConfig(BaseSettings):
     defaults: GithubStatusDefaults = GithubStatusDefaults()
     main_branch: str = Field("main")
     data_org: str = Field("ooi-data")
-    pat: str = Field(None, validation_alias="gh_pat")
+    pat: str = Field(None, env="gh_pat")
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    #@validator("pat", pre=True, always=True)
-    @field_validator("pat")
+    @validator("pat", pre=True, always=True)
     def pat_prefect(cls, v):
         if v is None:
             return get_prefect_secret("GH_PAT")
@@ -54,22 +50,16 @@ class GithubConfig(BaseSettings):
 
 
 class AWSConfig(BaseSettings):
-    key: str = Field(None, validation_alias="aws_key")
-    secret: str = Field(None, validation_alias="aws_secret")
+    key: str = Field(None, env="aws_key")
+    secret: str = Field(None, env="aws_secret")
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    #@validator("key", pre=True, always=True)
-    @field_validator("key")
+    @validator("key", pre=True, always=True)
     def key_prefect(cls, v):
         if v is None:
             return get_prefect_secret("AWS_KEY")
         return v
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    # @validator("secret", pre=True, always=True)
-    @field_validator("secret")
+    @validator("secret", pre=True, always=True)
     def secret_prefect(cls, v):
         if v is None:
             return get_prefect_secret("AWS_KEY")
@@ -80,10 +70,7 @@ class S3Buckets(BaseModel):
     metadata: str = "ooi-metadata-prod"
     harvest_cache: str = "flow-process-bucket"
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    #@validator("*", pre=True, always=True)
-    @field_validator("*")
+    @validator("*", pre=True, always=True)
     def add_s3(cls, v):
         if "s3://" not in v:
             return f"s3://{v}"
@@ -91,8 +78,8 @@ class S3Buckets(BaseModel):
 
 
 class OOIConfig(BaseSettings):
-    username: str = Field(None, validation_alias="ooi_username")
-    token: str = Field(None, validation_alias="ooi_token")
+    username: str = Field(None, env="ooi_username")
+    token: str = Field(None, env="ooi_token")
     base_urls: dict = {
         "ooinet": "https://ooinet.oceanobservatories.org",
         "rawdata": "https://rawdata.oceanobservatories.org",
@@ -104,19 +91,13 @@ class OOIConfig(BaseSettings):
         "calendar": "gregorian",
     }
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    #@validator("username", pre=True, always=True)
-    @field_validator("username")
+    @validator("username", pre=True, always=True)
     def username_prefect(cls, v):
         if v is None:
             return get_prefect_secret("OOI_USERNAME")
         return v
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    #@validator("token", pre=True, always=True)
-    @field_validator("token")
+    @validator("token", pre=True, always=True)
     def token_prefect(cls, v):
         if v is None:
             return get_prefect_secret("OOI_TOKEN")
