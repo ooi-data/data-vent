@@ -1,10 +1,10 @@
-from pydantic import BaseSettings
 from data_vent.settings.models import (
     StorageOptions,
     OOIConfig,
     S3Buckets,
     GithubConfig,
 )
+from pydantic_settings import BaseSettings
 
 
 class HarvestSettings(BaseSettings):
