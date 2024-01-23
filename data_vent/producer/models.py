@@ -2,14 +2,15 @@ from typing import List, Literal, Optional, Dict, Any
 from datetime import datetime
 from copy import deepcopy
 
-from pydantic import BaseModel, validator
+from pydantic import field_validator, ConfigDict, BaseModel, validator
 
 
 class Stream(BaseModel):
     method: str
     name: str
 
-    @validator("*")
+    @field_validator("*")
+    @classmethod
     def must_exists(cls, v):
         if not v.strip():
             raise ValueError("Stream method or name cannot be empty")
@@ -17,10 +18,11 @@ class Stream(BaseModel):
 
 
 class HarvestRange(BaseModel):
-    start: Optional[str]
-    end: Optional[str]
+    start: Optional[str] = None
+    end: Optional[str] = None
 
-    @validator("start")
+    @field_validator("start")
+    @classmethod
     def start_isoformat(cls, v):
         try:
             if v:
@@ -31,7 +33,8 @@ class HarvestRange(BaseModel):
                 "start custom range is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
-    @validator("end")
+    @field_validator("end")
+    @classmethod
     def end_isoformat(cls, v):
         try:
             if v:
@@ -51,7 +54,8 @@ class HarvestOptions(BaseModel):
     path_settings: dict = {}
     custom_range: HarvestRange = HarvestRange()
 
-    @validator("path")
+    @field_validator("path")
+    @classmethod
     def path_must_exists(cls, v):
         if not v.strip():
             raise ValueError("Harvest destination path cannot be empty")
@@ -66,25 +70,26 @@ class HarvestStatus(BaseModel):
     status: Literal[
         "started", "pending", "failed", "success", "discontinued", "unknown"
     ] = "unknown"
-    last_updated: Optional[str]
+    last_updated: Optional[str] = None
     # OOI Data request information
     data_ready: bool = False
-    data_response: Optional[str]
-    requested_at: Optional[str]
+    data_response: Optional[str] = None
+    requested_at: Optional[str] = None
     # Cloud data information
-    process_status: Optional[Literal["pending", "failed", "success"]]
-    cloud_location: Optional[str]
-    start_date: Optional[str]
-    end_date: Optional[str]
-    processed_at: Optional[str]
-    last_refresh: Optional[str]
+    process_status: Optional[Literal["pending", "failed", "success"]] = None
+    cloud_location: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    processed_at: Optional[str] = None
+    last_refresh: Optional[str] = None
     data_check: bool = False
 
     def __init__(self, **data):
         super().__init__(**data)
         self.last_updated = datetime.utcnow().isoformat()
 
-    @validator("processed_at")
+    @field_validator("processed_at")
+    @classmethod
     def processed_at_isoformat(cls, v):
         try:
             if v:
@@ -95,7 +100,8 @@ class HarvestStatus(BaseModel):
                 "processed_at is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
-    @validator("last_refresh")
+    @field_validator("last_refresh")
+    @classmethod
     def last_refresh_isoformat(cls, v):
         try:
             if v:
@@ -106,7 +112,8 @@ class HarvestStatus(BaseModel):
                 "last_refresh is not in ISO 8601 format (yyyy-MM-ddTHH:mm:ss.SSS)"
             )
 
-    @validator("requested_at")
+    @field_validator("requested_at")
+    @classmethod
     def requested_at_isoformat(cls, v):
         try:
             if v:
@@ -121,11 +128,11 @@ class HarvestStatus(BaseModel):
 class StreamHarvest(BaseModel):
     instrument: str
     stream: Stream
-    assignees: Optional[List[str]]
-    labels: Optional[List[str]]
+    assignees: Optional[List[str]] = None
+    labels: Optional[List[str]] = None
     harvest_options: HarvestOptions
     workflow_config: Workflow
-    table_name: Optional[str]
+    table_name: Optional[str] = None
     _status: HarvestStatus
 
     def __init__(self, **data):
@@ -141,13 +148,16 @@ class StreamHarvest(BaseModel):
         new_status.update(status_input)
         self._status = HarvestStatus(**new_status)
 
-    @validator("instrument")
+    @field_validator("instrument")
+    @classmethod
     def instrument_must_exists(cls, v):
         if not v.strip():
             raise ValueError("Instrument cannot be empty")
         return v
 
-    @validator("table_name", always=True)
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
+    @field_validator("table_name")
     def set_table_name(cls, v, values):
         if "instrument" in values and "stream" in values:
             return "-".join(
@@ -157,6 +167,6 @@ class StreamHarvest(BaseModel):
                     values["stream"].name,
                 ]
             )
-
-    class Config:
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(underscore_attrs_are_private=True)
