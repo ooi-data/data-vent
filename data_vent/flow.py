@@ -36,7 +36,7 @@ from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET
 
 
 class FlowParameters(BaseModel):
-    config: Optional[Dict[str, Any]]
+    config: Optional[Dict[str, Any]] = None
     target_bucket: str = f"s3://{DATA_BUCKET}"
     force_harvest: bool = False
     refresh: bool = False
