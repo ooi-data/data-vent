@@ -40,6 +40,10 @@ Deployed prefect flows are hosted on the free prefect2 cloud service, in this wo
 jdupreyuwedu/ooi-rca-prefect2
 The data harvest is scheduled to run once daily at 6am PST. It has been scheduled using the prefect2 GUI.
 
+## Known Issues
+Refreshing streams is not working as intended. Setting `refresh=True` and `force_harvest=True` will only refresh 
+the entire time series if all status files related to that stream are deleted first in `flow-process-bucket`.
+
 # Development Environment 
 With data-vent as cwd:
 
