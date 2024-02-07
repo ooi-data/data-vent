@@ -284,4 +284,5 @@ def chunk_ds(
 
             chunked_ds[k] = chunked_ds[k].chunk(chunks=var_chunks)
 
+    logger.info(f'raw_enc: {raw_enc}')
     return chunked_ds, raw_enc
