@@ -238,6 +238,8 @@ def run_stream_ingest(
     priority_df = pd.read_csv(
         "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
     )
+    # there may be some instruments we want to plot but not harvest
+    priority_df = priority_df[priority_df['harvestInterval'] == 1]
     priority_instruments = sorted(priority_df.refDes.unique())
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
