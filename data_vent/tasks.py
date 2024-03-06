@@ -150,7 +150,7 @@ def check_requested(stream_harvest):
         return stream_harvest.status.data_check
 
     last_data_date = parser.parse(status_json.get("end_date") + "Z")
-    logger.info(f"Cloud -- Last data point: {last_data_date}")
+    logger.info(f"RCA Cloud -- Last data point: {last_data_date}")
 
     if stream_harvest.status.data_check is True:
         return True
