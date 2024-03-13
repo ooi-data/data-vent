@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: false
+  test: false
+instrument: RS03INT1-MJ03C-09-TRHPHA302
+stream:
+  method: streamed
+  name: trhph_sample
+workflow_config:
+  schedule: 0 0 * * *
