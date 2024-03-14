@@ -203,6 +203,13 @@ def run_stream_ingest(
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
 
+    if test_run:
+        streams = ["CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record",
+                   "CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record",
+                   "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample"
+                   ]
+        logger.info(f"TEST RUN: setting streams to: {streams}")
+
     if streams:
         all_paths = []
         for stream in streams:
@@ -210,27 +217,6 @@ def run_stream_ingest(
             all_paths.append(fpath)
 
         logger.info(f"Running specified streams at the following paths: {all_paths}")
-
-    elif test_run:
-        # these are some "small data" streams that are useful for small test runs
-        all_paths = [
-            os.path.join(
-                config_dir,
-                "CE04OSPS-SF01B-2B-PHSENA108",
-                "CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record.yaml",
-            ),
-            os.path.join(
-                config_dir,
-                "CE04OSPS-SF01B-4F-PCO2WA102",
-                "CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record.yaml",
-            ),
-            os.path.join(
-                config_dir,
-                "CE04OSPS-SF01B-4A-NUTNRA102",
-                "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample.yaml",
-            ),
-        ]
-        logger.info(f"Using the following paths for this TEST RUN: {all_paths}")
 
     else:  # grabs all config yamls
         fs = fsspec.filesystem("")
