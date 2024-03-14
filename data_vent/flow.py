@@ -75,8 +75,7 @@ def stream_ingest(
     flow_dict = flow_params.dict()
 
     stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, refresh)
-    # TODO how do you actually set these path settings - it is confusing
-    # stream_harvest.harvest_options.path_settings = DEV_PATH_SETTINGS['aws']
+    # TODO still don't know how this was intended to work flexibly
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
 
     is_requested = check_requested(stream_harvest)
