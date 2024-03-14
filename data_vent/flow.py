@@ -50,7 +50,6 @@ class FlowParameters(BaseModel):
 def stream_ingest(
     config: Dict,
     harvest_options: Dict[str, Any] = {},
-    # issue_config: Dict[str, Any] = {},
     force_harvest: bool = False,
     refresh: bool = False,
     max_chunk: str = "100MB",
@@ -60,11 +59,6 @@ def stream_ingest(
     gh_write_da: bool = True,
 ):
     logger = get_run_logger()
-
-    # TODO automated github things - are these all deprecated??
-    # default_gh_org = harvest_settings.github.data_org
-    # issue_config.setdefault("gh_org", default_gh_org)
-    # state_handlers = [github_issue_notifier(**issue_config)]
 
     # Check default_params
     flow_params = FlowParameters(
@@ -78,15 +72,7 @@ def stream_ingest(
         error_test=error_test,
     )
 
-    # Sets the defaults for flow config
-    # config_required = False
-    # if default_params.config is None:
-    #     config_required = True
-
     flow_dict = flow_params.dict()
-
-    # config = Parameter("config", required=config_required, default=default_dict.get("config", no_default),)
-    # harvest_options = Parameter("harvest_options", default={})
 
     stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, refresh)
     # TODO how do you actually set these path settings - it is confusing
@@ -133,9 +119,6 @@ def stream_ingest(
         stores_dict,
         stream_harvest,
         max_chunk,
-        # task_args={
-        #     "state_handlers": state_handlers,
-        # },
     )
 
     # TODO: Add data validation step here!
@@ -146,31 +129,8 @@ def stream_ingest(
         stream_harvest,
         export_da,
         gh_write_da,
-        # TODO figure out what to do with task args
-        # task_args={
-        #     "state_handlers": state_handlers,
-        # },
-        wait_for=final_path,  # TODO
+        wait_for=final_path,
     )
-
-    # in prefect 1.0 this sets the provided task as an upstream dependency of `availability` in this case
-    # availability.set_upstream(final_path)
-
-    # TODO I think this saves logs as files to s3 - will have to find alternative or alter for prefect 2.0?
-    # task_names = [t.name for t in stream_ingest.tasks]
-    # if isinstance(log_settings, dict):
-    #     log_settings = LogHandlerSettings(**log_settings)
-    # elif isinstance(log_settings, LogHandlerSettings):
-    #     ...
-    # else:
-    #     raise TypeError("log_settings must be type LogHandlerSettings or Dict")
-
-    # flow_logger = get_logger()
-    # flow_logger.addHandler(
-    #     HarvestFlowLogHandler(task_names, **log_settings.dict())
-    # )
-    # return flow
-
 
 # async def is_flowrun_running(run_name: str) -> bool:
 #     async with get_client() as client:
