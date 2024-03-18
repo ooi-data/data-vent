@@ -31,8 +31,7 @@ from data_vent.tasks import (
 )
 
 from data_vent.settings.main import harvest_settings
-from data_vent.pipelines.notifications import github_issue_notifier
-from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET
+from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS
 
 
 class FlowParameters(BaseModel):
@@ -258,13 +257,23 @@ def run_stream_ingest(
 
         logger.info(f"Launching child flow: {run_name}")
         logger.info(f"configs: {config_json}")
-
+        # asyncio.run(is_flowrun_running(run_name))
         # run stream_ingest in parallel using AWS ECS fargate - this infrastructure is tied to
         # the prefect deployment
         if run_in_cloud:
-            # asyncio.run(is_flowrun_running(run_name))
+            if refresh:
+                harvest_type = "refresh"
+            else:
+                harvest_type = "append"
+
+            if run_name in COMPUTE_EXCEPTIONS and harvest_type in COMPUTE_EXCEPTIONS[run_name]:
+                deployment_name = f"stream-ingest/stream_ingest_{COMPUTE_EXCEPTIONS[run_name][harvest_type]}"
+                logger.warning(f"{run_name} requires additional compute. Running deployment: {deployment_name}")
+            else:
+                deployment_name = "stream-ingest/stream_ingest_2vcpu_16gb" # default deployment
+
             run_deployment(
-                name="stream-ingest/stream_ingest_2vcpu_16gb",
+                name=deployment_name,
                 parameters=flow_params,
                 flow_run_name=run_name,
                 timeout=20,  # TODO timeout might need to be increase if we have race condition errors
