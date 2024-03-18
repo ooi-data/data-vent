@@ -65,3 +65,17 @@ deployments:
     job_variables: {}
   schedule:
   is_schedule_active: true
+- name: stream_ingest_4vcpu_30gb
+  version:
+  tags: []
+  description:
+  entrypoint: data_vent/flow.py:stream_ingest
+  parameters: {}
+  work_pool:
+    name: data-harvest-push-pool
+    work_queue_name:
+    job_variables:
+      cpu: 4096
+      memory: 30720
+  schedule:
+  is_schedule_active: true
