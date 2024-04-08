@@ -242,7 +242,6 @@ def create_request_estimate(
             request_dict.update({"stream": stream_dct, "estimated": response})
             logger.debug(text(table_name, m))
 
-        logger.info(f"request_dict: {request_dict}")
         return request_dict
 
 
