@@ -79,3 +79,17 @@ deployments:
       memory: 30720
   schedule:
   is_schedule_active: true
+- name: stream_ingest_8vcpu_60gb
+  version:
+  tags: []
+  description:
+  entrypoint: data_vent/flow.py:stream_ingest
+  parameters: {}
+  work_pool:
+    name: data-harvest-push-pool
+    work_queue_name:
+    job_variables:
+      cpu: 8192
+      memory: 64424
+  schedule:
+  is_schedule_active: true
