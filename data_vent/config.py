@@ -40,5 +40,6 @@ STATUS_EMOJIS = harvest_settings.github.defaults.status_emojis
 COMPUTE_EXCEPTIONS = {
     'CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data':{
         'refresh': '4vcpu_30gb',
+        'append': '4vcpu_30gb',
     }
 }
