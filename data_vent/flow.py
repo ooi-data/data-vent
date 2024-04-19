@@ -193,9 +193,15 @@ def run_stream_ingest(
             "non_priority must be `False` if priority only is `True` (or visa-versa)"
         )
 
-    priority_df = pd.read_csv(
-        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
+    stage1_df = pd.read_csv(
+        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv" # noqa
     )
+    stage2_df = pd.read_csv(
+        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/stage2Dictionary.csv" 
+    )
+
+    priority_df = pd.concat([stage1_df, stage2_df])
+
     # there may be some instruments we want to plot but not harvest
     priority_df = priority_df[priority_df['harvestInterval'] == 1]
     priority_instruments = sorted(priority_df.refDes.unique())
