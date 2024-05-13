@@ -10,11 +10,11 @@ class GithubConfig(BaseSettings):
     data_org: str = Field("ooi-data")
     pat: str = Field(None, env="gh_pat")
 
-    @validator("pat", pre=True, always=True)
-    def pat_prefect(cls, v):
-        if v is None:
-            return get_env_secret("GH_PAT")
-        return v
+    # @validator("pat", pre=True, always=True)
+    # def pat_prefect(cls, v):
+    #     if v is None:
+    #         return get_env_secret("GH_PAT")
+    #     return v
 
 
 class AWSConfig(BaseSettings):
