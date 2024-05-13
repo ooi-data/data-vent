@@ -17,8 +17,8 @@ class AWSConfig(BaseSettings):
 
 
 class S3Buckets(BaseModel):
-    metadata: str = "ooi-metadata-prod"
-    harvest_cache: str = "flow-process-bucket"
+    metadata: str = "s3://ooi-metadata-prod"
+    harvest_cache: str = "s3://flow-process-bucket"
 
 
 class OOIConfig(BaseSettings):
