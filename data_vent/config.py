@@ -24,16 +24,16 @@ FLOW_PROCESS_BUCKET = "flow-process-bucket"
 GH_PAT = harvest_settings.github.pat
 GH_DATA_ORG = harvest_settings.github.data_org
 GH_MAIN_BRANCH = harvest_settings.github.main_branch
-RESPONSE_PATH_STR = harvest_settings.github.defaults.response_path_str
-REQUEST_STATUS_PATH_STR = harvest_settings.github.defaults.request_status_path_str
-PROCESS_STATUS_PATH_STR = harvest_settings.github.defaults.process_status_path_str
-CONFIG_PATH_STR = harvest_settings.github.defaults.config_path_str
+# RESPONSE_PATH_STR = harvest_settings.github.defaults.response_path_str
+# REQUEST_STATUS_PATH_STR = harvest_settings.github.defaults.request_status_path_str
+# PROCESS_STATUS_PATH_STR = harvest_settings.github.defaults.process_status_path_str
+# CONFIG_PATH_STR = harvest_settings.github.defaults.config_path_str
 
-COMMIT_MESSAGE_TEMPLATE = harvest_settings.github.defaults.commit_message_template
+# COMMIT_MESSAGE_TEMPLATE = harvest_settings.github.defaults.commit_message_template
 
-PROCESS_COMMIT_MESSAGE_TEMPLATE = (
-    harvest_settings.github.defaults.process_commit_message_template
-)
+# PROCESS_COMMIT_MESSAGE_TEMPLATE = (
+#     harvest_settings.github.defaults.process_commit_message_template
+# )
 
 COMPUTE_EXCEPTIONS = {
     'CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data':{
