@@ -130,6 +130,7 @@ class StreamHarvest(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
+        self.table_name = "-".join([self.instrument, self.stream.method, self.stream.name])
         self._status = HarvestStatus()
 
     @property
@@ -147,16 +148,6 @@ class StreamHarvest(BaseModel):
             raise ValueError("Instrument cannot be empty")
         return v
 
-    @validator("table_name", always=True)
-    def set_table_name(cls, v, values):
-        if "instrument" in values and "stream" in values:
-            return "-".join(
-                [
-                    values["instrument"],
-                    values["stream"].method,
-                    values["stream"].name,
-                ]
-            )
 
     class Config:
         underscore_attrs_are_private = True
