@@ -16,28 +16,28 @@ def get_prefect_secret(key):
     return os.environ.get(key, None)
 
 
-class GithubStatusDefaults(BaseModel):
-    status_emojis: dict = {
-        "pending": "🔵",
-        "failed": "🔴",
-        "success": "🟢",
-        "skip": "🟠",
-        "discontinued": "⚫️",
-    }
-    process_commit_message_template: PyObject = (
-        "{status_emoji} Data processing [{status}] ({request_dt})".format
-    )
-    commit_message_template: PyObject = (
-        "{status_emoji} Data request [{status}] ({request_dt})".format
-    )
-    config_path_str: str = "config.yaml"
-    process_status_path_str: str = "history/process.yaml"
-    request_status_path_str: str = "history/request.yaml"
-    response_path_str: str = "history/response.json"
+# class GithubStatusDefaults(BaseModel):
+#     status_emojis: dict = {
+#         "pending": "🔵",
+#         "failed": "🔴",
+#         "success": "🟢",
+#         "skip": "🟠",
+#         "discontinued": "⚫️",
+#     }
+#     process_commit_message_template: PyObject = (
+#         "{status_emoji} Data processing [{status}] ({request_dt})".format
+#     )
+#     commit_message_template: PyObject = (
+#         "{status_emoji} Data request [{status}] ({request_dt})".format
+#     )
+#     config_path_str: str = "config.yaml"
+#     process_status_path_str: str = "history/process.yaml"
+#     request_status_path_str: str = "history/request.yaml"
+#     response_path_str: str = "history/response.json"
 
 
 class GithubConfig(BaseSettings):
-    defaults: GithubStatusDefaults = GithubStatusDefaults()
+    #defaults: GithubStatusDefaults = GithubStatusDefaults()
     main_branch: str = Field("main")
     data_org: str = Field("ooi-data")
     pat: str = Field(None, env="gh_pat")
