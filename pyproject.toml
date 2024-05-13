@@ -29,7 +29,7 @@ dependencies = [
   "xarray",
   "netcdf4",
   "zarr",
-  "lxml",
+  "lxml<5.2",
   "gspread",
   "fastparquet",
   "pygithub",

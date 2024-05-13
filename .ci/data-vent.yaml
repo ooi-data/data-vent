@@ -14,7 +14,7 @@ dependencies:
   - typer
   - zarr
   - xarray
-  - lxml
+  - lxml<5.2
   - gspread
   - fastparquet
   - pygithub
