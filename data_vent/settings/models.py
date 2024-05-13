@@ -1,5 +1,5 @@
 import os
-from pydantic import BaseSettings, BaseModel, Field, validator
+from pydantic import BaseSettings, BaseModel, Field
 
 def get_env_secret(key):
     return os.environ.get(key, None)
