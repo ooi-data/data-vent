@@ -39,7 +39,7 @@ dependencies = [
   "prefect-aws",
   "requests-html",
   "rechunker",
-  "pydantic<2",
+  "pydantic>2",
 ]
 
 [project.scripts]

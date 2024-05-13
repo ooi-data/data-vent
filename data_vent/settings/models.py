@@ -1,5 +1,6 @@
 import os
-from pydantic import BaseSettings, BaseModel, Field
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
 def get_env_secret(key):
     return os.environ.get(key, None)
@@ -8,12 +9,12 @@ def get_env_secret(key):
 class GithubConfig(BaseSettings):
     main_branch: str = Field("main")
     data_org: str = Field("ooi-data")
-    pat: str = Field(None, env="gh_pat")
+    pat: str = Field(None, validation_alias="gh_pat")
 
 
 class AWSConfig(BaseSettings):
-    key: str = Field(None, env="aws_key")
-    secret: str = Field(None, env="aws_secret")
+    key: str = Field(None, validation_alias="aws_key")
+    secret: str = Field(None, validation_alias="aws_secret")
 
 
 class S3Buckets(BaseModel):
@@ -22,8 +23,8 @@ class S3Buckets(BaseModel):
 
 
 class OOIConfig(BaseSettings):
-    username: str = Field(None, env="ooi_username")
-    token: str = Field(None, env="ooi_token")
+    username: str = Field(None, validation_alias="ooi_username")
+    token: str = Field(None, validation_alias="ooi_token")
     base_urls: dict = {
         "ooinet": "https://ooinet.oceanobservatories.org",
         "rawdata": "https://rawdata.oceanobservatories.org",
