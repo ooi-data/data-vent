@@ -40,6 +40,7 @@ dependencies = [
   "requests-html",
   "rechunker",
   "pydantic>2",
+  "pydantic-settings"
 ]
 
 [project.scripts]
