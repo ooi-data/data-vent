@@ -35,8 +35,6 @@ PROCESS_COMMIT_MESSAGE_TEMPLATE = (
     harvest_settings.github.defaults.process_commit_message_template
 )
 
-STATUS_EMOJIS = harvest_settings.github.defaults.status_emojis
-
 COMPUTE_EXCEPTIONS = {
     'CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data':{
         'refresh': '4vcpu_30gb',
