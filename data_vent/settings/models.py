@@ -21,28 +21,10 @@ class AWSConfig(BaseSettings):
     key: str = Field(None, env="aws_key")
     secret: str = Field(None, env="aws_secret")
 
-    @validator("key", pre=True, always=True)
-    def key_prefect(cls, v):
-        if v is None:
-            return get_env_secret("AWS_KEY")
-        return v
-
-    @validator("secret", pre=True, always=True)
-    def secret_prefect(cls, v):
-        if v is None:
-            return get_env_secret("AWS_KEY")
-        return v
-
 
 class S3Buckets(BaseModel):
     metadata: str = "ooi-metadata-prod"
     harvest_cache: str = "flow-process-bucket"
-
-    @validator("*", pre=True, always=True)
-    def add_s3(cls, v):
-        if "s3://" not in v:
-            return f"s3://{v}"
-        return v
 
 
 class OOIConfig(BaseSettings):
@@ -58,18 +40,6 @@ class OOIConfig(BaseSettings):
         "units": "seconds since 1900-01-01 0:0:0",
         "calendar": "gregorian",
     }
-
-    @validator("username", pre=True, always=True)
-    def username_prefect(cls, v):
-        if v is None:
-            return get_env_secret("OOI_USERNAME")
-        return v
-
-    @validator("token", pre=True, always=True)
-    def token_prefect(cls, v):
-        if v is None:
-            return get_env_secret("OOI_TOKEN")
-        return v
 
 
 class StorageOptions(BaseSettings):
