@@ -1,7 +1,5 @@
 import os
 from pydantic import BaseSettings, BaseModel, Field, validator
-from data_vent.utils.core import prefect_version
-
 
 def get_env_secret(key):
     return os.environ.get(key, None)
