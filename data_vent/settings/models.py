@@ -5,14 +5,7 @@ from data_vent.utils.core import prefect_version
 PREFECT_VERSION = prefect_version()
 
 
-def get_prefect_secret(key):
-    if PREFECT_VERSION < (2, 0, 0):
-        import prefect
-
-        prefect_secret = prefect.client.Secret(key)
-        if prefect_secret.exists():
-            return prefect_secret.get()
-        return None
+def get_env_secret(key):
     return os.environ.get(key, None)
 
 
@@ -24,7 +17,7 @@ class GithubConfig(BaseSettings):
     @validator("pat", pre=True, always=True)
     def pat_prefect(cls, v):
         if v is None:
-            return get_prefect_secret("GH_PAT")
+            return get_env_secret("GH_PAT")
         return v
 
 
@@ -35,13 +28,13 @@ class AWSConfig(BaseSettings):
     @validator("key", pre=True, always=True)
     def key_prefect(cls, v):
         if v is None:
-            return get_prefect_secret("AWS_KEY")
+            return get_env_secret("AWS_KEY")
         return v
 
     @validator("secret", pre=True, always=True)
     def secret_prefect(cls, v):
         if v is None:
-            return get_prefect_secret("AWS_KEY")
+            return get_env_secret("AWS_KEY")
         return v
 
 
@@ -73,13 +66,13 @@ class OOIConfig(BaseSettings):
     @validator("username", pre=True, always=True)
     def username_prefect(cls, v):
         if v is None:
-            return get_prefect_secret("OOI_USERNAME")
+            return get_env_secret("OOI_USERNAME")
         return v
 
     @validator("token", pre=True, always=True)
     def token_prefect(cls, v):
         if v is None:
-            return get_prefect_secret("OOI_TOKEN")
+            return get_env_secret("OOI_TOKEN")
         return v
 
 
