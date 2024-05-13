@@ -1,5 +1,5 @@
 import os
-from pydantic import BaseSettings, BaseModel, Field, PyObject, validator
+from pydantic import BaseSettings, BaseModel, Field, validator
 from data_vent.utils.core import prefect_version
 
 PREFECT_VERSION = prefect_version()
