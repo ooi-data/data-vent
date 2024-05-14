@@ -10,8 +10,5 @@ __pycache__/
 # prefect
 .prefectignore
 
-# ecs block
-secrets_block.py
-
 # deployments
 deployments/*
