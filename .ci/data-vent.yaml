@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - python>=3.8
-  - pip=22
+  - pip
   - fsspec
   - s3fs
   - dask
