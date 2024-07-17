@@ -33,12 +33,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup micromamba
-        uses: mamba-org/provision-with-micromamba@v14
+        uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: ${{ env.ENV_FILE }}
           environment-name: ${{ env.CONDA_ENV }}
-          cache-env: true
-          cache-env-key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
+          cache-environment: true
+          cache-environment-key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
       - name: Print conda env
         run: |
           conda info
