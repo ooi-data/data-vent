@@ -1,6 +1,8 @@
 # data-vent
 
 [![Cabled Array Official](https://tinyurl.com/ca-official)](#)
+[![Annotations Harvest](https://github.com/ooi-data/data-vent/actions/workflows/annotations-harvest.yaml/badge.svg)](https://github.com/ooi-data/data-vent/actions/workflows/annotations-harvest.yaml)
+[![Metadata Harvest](https://github.com/ooi-data/data-vent/actions/workflows/metadata-harvest.yaml/badge.svg)](https://github.com/ooi-data/data-vent/actions/workflows/metadata-harvest.yaml)
 
 # Overview
 This repo contains code migrated from OOI-RCA data-harvest and ooi-harvester.
