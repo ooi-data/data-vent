@@ -136,8 +136,8 @@ def update_metadata(dstime, download_date, unit=None, extra_attrs={}):
     ] = "Some of the metadata of this dataset has been modified to be CF-1.6 compliant."
     dstime.attrs[
         "Notes"
-    ] = "This netCDF product is a copy of the data on the University of Washington AWS Cloud Infrastructure."  # noqa
-    dstime.attrs["Owner"] = "Ocean Observatories Initiative, University of Washington, Regional Cabled Array."  # noqa
+    ] = "This netCDF product is a copy of the data available through the NSF Ocean Observatories Initiative."  # noqa
+    dstime.attrs["Owner"] = "NSF, Ocean Observatories Initiative, Regional Cabled Array, University of Washington."  # noqa
     dstime.attrs["date_downloaded"] = download_date
     dstime.attrs["date_processed"] = datetime.datetime.now().isoformat()
 
