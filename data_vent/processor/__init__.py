@@ -137,7 +137,7 @@ def update_metadata(dstime, download_date, unit=None, extra_attrs={}):
     dstime.attrs[
         "Notes"
     ] = "This netCDF product is a copy of the data on the University of Washington AWS Cloud Infrastructure."  # noqa
-    dstime.attrs["Owner"] = "University of Washington Cabled Array Value Add Team."  # noqa
+    dstime.attrs["Owner"] = "Ocean Observatories Initiative, University of Washington, Regional Cabled Array."  # noqa
     dstime.attrs["date_downloaded"] = download_date
     dstime.attrs["date_processed"] = datetime.datetime.now().isoformat()
 
