@@ -28,6 +28,7 @@ Note: in the future this could be automated with a github workflow.
 
 # How to refresh a UW RCA zarr file for a given stream 
 (Updated 11/20/2024)
+
 Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record` zarr needs a complete refresh.
 1) **Delete harvest metadata and zarr for `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.**
    - Navigate to RCA s3 `flow_process_bucket/harvest_status`. Delete the `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record` folder using the s3 GUI
