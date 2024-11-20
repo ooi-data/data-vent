@@ -49,7 +49,7 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
    - **`force harvest` should be toggled `OFF` when getting data that has already been requested, `refresh` should be toggled `ON`**
    - Hit submit, data should be ready and the run will proceed to concetenate the .nc files to zarr.
 
-4) **Confirm daily `stream_ingest` and `qaqc_pipeline_flow` are working as intended with the refreshed zarr of `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.
+4) Confirm daily `stream_ingest` and `qaqc_pipeline_flow` are working as intended with the refreshed zarr of `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.
 
 # Known Issues
 Refreshing streams is not working as intended. Setting `refresh=True` and `force_harvest=True` will only refresh 
