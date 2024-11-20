@@ -37,9 +37,18 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
 2) **Request new data from m2m through the RCA data harvest.**
    - Log into the prefect2 dashboard with an authorized uw email address. Click on deployments. In the deployments list click on `run_stream_ingest_2vcpu_16gb`.
    - In the upper right click the `run` button and on the dropdown select `custom run`.
-   - Enter a run name. I usually tag the initial run with the stream name and `_REQUEST_DATA`.
-   - **Make sure `force_harvest` and `refresh` parameters are toggled on.**
+   - Enter a run name. I usually tag the initial run with the stream name and `_REQUEST_DATA` and the stream name.
+   - **Make sure `force_harvest` and `refresh` parameters are toggled ON.**
    - Hit submit in the lower right.
+  
+3) **If necessary, get data you requested in step 2**
+   - The initial prefect run will wait 30 minutes for m2m to serve the requested data. If the stream is dense it will likey take longer than this and you will see your initial request failes with a `data not ready error`
+   - In this case wait 4-24 hours and make a new request. In prefect deployments click `run_stream_ingest_2vcpu_16gb`, once again select `custom run`.
+   - Enter a run name, for subsequent runs I usually tag them `_GET_DATA` and the stream name.
+   - **`force harvest` should be toggled OFF when getting data that has already been requested, `refresh` should be toggled ON**
+   - Hit submit, data should be ready and the run will proceed to concetenate the .nc files to zarr.
+
+4) **Confirm daily `stream_ingest` and `qaqc_pipeline_flow` are working as intended with the refreshed zarr of `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.
 
 # Known Issues
 Refreshing streams is not working as intended. Setting `refresh=True` and `force_harvest=True` will only refresh 
