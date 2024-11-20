@@ -26,7 +26,11 @@ For more details on prefect push pools vs workers see this documention:
 https://docs.prefect.io/latest/guides/deployment/push-work-pools/.
 Note: in the future this could be automated with a github workflow.
 
-## Known Issues
+# How to refresh a UW RCA zarr file for a given stream 
+(Updated 11/20/2024)
+1) _bold_
+
+# Known Issues
 Refreshing streams is not working as intended. Setting `refresh=True` and `force_harvest=True` will only refresh 
 the entire time series if all status files related to that stream are deleted first in `flow-process-bucket`.
 
