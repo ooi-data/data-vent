@@ -33,6 +33,13 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
    - Navigate to RCA s3 `flow_process_bucket/harvest_status`. Delete the `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record` folder using the s3 GUI
    - Navigate to RCA s3 `flow_process_bucket/ooinet-requests`. Search for the prefix `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record` delete all requests containing this prefix
    - Navigate to RCA s3 `ooi-data` and delete the folder `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`. This is the actual zarr store.
+  
+2) **Request new data from m2m through the RCA data harvest.**
+   - Log into the prefect2 dashboard with an authorized uw email address. Click on deployments. In the deployments list click on `run_stream_ingest_2vcpu_16gb`.
+   - In the upper right click the `run` button and on the dropdown select `custom run`.
+   - Enter a run name. I usually tag the initial run with the stream name and `_REQUEST_DATA`.
+   - **Make sure `force_harvest` and `refresh` parameters are toggled on.**
+   - Hit submit in the lower right.
 
 # Known Issues
 Refreshing streams is not working as intended. Setting `refresh=True` and `force_harvest=True` will only refresh 
