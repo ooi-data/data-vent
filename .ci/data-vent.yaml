@@ -12,7 +12,7 @@ dependencies:
   - pandas
   - progressbar2
   - typer
-  - zarr
+  - zarr<3
   - xarray
   - lxml<5.2
   - gspread
