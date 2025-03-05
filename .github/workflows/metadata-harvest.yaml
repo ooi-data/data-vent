@@ -16,7 +16,7 @@ env:
     CACHE_NUMBER: 0
 jobs:
   harvest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -l {0}
