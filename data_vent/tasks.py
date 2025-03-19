@@ -116,7 +116,7 @@ def get_stream_harvest(
     config_json["harvest_options"].update(harvest_options)
     stream_harvest = StreamHarvest(**config_json)
     stream_harvest = read_status_json(stream_harvest)
-    # TODO tidy comments
+
     # if stream_harvest.status.last_refresh is not None:
     logger.info(f"Cloud data last refreshed on {stream_harvest.status.last_refresh}")
     # 11/28/2022 Don.S: Comment out this section to prevent auto refresh.
@@ -148,8 +148,7 @@ def check_requested(stream_harvest):
     status_json = stream_harvest.status.dict()
     if status_json.get("status") == "discontinued":
         # Skip discontinued stuff forever
-        # TODO: Find way to turn off the scheduled flow all together
-        # raise SKIP("Stream is discontinued. Finished.")
+
         logger.warning("Stream is discontinued. Finished")
         return "SKIPPED"
 
@@ -225,7 +224,6 @@ def _check_stream(stream_harvest):
                 # raise SKIP("OOI is under maintenance!")
                 logger.warning("OOI is under maintenance!")
                 return Cancelled(message="OOI is under maintenance!")
-    # TODO not sure what this did
     # raise SKIP("OOINet is currently down.")
 
 

@@ -74,7 +74,7 @@ def stream_ingest(
     flow_dict = flow_params.dict()
 
     stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, force_harvest, refresh)
-    # TODO still don't know how this was intended to work flexibly
+
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
 
     # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data 
