@@ -1,13 +1,12 @@
 from typing import Any, Dict, Optional, List
 
-import asyncio
 import datetime
 import os
 import yaml
 import pandas as pd
 from pathlib import Path
 from pydantic import BaseModel
-from prefect import flow, get_run_logger, get_client
+from prefect import flow, get_run_logger
 from prefect.deployments import run_deployment
 from prefect.states import Completed
 
@@ -224,7 +223,7 @@ def run_stream_ingest(
 
         logger.info(f"Running specified streams at the following paths: {all_paths}")
 
-    else:  # grabs all config yamls
+    else: # grabs all config yamls
         fs = fsspec.filesystem("")
         glob_path = config_dir + "/**/*.yaml"
         logger.info(f"Searching for config yamls at path: {glob_path}")
@@ -287,7 +286,6 @@ def run_stream_ingest(
 
         # run stream_ingest in sequence on local
         else:
-            # asyncio.run(is_flowrun_running(run_name))
             stream_ingest(**flow_params)
 
     logger.info("Parent flow complete")
