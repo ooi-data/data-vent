@@ -17,6 +17,7 @@ from data_vent.producer.models import StreamHarvest
 from data_vent.tasks import (
     get_stream_harvest,
     check_requested,
+    reset_data_check,
     setup_harvest,
     request_data,
     get_request_response,
@@ -72,9 +73,16 @@ def stream_ingest(
 
     flow_dict = flow_params.dict()
 
-    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, refresh, force_harvest)
+    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, force_harvest, refresh)
     # TODO still don't know how this was intended to work flexibly
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
+
+    # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data 
+    # request to m2m, because we don't know what state that flag was left in due to the failure
+    # that is likely necessitating the refresh...
+    if refresh and force_harvest:
+        logger.info("force havest - resetting data check flag")
+        reset_data_check(stream_harvest)
 
     is_requested = check_requested(stream_harvest)
 
@@ -95,7 +103,7 @@ def stream_ingest(
     logger.info("Data succesfully requested - checking data readiness")
     # Get request response directly here
     request_response = get_request_response(stream_harvest)
-    # Now run the data check - #TODO may need to adjust retries based on new harvest logic
+    # Now run the check - may need to adjust retries if different "waiting" behavior is needed
     data_readiness = check_data(request_response, stream_harvest)
 
     response_json = get_response(data_readiness)
@@ -128,12 +136,6 @@ def stream_ingest(
         gh_write_da,
         wait_for=final_path,
     )
-
-# async def is_flowrun_running(run_name: str) -> bool:
-#     async with get_client() as client:
-#         flow_runs = await client.read_flow_runs()
-#         for run in flow_runs: print(run.state)
-#         running_runs = [run for run in flow_runs if run.state==Running()]
 
 
 @flow
@@ -262,7 +264,6 @@ def run_stream_ingest(
 
         logger.info(f"Launching child flow: {run_name}")
         logger.info(f"flow_params: {flow_params}")
-        # asyncio.run(is_flowrun_running(run_name))
         # run stream_ingest in parallel using AWS ECS fargate - this infrastructure is tied to
         # the prefect deployment
         if run_in_cloud:
@@ -281,7 +282,7 @@ def run_stream_ingest(
                 name=deployment_name,
                 parameters=flow_params,
                 flow_run_name=run_name,
-                timeout=20,  # TODO timeout might need to be increase if we have race condition errors
+                timeout=20, # timeout can be adjusted based on AWS cluster race conditions
             )
 
         # run stream_ingest in sequence on local

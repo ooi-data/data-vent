@@ -181,6 +181,13 @@ def check_requested(stream_harvest):
         return False
 
 
+@task
+def reset_data_check(stream_harvest):
+    status_json = stream_harvest.status.dict()
+    status_json.update({"data_check": False})
+    update_and_write_status(stream_harvest, status_json)
+
+
 def _check_stream(stream_harvest):
     import json
     from requests_html import HTMLSession
