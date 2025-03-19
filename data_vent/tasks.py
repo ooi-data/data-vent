@@ -109,6 +109,7 @@ def update_and_write_status(
 def get_stream_harvest(
     config_json: Dict[str, Any],
     harvest_options: Dict[str, Any] = {},
+    force_harvest: bool = False,
     refresh: bool = False,
 ):
     logger = get_run_logger()
@@ -130,8 +131,14 @@ def get_stream_harvest(
     #     stream_harvest.harvest_options.refresh = False
     if refresh:
         stream_harvest.harvest_options.refresh = True
-
+    if force_harvest:
+        stream_harvest.harvest_options.force_harvest = True
+    # TODO Don clearly intended to pass arguments around in tidy pydantic jsons
+    # but right now we have the harvest behavior we want using a messing combination
+    # of piping arguments and passing around those models. This should be cleaned up
+    # but for now its stable...
     logger.warning(f"Refresh flag: {stream_harvest.harvest_options.refresh}")
+    logger.warning(f"Force harvest: {stream_harvest.harvest_options.force_harvest}")
     return stream_harvest
 
 
@@ -148,6 +155,7 @@ def check_requested(stream_harvest):
 
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
+        
 
     last_data_date = parser.parse(status_json.get("end_date") + "Z")
     logger.info(f"RCA Cloud -- Last data point: {last_data_date}")

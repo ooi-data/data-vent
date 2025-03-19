@@ -30,7 +30,6 @@ from data_vent.tasks import (
     read_status_json,
 )
 
-from data_vent.settings.main import harvest_settings
 from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS
 
 
@@ -73,7 +72,7 @@ def stream_ingest(
 
     flow_dict = flow_params.dict()
 
-    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, refresh)
+    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, refresh, force_harvest)
     # TODO still don't know how this was intended to work flexibly
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
 
@@ -262,7 +261,7 @@ def run_stream_ingest(
         }
 
         logger.info(f"Launching child flow: {run_name}")
-        logger.info(f"configs: {config_json}")
+        logger.info(f"flow_params: {flow_params}")
         # asyncio.run(is_flowrun_running(run_name))
         # run stream_ingest in parallel using AWS ECS fargate - this infrastructure is tied to
         # the prefect deployment

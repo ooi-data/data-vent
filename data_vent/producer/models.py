@@ -48,6 +48,7 @@ class HarvestRange(BaseModel):
 
 class HarvestOptions(BaseModel):
     path: str
+    force_harvest: bool = False
     refresh: bool = False
     test: bool = False
     goldcopy: bool = False
