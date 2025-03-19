@@ -288,7 +288,7 @@ def request_data(
     logger.info("=== Performing data request ===")
     if "requestUUID" in estimated_request["estimated"]:
         logger.info("Continue to actual request ...")
-        logger.warning(estimated_request)
+        logger.info(estimated_request)
         request_response = perform_request(
             estimated_request,
             refresh=stream_harvest.harvest_options.refresh,
