@@ -1,5 +1,4 @@
 import typer
-import sys
 import textwrap
 
 from data_vent.config import DATA_BUCKET

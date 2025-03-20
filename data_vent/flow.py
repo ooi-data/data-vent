@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional, List
 
-import datetime
 import os
 import yaml
 import pandas as pd
@@ -11,7 +10,6 @@ from prefect.deployments import run_deployment
 from prefect.states import Completed
 
 import fsspec
-from data_vent.producer.models import StreamHarvest
 
 from data_vent.tasks import (
     get_stream_harvest,
@@ -85,7 +83,7 @@ def stream_ingest(
 
     is_requested = check_requested(stream_harvest)
 
-    while is_requested == False:
+    while not is_requested:
         # Run the data request here
         estimated_request = setup_harvest(stream_harvest)
 
@@ -128,7 +126,7 @@ def stream_ingest(
     # TODO: Add data validation step here!
 
     # Data availability
-    availability = data_availability(
+    data_availability(
         nc_files_dict,
         stream_harvest,
         export_da,
@@ -180,7 +178,7 @@ def run_stream_ingest(
     """
     logger = get_run_logger()
     logger.info("Starting parent flow...")
-    
+
     # validate arguments
     if priority_only and non_priority:
         raise ValueError(

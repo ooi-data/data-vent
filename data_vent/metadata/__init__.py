@@ -11,7 +11,6 @@ import fsspec
 import re
 from loguru import logger
 
-from data_vent.utils.conn import get_toc
 from data_vent.metadata.utils import (
     FS,
     read_cava_assets,

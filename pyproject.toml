@@ -48,3 +48,6 @@ dependencies = [
   ooi-data-stats = "data_vent.stats.cli:app"
   ooi-data-catalog = "data_vent.cli:app"
   annotations-harvest = "data_vent.metadata.annotations:harvest_annotations"
+
+[tool.ruff]
+line-length = 95
