@@ -568,7 +568,7 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                             )
                         )
                         # only check for duplicate timestamps during daily appends
-                        if refresh == False:
+                        if not refresh:
                             check_for_timestamp_duplicates(ds)
                         logger.info("Finished preprocessing dataset.")
 

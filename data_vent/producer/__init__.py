@@ -6,7 +6,6 @@ import textwrap
 
 import fsspec
 from loguru import logger
-import pandas as pd
 from siphon.catalog import TDSCatalog
 import numpy as np
 from dateutil import parser
@@ -16,9 +15,6 @@ from data_vent.config import HARVEST_CACHE_BUCKET, OOI_EMAIL
 from data_vent.utils.conn import request_data, check_zarr, send_request
 from data_vent.utils.parser import estimate_size_and_time, parse_uframe_response
 
-#     get_storage_options,
-# )
-
 from data_vent.utils.compute import map_concurrency
 from data_vent.metadata.fetcher import fetch_instrument_streams_list
 
@@ -27,9 +23,6 @@ from data_vent.utils.conn import get_toc
 from data_vent.metadata import get_ooi_streams_and_parameters
 from data_vent.producer.models import StreamHarvest
 from data_vent.utils.parser import (
-    filter_and_parse_datasets,
-    filter_datasets_by_time,
-    memory_repr,
     filter_ooi_datasets,
     parse_ooi_data_catalog,
 )

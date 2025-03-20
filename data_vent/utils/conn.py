@@ -1,7 +1,5 @@
 import datetime
 from loguru import logger
-import os
-import re
 import json
 
 import zarr
@@ -10,12 +8,9 @@ import requests
 from requests.adapters import HTTPAdapter
 import xarray as xr
 import pandas as pd
-from lxml import html
-import progressbar
 
 from data_vent.config import BASE_URL, M2M_PATH
 from data_vent.utils.parser import (
-    seconds_to_date,
     parse_global_range_dataframe,
     parse_param_dict,
 )

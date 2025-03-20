@@ -1,8 +1,5 @@
 import datetime
 import math
-import time
-import os
-from pathlib import Path
 
 import zarr
 import numpy as np
@@ -13,17 +10,13 @@ import xarray as xr
 from xarray import coding
 
 from rechunker.algorithm import prod
-from rechunker import rechunk
-from dask.diagnostics import ProgressBar
-
+from rechunker import rechunk #noqa
 
 from .utils import (
     _reindex_zarr,
-    _append_zarr,
     _prepare_existing_zarr,
     _prepare_ds_to_append,
     _validate_dims,
-    _download,
 )
 
 
@@ -66,7 +59,7 @@ def preproc(ds):
             not np.issubdtype(var.dtype, np.number)
             and not np.issubdtype(var.dtype, np.datetime64)
             and not np.issubdtype(var.dtype, np.bool_)
-            and not "qartod_executed" in v  # keep qartod_executed variable
+            and "qartod_executed" not in v  # keep qartod_executed variable 
         ):
             if not coding.strings.is_unicode_dtype(var.dtype) or var.dtype == object:
                 string_variables.append(v)
