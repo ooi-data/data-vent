@@ -339,7 +339,7 @@ def perform_request(req, refresh=False, logger=logger, storage_options={}, force
     )
     fpath = os.path.join(HARVEST_CACHE_BUCKET, "ooinet-requests", fname)
 
-    if fs.exists(fpath):
+    if fs.exists(fpath) and not force:
         logger.info(f"Already requested {name} on " f"{datestr} for {refresh_text} ({fpath})")
         with fs.open(fpath, mode="r") as f:
             response = json.load(f)
