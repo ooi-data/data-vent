@@ -17,6 +17,7 @@ from .utils import (
     _prepare_existing_zarr,
     _prepare_ds_to_append,
     _validate_dims,
+    _download
 )
 
 
