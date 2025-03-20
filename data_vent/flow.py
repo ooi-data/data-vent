@@ -180,13 +180,7 @@ def run_stream_ingest(
     """
     logger = get_run_logger()
     logger.info("Starting parent flow...")
-    # current time will help determine which streams to ingest
-    now = datetime.datetime.utcnow()
-    day_of_week = now.strftime("%w") 
-    day_of_month = now.strftime("%d")
-    logger.info(f"It is day of the week: {day_of_week}.")
-    logger.info(f"It is day of the month: {day_of_month}.")
-
+    
     # validate arguments
     if priority_only and non_priority:
         raise ValueError(
