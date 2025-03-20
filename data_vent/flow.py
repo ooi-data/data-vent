@@ -16,7 +16,7 @@ from data_vent.producer.models import StreamHarvest
 from data_vent.tasks import (
     get_stream_harvest,
     check_requested,
-    reset_data_check,
+    reset_status_json,
     setup_harvest,
     request_data,
     get_request_response,
@@ -81,7 +81,7 @@ def stream_ingest(
     # that is likely necessitating the refresh...
     if refresh and force_harvest:
         logger.info("force havest - resetting data check flag")
-        reset_data_check(stream_harvest)
+        reset_status_json(stream_harvest)
 
     is_requested = check_requested(stream_harvest)
 

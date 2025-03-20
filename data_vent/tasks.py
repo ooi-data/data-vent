@@ -181,9 +181,11 @@ def check_requested(stream_harvest):
 
 
 @task
-def reset_data_check(stream_harvest):
+def reset_status_json(stream_harvest):
     status_json = stream_harvest.status.dict()
-    status_json.update({"data_check": False})
+    # setting end date to None is #HACK to get subsequent refresh streams to fail nicely
+    # could make a nice error #TODO in future
+    status_json.update({"data_check": False, "start_date": None, "end_date": None}) 
     update_and_write_status(stream_harvest, status_json)
 
 
