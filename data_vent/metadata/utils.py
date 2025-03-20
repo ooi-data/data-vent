@@ -214,7 +214,7 @@ def create_ooinet_inventory():
     ooinetdf.loc[:, "iris_enabled"] = ooinetdf["iris_enabled"].astype(bool)
     # GET STUFF THAT ARE IN IRIS
     irisdf = ooinetdf[
-        (ooinetdf.iris_enabled == True) & ~ooinetdf.reference_designator.str.contains("BOTPT") # noqa
+        (ooinetdf.iris_enabled == True) & ~ooinetdf.reference_designator.str.contains("BOTPT")  # noqa
     ].copy()
     # GET STUFF THAT ARE IN RAW DATA ARCHIVE
     rawdatadf = ooinetdf[~ooinetdf.rds_link.isna()]

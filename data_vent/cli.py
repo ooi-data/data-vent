@@ -43,10 +43,10 @@ def producer(
         for r in request_responses:
             resp_text = textwrap.dedent(
                 f"""\
-                        {r['stream']['table_name']}
+                        {r["stream"]["table_name"]}
                         Refresh: {refresh}
-                        Request Range: {r['params']['beginDT']} - {r['params']['endDT']}
-                        Thredds: {r['result']['thredds_catalog']}
+                        Request Range: {r["params"]["beginDT"]} - {r["params"]["endDT"]}
+                        Thredds: {r["result"]["thredds_catalog"]}
                         """
             )
             all_resp.append(resp_text)

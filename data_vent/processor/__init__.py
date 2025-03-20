@@ -10,7 +10,7 @@ import xarray as xr
 from xarray import coding
 
 from rechunker.algorithm import prod
-from rechunker import rechunk #noqa
+from rechunker import rechunk  # noqa
 
 from .utils import (
     _reindex_zarr,
@@ -59,7 +59,7 @@ def preproc(ds):
             not np.issubdtype(var.dtype, np.number)
             and not np.issubdtype(var.dtype, np.datetime64)
             and not np.issubdtype(var.dtype, np.bool_)
-            and "qartod_executed" not in v  # keep qartod_executed variable 
+            and "qartod_executed" not in v  # keep qartod_executed variable
         ):
             if not coding.strings.is_unicode_dtype(var.dtype) or var.dtype == object:
                 string_variables.append(v)
@@ -124,13 +124,15 @@ def update_metadata(dstime, download_date, unit=None, extra_attrs={}):
     #         "|S36"
     #     )
 
-    dstime.attrs[
-        "comment"
-    ] = "Some of the metadata of this dataset has been modified to be CF-1.6 compliant."
-    dstime.attrs[
-        "Notes"
-    ] = "This netCDF product is a copy of the data available through the NSF Ocean Observatories Initiative."  # noqa
-    dstime.attrs["Owner"] = "NSF, Ocean Observatories Initiative, Regional Cabled Array, University of Washington."  # noqa
+    dstime.attrs["comment"] = (
+        "Some of the metadata of this dataset has been modified to be CF-1.6 compliant."
+    )
+    dstime.attrs["Notes"] = (
+        "This netCDF product is a copy of the data available through the NSF Ocean Observatories Initiative."  # noqa
+    )
+    dstime.attrs["Owner"] = (
+        "NSF, Ocean Observatories Initiative, Regional Cabled Array, University of Washington."  # noqa
+    )
     dstime.attrs["date_downloaded"] = download_date
     dstime.attrs["date_processed"] = datetime.datetime.now().isoformat()
 

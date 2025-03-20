@@ -1,7 +1,8 @@
 """
-This module contains functions helpful for checking and validating 
+This module contains functions helpful for checking and validating
 array data throughout the harvest process.
 """
+
 import xarray as xr
 import numpy as np
 

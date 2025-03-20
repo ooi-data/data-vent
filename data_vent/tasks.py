@@ -52,7 +52,8 @@ def setup_status_s3fs(
     stream_harvest: StreamHarvest,
 ):
     fs = fsspec.filesystem(
-        "s3", **STORAGE_OPTIONS["aws"]  # **stream_harvest.harvest_options.path_settings
+        "s3",
+        **STORAGE_OPTIONS["aws"],  # **stream_harvest.harvest_options.path_settings
     )
     status_file = f"{FLOW_PROCESS_BUCKET}/harvest-status/{stream_harvest.table_name}"
 
@@ -154,16 +155,18 @@ def check_requested(stream_harvest):
 
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
-        
+
     try:
         last_data_date = parser.parse(status_json.get("end_date") + "Z")
     except TypeError as e:
-        raise NullMetadataError(f"Unable to parse end date in status json: {str(e)}: This is "
+        raise NullMetadataError(
+            f"Unable to parse end date in status json: {str(e)}: This is "
             "likely because this stream was recently run with flag `refresh` and `force-harvest`. "
-            "Try running the stream again with `refresh` set to `True` and `force-harvest` set " 
+            "Try running the stream again with `refresh` set to `True` and `force-harvest` set "
             "to `False`. If the full time series is ready, it will be processed to zarr and "
-            "valid start_dates and end_dates added to the json. Once complete APPENDS can be " 
-            "run again succesfully.")
+            "valid start_dates and end_dates added to the json. Once complete APPENDS can be "
+            "run again succesfully."
+        )
     logger.info(f"RCA Cloud -- Last data point: {last_data_date}")
 
     if stream_harvest.status.data_check is True:
@@ -192,7 +195,7 @@ def reset_status_json(stream_harvest):
     status_json = stream_harvest.status.dict()
     # setting end date to None is #HACK to get subsequent refresh streams to fail nicely
     # could make a nice error #TODO in future
-    status_json.update({"data_check": False, "start_date": None, "end_date": None}) 
+    status_json.update({"data_check": False, "start_date": None, "end_date": None})
     update_and_write_status(stream_harvest, status_json)
 
 

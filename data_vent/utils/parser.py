@@ -45,7 +45,7 @@ def estimate_size_and_time(raw):
     elif "message" in raw:
         m = f"""
         No estimate calculated.
-        {raw['message']['status']}
+        {raw["message"]["status"]}
         """
     return m
 
