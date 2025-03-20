@@ -1,1 +1,1 @@
-from data_vent.settings.main import harvest_settings # noqa
+from data_vent.settings.main import harvest_settings  # noqa

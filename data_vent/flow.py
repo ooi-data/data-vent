@@ -70,11 +70,13 @@ def stream_ingest(
 
     flow_dict = flow_params.dict()
 
-    stream_harvest = get_stream_harvest(flow_dict.get("config"), harvest_options, force_harvest, refresh)
+    stream_harvest = get_stream_harvest(
+        flow_dict.get("config"), harvest_options, force_harvest, refresh
+    )
 
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
 
-    # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data 
+    # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data
     # request to m2m, because we don't know what state that flag was left in due to the failure
     # that is likely necessitating the refresh...
     if refresh and force_harvest:
@@ -186,25 +188,26 @@ def run_stream_ingest(
         )
 
     stage1_df = pd.read_csv(
-        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv" # noqa
+        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
     )
     stage2_df = pd.read_csv(
-        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/stage2Dictionary.csv" 
+        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/stage2Dictionary.csv"
     )
 
     priority_df = pd.concat([stage1_df, stage2_df])
 
     # there may be some instruments we want to plot but not harvest
-    priority_df = priority_df[priority_df['harvestInterval'] == 1]
+    priority_df = priority_df[priority_df["harvestInterval"] == 1]
     priority_instruments = sorted(priority_df.refDes.unique())
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
 
     if test_run:
-        streams = ["CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record",
-                   "CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record",
-                   "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample"
-                   ]
+        streams = [
+            "CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record",
+            "CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record",
+            "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample",
+        ]
         logger.info(f"TEST RUN: setting streams to: {streams}")
 
     if streams:
@@ -215,7 +218,7 @@ def run_stream_ingest(
 
         logger.info(f"Running specified streams at the following paths: {all_paths}")
 
-    else: # grabs all config yamls
+    else:  # grabs all config yamls
         fs = fsspec.filesystem("")
         glob_path = config_dir + "/**/*.yaml"
         logger.info(f"Searching for config yamls at path: {glob_path}")
@@ -264,16 +267,22 @@ def run_stream_ingest(
                 harvest_type = "append"
 
             if run_name in COMPUTE_EXCEPTIONS and harvest_type in COMPUTE_EXCEPTIONS[run_name]:
-                deployment_name = f"stream-ingest/stream_ingest_{COMPUTE_EXCEPTIONS[run_name][harvest_type]}"
-                logger.warning(f"{run_name} requires additional compute. Running deployment: {deployment_name}")
+                deployment_name = (
+                    f"stream-ingest/stream_ingest_{COMPUTE_EXCEPTIONS[run_name][harvest_type]}"
+                )
+                logger.warning(
+                    f"{run_name} requires additional compute. Running deployment: {deployment_name}"
+                )
             else:
-                deployment_name = "stream-ingest/stream_ingest_2vcpu_16gb" # default deployment
+                deployment_name = (
+                    "stream-ingest/stream_ingest_2vcpu_16gb"  # default deployment
+                )
 
             run_deployment(
                 name=deployment_name,
                 parameters=flow_params,
                 flow_run_name=run_name,
-                timeout=20, # timeout can be adjusted based on AWS cluster race conditions
+                timeout=20,  # timeout can be adjusted based on AWS cluster race conditions
             )
 
         # run stream_ingest in sequence on local

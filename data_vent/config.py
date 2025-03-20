@@ -26,8 +26,8 @@ GH_MAIN_BRANCH = harvest_settings.github.main_branch
 
 # Cloud config
 COMPUTE_EXCEPTIONS = {
-    'CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data':{
-        'refresh': '4vcpu_30gb',
-        'append': '4vcpu_30gb',
+    "CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data": {
+        "refresh": "4vcpu_30gb",
+        "append": "4vcpu_30gb",
     }
 }

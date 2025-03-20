@@ -68,9 +68,9 @@ class Workflow(BaseModel):
 
 
 class HarvestStatus(BaseModel):
-    status: Literal[
-        "started", "pending", "failed", "success", "discontinued", "unknown"
-    ] = "unknown"
+    status: Literal["started", "pending", "failed", "success", "discontinued", "unknown"] = (
+        "unknown"
+    )
     last_updated: Optional[str] = None
     # OOI Data request information
     data_ready: bool = False
@@ -156,4 +156,3 @@ class StreamHarvest(BaseModel):
         if not v.strip():
             raise ValueError("Instrument cannot be empty")
         return v
-

@@ -289,8 +289,9 @@ def check_thredds_cache(stream_name: str):
         if ready:
             _, datasets = filter_ooi_datasets(datasets, stream_name)
             if len(datasets) > 0:
-                data_range = parser.parse(datasets[-1]["start_ts"]), parser.parse(
-                    datasets[0]["end_ts"]
+                data_range = (
+                    parser.parse(datasets[-1]["start_ts"]),
+                    parser.parse(datasets[0]["end_ts"]),
                 )
                 data_timedelta = data_range[-1] - data_range[0]
                 # If the amount of data is greater than 90 days
@@ -333,7 +334,7 @@ def perform_request(req, refresh=False, logger=logger, storage_options={}, force
     fpath = os.path.join(HARVEST_CACHE_BUCKET, "ooinet-requests", fname)
 
     if fs.exists(fpath) and not force:
-        logger.info(f"Already requested {name} on " f"{datestr} for {refresh_text} ({fpath})")
+        logger.info(f"Already requested {name} on {datestr} for {refresh_text} ({fpath})")
         with fs.open(fpath, mode="r") as f:
             response = json.load(f)
     else:

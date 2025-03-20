@@ -2,6 +2,7 @@ import os
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
+
 def get_env_secret(key):
     return os.environ.get(key, None)
 
