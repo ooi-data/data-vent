@@ -158,11 +158,11 @@ def check_requested(stream_harvest):
     try:
         last_data_date = parser.parse(status_json.get("end_date") + "Z")
     except TypeError as e:
-        raise NullMetadataError(f"Unable to parse end date in status json: {str(e)}: This is"
-            "likely because this stream was recently run with flag `refresh` and `force-harvest`."
-            "Try running the stream again with `refresh` set to `True` and `force-harvest` set" 
-            "to `False`. If the full time series is ready, it will be processed to zarr and"
-            "valid start_dates and end_dates added to the json. Once complete APPENDS can be" 
+        raise NullMetadataError(f"Unable to parse end date in status json: {str(e)}: This is "
+            "likely because this stream was recently run with flag `refresh` and `force-harvest`. "
+            "Try running the stream again with `refresh` set to `True` and `force-harvest` set " 
+            "to `False`. If the full time series is ready, it will be processed to zarr and "
+            "valid start_dates and end_dates added to the json. Once complete APPENDS can be " 
             "run again succesfully.")
     logger.info(f"RCA Cloud -- Last data point: {last_data_date}")
 
