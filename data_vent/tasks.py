@@ -45,7 +45,7 @@ from data_vent.utils.validate import check_for_timestamp_duplicates
 from data_vent.settings import harvest_settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
-from data_vent.exceptions import DataNotReadyError
+from data_vent.exceptions import DataNotReadyError, NullMetadataError
 
 
 def setup_status_s3fs(
@@ -155,8 +155,15 @@ def check_requested(stream_harvest):
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
         
-
-    last_data_date = parser.parse(status_json.get("end_date") + "Z")
+    try:
+        last_data_date = parser.parse(status_json.get("end_date") + "Z")
+    except TypeError as e:
+        raise NullMetadataError(f"Unable to parse end date in status json: {str(e)}: This is"
+            "likely because this stream was recently run with flag `refresh` and `force-harvest`."
+            "Try running the stream again with `refresh` set to `True` and `force-harvest` set" 
+            "to `False`. If the full time series is ready, it will be processed to zarr and"
+            "valid start_dates and end_dates added to the json. Once complete APPENDS can be" 
+            "run again succesfully.")
     logger.info(f"RCA Cloud -- Last data point: {last_data_date}")
 
     if stream_harvest.status.data_check is True:

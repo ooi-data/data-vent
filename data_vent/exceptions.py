@@ -4,3 +4,6 @@ class DataNotReadyError(Exception):
 
 class DuplicateTimeStampError(Exception):
     pass
+
+class NullMetadataError(Exception):
+    pass
