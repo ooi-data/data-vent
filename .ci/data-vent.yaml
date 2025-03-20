@@ -19,7 +19,7 @@ dependencies:
   - fastparquet
   - pygithub
   - siphon
-  - prefect>2
+  - prefect>3.0.3
   - requests-html
   - rechunker
   - flatten-dict
