@@ -10,6 +10,7 @@ from siphon.catalog import TDSCatalog
 import numpy as np
 from dateutil import parser
 from uuid import uuid4
+from prefect import get_run_logger
 
 from data_vent.config import HARVEST_CACHE_BUCKET, OOI_EMAIL
 from data_vent.utils.conn import request_data, check_zarr, send_request
@@ -164,6 +165,7 @@ def create_request_estimate(
     storage_options: dict = {},
 ):
     """Creates an estimated request to OOI M2M"""
+    logger = get_run_logger()
     beginTime = np.datetime64(parser.parse(stream_dct["beginTime"]))
     endTime = np.datetime64(parser.parse(stream_dct["endTime"]))
 
