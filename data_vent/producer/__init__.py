@@ -385,15 +385,3 @@ def fetch_harvest(instrument_rd, refresh, existing_data_path):
     if len(success_requests) > 0:
         request_responses = [perform_request(req, refresh) for req in success_requests]
     return request_responses
-
-
-# def fetch_harvest(instrument_rd, refresh, existing_data_path):
-#     success_requests = perform_estimates(
-#         instrument_rd, refresh, existing_data_path
-#     )
-#     request_responses = []
-#     if len(success_requests) > 0:
-#         request_responses = [
-#             perform_request(req, refresh) for req in success_requests
-#         ]
-#     return request_responses
