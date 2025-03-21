@@ -15,7 +15,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
   "fsspec",
   "requests",
@@ -33,6 +33,7 @@ dependencies = [
   "gspread",
   "fastparquet",
   "pygithub",
+  "pyarrow",
   "pendulum",
   "siphon",
   "prefect>3.0.3",

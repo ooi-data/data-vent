@@ -12,3 +12,5 @@ __pycache__/
 
 # deployments
 deployments/*
+
+.ruff_cache
