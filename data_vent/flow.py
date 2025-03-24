@@ -128,13 +128,13 @@ def stream_ingest(
     # TODO: Add data validation step here!
 
     # Data availability
-    data_availability(
-        nc_files_dict,
-        stream_harvest,
-        export_da,
-        gh_write_da,
-        wait_for=final_path,
-    )
+    # data_availability(
+    #     nc_files_dict,
+    #     stream_harvest,
+    #     export_da,
+    #     gh_write_da,
+    #     wait_for=final_path,
+    # )
 
 
 @flow
