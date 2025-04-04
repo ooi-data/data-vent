@@ -127,7 +127,7 @@ def stream_ingest(
 
     # TODO: Add data validation step here!
 
-    # Data availability
+    # Data availability # TODO uncomment and fix
     # data_availability(
     #     nc_files_dict,
     #     stream_harvest,
@@ -139,11 +139,11 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    streams: Optional[List[str]] = None,
+    streams: Optional[List[str]] = ["RS03AXPS-PC03A-4B-PHSENA302-streamed-phsen_data_record"],
     test_run: bool = False,
     priority_only: bool = True,
     non_priority: bool = False,
-    run_in_cloud: bool = True,
+    run_in_cloud: bool = False,
     # pipeline behavior args
     force_harvest: Optional[bool] = False,
     refresh: Optional[bool] = False,
