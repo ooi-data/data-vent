@@ -627,7 +627,7 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
     else:
         # raise SKIP("No datasets to process. Skipping...")
         logger.warning("No datasets to process. Skipping...")
-        return Cancelled("No datasets to process. Skipping...")
+        return Cancelled(message="No datasets to process. Skipping...")
     return {
         "final_path": nc_files_dict.get("final_bucket"),
         "temp_path": nc_files_dict.get("temp_bucket"),
