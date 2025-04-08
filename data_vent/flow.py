@@ -139,11 +139,11 @@ def stream_ingest(
 
 @flow
 def run_stream_ingest(
-    streams: Optional[List[str]] = ["RS03AXPS-PC03A-4B-PHSENA302-streamed-phsen_data_record"],
+    streams: Optional[List[str]] = None,
     test_run: bool = False,
     priority_only: bool = True,
     non_priority: bool = False,
-    run_in_cloud: bool = False,
+    run_in_cloud: bool = True,
     # pipeline behavior args
     force_harvest: Optional[bool] = False,
     refresh: Optional[bool] = False,
