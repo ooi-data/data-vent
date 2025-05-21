@@ -7,6 +7,6 @@ harvest_options:
 instrument: RS03INT2-MJ03D-06-BOTPTA303
 stream:
   method: streamed
-  name: botpt_nano_sample_15s
+  name: botpt_nano_sample_15sec
 workflow_config:
   schedule: 0 0 * * *

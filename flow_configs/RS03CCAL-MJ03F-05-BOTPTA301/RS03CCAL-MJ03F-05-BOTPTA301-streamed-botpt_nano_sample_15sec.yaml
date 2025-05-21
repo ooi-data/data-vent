@@ -7,6 +7,6 @@ harvest_options:
 instrument: RS03CCAL-MJ03F-05-BOTPTA301
 stream:
   method: streamed
-  name: botpt_nano_sample_15s
+  name: botpt_nano_sample_15sec
 workflow_config:
   schedule: 0 0 * * *
