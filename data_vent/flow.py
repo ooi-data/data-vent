@@ -143,9 +143,7 @@ def stream_ingest(
 @flow
 def run_stream_ingest(
     streams: Optional[List[str]] = None,
-    test_run: bool = False,
     priority_only: bool = True,
-    non_priority: bool = False,
     run_in_cloud: bool = True,
     # pipeline behavior args
     force_harvest: Optional[bool] = False,
@@ -160,10 +158,8 @@ def run_stream_ingest(
     In production setting harvesters run in parallel on AWS Fargate instances.
 
     Args:
-        test_run (bool): If true, only launch harvesters for 3 small test instrument streams
         priority_only (bool): If true, launch harvesters for instrument streams defined as
             priority in the OOI-RCA priority instrument csv
-        non_priority (bool): if true, launch harvesters for all non-priority instruments
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This
             can be useful for debugging.
@@ -175,7 +171,7 @@ def run_stream_ingest(
         gh_write_da (Optional[bool]): arg from legacy pipeline, controls the uploading of data availability
             to gihub. Relevant to CAVA frontend/API.
         overwrite_attrs (Optional[bool]): if `True` overwrite both global and variable attributes in the 
-            existing zarr.
+            existing zarr with those in the most recent data.
 
     As configured, harvesters will output array data stored as .zarr files to the following s3 buckets:
 
@@ -186,12 +182,6 @@ def run_stream_ingest(
     """
     logger = get_run_logger()
     logger.info("Starting parent flow...")
-
-    # validate arguments
-    if priority_only and non_priority:
-        raise ValueError(
-            "non_priority must be `False` if priority only is `True` (or visa-versa)"
-        )
 
     stage1_df = pd.read_csv(
         "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
@@ -207,14 +197,6 @@ def run_stream_ingest(
     priority_instruments = sorted(priority_df.refDes.unique())
 
     config_dir = os.path.join(os.getcwd(), "flow_configs")
-
-    if test_run:
-        streams = [
-            "CE04OSPS-SF01B-2B-PHSENA108-streamed-phsen_data_record",
-            "CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record",
-            "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample",
-        ]
-        logger.info(f"TEST RUN: setting streams to: {streams}")
 
     if streams:
         all_paths = []
@@ -234,11 +216,6 @@ def run_stream_ingest(
             # instrument ref_des is first 27 characters of stream
             all_paths = [
                 f for f in all_paths if os.path.basename(f)[:27] in priority_instruments
-            ]
-
-        elif non_priority:
-            all_paths = [
-                f for f in all_paths if os.path.base(f)[:27] not in priority_instruments
             ]
 
     for config_path in all_paths:
