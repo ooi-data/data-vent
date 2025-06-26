@@ -169,10 +169,23 @@ def _meta_cleanup(chunked_ds):
     return chunked_ds
 
 
-def append_to_zarr(mod_ds, store, encoding, logger=None):
+def append_to_zarr(mod_ds, store, encoding, overwrite_attrs, logger=None):
     if logger is None:
         logger = get_logger()
     existing_zarr = zarr.open_group(store, mode="a")
+
+    if overwrite_attrs:
+        logger.info("Overwriting existing zarr global and variable attributes.")
+        existing_zarr.attrs.update(mod_ds.attrs)
+
+        # overwrite each variable’s attributes
+        for var_name in mod_ds.data_vars:
+            if var_name in mod_ds:
+                existing_zarr[var_name].attrs.update(mod_ds[var_name].attrs)
+
+        # rebuild consolidated metadata
+        zarr.convenience.consolidate_metadata(existing_zarr.store)
+
     existing_var_count = len(list(existing_zarr.array_keys()))
     to_append_var_count = len(mod_ds.variables)
 

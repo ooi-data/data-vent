@@ -53,6 +53,7 @@ def stream_ingest(
     target_bucket: str = f"s3://{DATA_BUCKET}",
     export_da: bool = True,
     gh_write_da: bool = True,
+    overwrite_attrs: Optional[bool] = False,
 ):
     logger = get_run_logger()
 
@@ -66,6 +67,7 @@ def stream_ingest(
         export_da=export_da,
         gh_write_da=gh_write_da,
         error_test=error_test,
+        overwrite_attrs=overwrite_attrs,
     )
 
     flow_dict = flow_params.dict()
@@ -116,6 +118,7 @@ def stream_ingest(
         max_chunk,
         refresh,
         error_test,
+        overwrite_attrs,
     )
 
     # Finalize data and transfer to final
@@ -149,6 +152,7 @@ def run_stream_ingest(
     refresh: Optional[bool] = False,
     export_da: Optional[bool] = True,
     gh_write_da: Optional[bool] = True,
+    overwrite_attrs: Optional[bool] = False,
 ):
     """
     Launches a data harvest for each specified OOI-RCA instrument streams
@@ -170,6 +174,8 @@ def run_stream_ingest(
             Relevant to CAVA frontend/API.
         gh_write_da (Optional[bool]): arg from legacy pipeline, controls the uploading of data availability
             to gihub. Relevant to CAVA frontend/API.
+        overwrite_attrs (Optional[bool]): if `True` overwrite both global and variable attributes in the 
+            existing zarr.
 
     As configured, harvesters will output array data stored as .zarr files to the following s3 buckets:
 
@@ -254,6 +260,7 @@ def run_stream_ingest(
             "export_da": export_da,
             "gh_write_da": gh_write_da,
             "error_test": False,
+            "overwrite_attrs": overwrite_attrs,
         }
 
         logger.info(f"Launching child flow: {run_name}")

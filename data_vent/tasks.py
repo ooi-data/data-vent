@@ -509,7 +509,14 @@ def setup_process(response_json, target_bucket):
 
 
 @task
-def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_test):
+def data_processing(
+    nc_files_dict, 
+    stream_harvest, 
+    max_chunk, 
+    refresh, 
+    error_test, 
+    overwrite_attrs
+):
     logger = get_run_logger()
     stream = nc_files_dict.get("stream")
     name = stream.get("table_name")
@@ -597,7 +604,7 @@ def data_processing(nc_files_dict, stream_harvest, max_chunk, refresh, error_tes
                                 succeed = True
                             else:
                                 succeed = append_to_zarr(
-                                    mod_ds, temp_store, enc, logger=logger
+                                    mod_ds, temp_store, enc, overwrite_attrs, logger=logger
                                 )
 
                             if succeed:
