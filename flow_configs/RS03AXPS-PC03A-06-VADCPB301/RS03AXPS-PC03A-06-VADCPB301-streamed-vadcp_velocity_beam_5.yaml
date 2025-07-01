@@ -4,7 +4,7 @@ harvest_options:
   path: s3://ooi-data
   refresh: false
   test: false
-instrument: RS03AXPS-PC03A-06-VADCPA301
+instrument: RS03AXPS-PC03A-06-VADCPB301
 stream:
   method: streamed
   name: vadcp_velocity_beam_5
