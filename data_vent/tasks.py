@@ -249,7 +249,7 @@ def setup_harvest(stream_harvest: StreamHarvest):
     status_json = stream_harvest.status.dict()
     try:
         stream_dct = next(filter(lambda s: s["table_name"] == table_name, streams_list))
-    except Exception:
+    except StopIteration:
         # Check if stream has been dicontinued
         logger.warning("Stream not found in OOI Database.")
         message = f"{table_name} not found in OOI Database. It may be that this stream has been discontinued."
