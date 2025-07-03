@@ -517,7 +517,6 @@ def data_processing(
     stream_harvest, 
     max_chunk, 
     refresh, 
-    error_test, 
     overwrite_attrs,
     check_qartod,
 ):
@@ -556,10 +555,7 @@ def data_processing(
                     # Append to live data when it's daily
                     # So it's never the first
                     is_first = True
-                if error_test:
-                    status_json.update({"process_status": "failed"})
-                    update_and_write_status(stream_harvest, status_json)
-                    raise ValueError("Error test in progress! Not actual error found here!")
+              
             logger.info(
                 f"*** {name} ({d.get('deployment')}) | {d.get('start_ts')} - {d.get('end_ts')} ***"
             )
