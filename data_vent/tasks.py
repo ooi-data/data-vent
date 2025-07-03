@@ -40,7 +40,10 @@ from data_vent.utils.parser import (
     filter_and_parse_datasets,
     setup_etl,
 )
-from data_vent.utils.validate import check_for_timestamp_duplicates
+from data_vent.utils.validate import (
+    check_for_timestamp_duplicates, 
+    check_for_empty_qartod_vars
+)
 
 from data_vent.settings import harvest_settings
 from data_vent.config import FLOW_PROCESS_BUCKET
@@ -515,7 +518,8 @@ def data_processing(
     max_chunk, 
     refresh, 
     error_test, 
-    overwrite_attrs
+    overwrite_attrs,
+    check_qartod,
 ):
     logger = get_run_logger()
     stream = nc_files_dict.get("stream")
@@ -577,9 +581,13 @@ def data_processing(
                                 nc_files_dict.get("retrieved_dt"),
                             )
                         )
+                        # <<< SOME DATA VALIDATION depending on context >>>
                         # only check for duplicate timestamps during daily appends
                         if not refresh:
                             check_for_timestamp_duplicates(ds)
+                        if refresh and check_qartod:
+                            ds = check_for_empty_qartod_vars(ds)
+
                         logger.info("Finished preprocessing dataset.")
 
                         # Chunk dataset and write to zarr

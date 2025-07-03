@@ -40,6 +40,8 @@ class FlowParameters(BaseModel):
     export_da: bool = False
     gh_write_da: bool = False
     error_test: bool = False
+    overwrite_attrs: Optional[bool] = False
+    check_qartod: Optional[bool] = False
 
 
 @flow
@@ -54,6 +56,7 @@ def stream_ingest(
     export_da: bool = True,
     gh_write_da: bool = True,
     overwrite_attrs: Optional[bool] = False,
+    check_qartod: Optional[bool] = False,
 ):
     logger = get_run_logger()
 
@@ -68,6 +71,7 @@ def stream_ingest(
         gh_write_da=gh_write_da,
         error_test=error_test,
         overwrite_attrs=overwrite_attrs,
+        check_qartod=check_qartod,
     )
 
     flow_dict = flow_params.dict()
@@ -119,6 +123,7 @@ def stream_ingest(
         refresh,
         error_test,
         overwrite_attrs,
+        check_qartod,
     )
 
     # Finalize data and transfer to final
@@ -143,7 +148,6 @@ def stream_ingest(
 @flow
 def run_stream_ingest(
     streams: Optional[List[str]] = None,
-    priority_only: bool = True,
     run_in_cloud: bool = True,
     # pipeline behavior args
     force_harvest: Optional[bool] = False,
@@ -151,6 +155,7 @@ def run_stream_ingest(
     export_da: Optional[bool] = True,
     gh_write_da: Optional[bool] = True,
     overwrite_attrs: Optional[bool] = False,
+    check_qartod: Optional[bool] = False
 ):
     """
     Launches a data harvest for each specified OOI-RCA instrument streams
@@ -158,8 +163,6 @@ def run_stream_ingest(
     In production setting harvesters run in parallel on AWS Fargate instances.
 
     Args:
-        priority_only (bool): If true, launch harvesters for instrument streams defined as
-            priority in the OOI-RCA priority instrument csv
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This
             can be useful for debugging.
@@ -172,6 +175,8 @@ def run_stream_ingest(
             to gihub. Relevant to CAVA frontend/API.
         overwrite_attrs (Optional[bool]): if `True` overwrite both global and variable attributes in the 
             existing zarr with those in the most recent data.
+        check_qartod (Optional[bool]): if `True` check for empty qartod data points and remove 
+            them from the dataset so they don't cause havoc downstream. Only on refresh.
 
     As configured, harvesters will output array data stored as .zarr files to the following s3 buckets:
 
@@ -212,11 +217,10 @@ def run_stream_ingest(
         logger.info(f"Searching for config yamls at path: {glob_path}")
         all_paths = fs.glob(glob_path)
 
-        if priority_only:
-            # instrument ref_des is first 27 characters of stream
-            all_paths = [
-                f for f in all_paths if os.path.basename(f)[:27] in priority_instruments
-            ]
+        # instrument ref_des is first 27 characters of stream
+        all_paths = [
+            f for f in all_paths if os.path.basename(f)[:27] in priority_instruments
+        ]
 
     for config_path in all_paths:
         config_json = yaml.safe_load(Path(config_path).open())
@@ -238,6 +242,7 @@ def run_stream_ingest(
             "gh_write_da": gh_write_da,
             "error_test": False,
             "overwrite_attrs": overwrite_attrs,
+            "check_qartod": check_qartod,
         }
 
         logger.info(f"Launching child flow: {run_name}")

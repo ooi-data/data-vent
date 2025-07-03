@@ -28,3 +28,17 @@ def check_for_timestamp_duplicates(ds: xr.DataArray) -> None:
 
     else:
         logger.info("No duplicate timestamps found.")
+
+
+def check_for_empty_qartod_vars(ds: xr.DataArray) -> None:
+    logger = get_run_logger()
+
+    qartod_var_list = [var for var in ds.data_vars if "qartod" in var]
+    subset = ds[qartod_var_list]
+    bad_points = subset.where((subset == '').compute(), drop=True)
+
+    logger.warning(f"Found {len(bad_points.time)} bad data points")
+    logger.warning(f"Bad timestamps: {bad_points.time.values}")
+
+    clean_ds = ds.drop_sel(time=bad_points.time.values)
+    return clean_ds
