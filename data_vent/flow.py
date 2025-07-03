@@ -39,7 +39,6 @@ class FlowParameters(BaseModel):
     max_chunk: str = "100MB"
     export_da: bool = False
     gh_write_da: bool = False
-    error_test: bool = False
     overwrite_attrs: Optional[bool] = False
     check_qartod: Optional[bool] = False
 
@@ -51,7 +50,6 @@ def stream_ingest(
     force_harvest: bool = False,
     refresh: bool = False,
     max_chunk: str = "100MB",
-    error_test: bool = False,
     target_bucket: str = f"s3://{DATA_BUCKET}",
     export_da: bool = True,
     gh_write_da: bool = True,
@@ -69,7 +67,6 @@ def stream_ingest(
         max_chunk=max_chunk,
         export_da=export_da,
         gh_write_da=gh_write_da,
-        error_test=error_test,
         overwrite_attrs=overwrite_attrs,
         check_qartod=check_qartod,
     )
@@ -121,7 +118,6 @@ def stream_ingest(
         stream_harvest,
         max_chunk,
         refresh,
-        error_test,
         overwrite_attrs,
         check_qartod,
     )
@@ -240,7 +236,6 @@ def run_stream_ingest(
             "max_chunk": "100MB",
             "export_da": export_da,
             "gh_write_da": gh_write_da,
-            "error_test": False,
             "overwrite_attrs": overwrite_attrs,
             "check_qartod": check_qartod,
         }
