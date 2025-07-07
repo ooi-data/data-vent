@@ -131,14 +131,13 @@ def stream_ingest(
 
     # NOTE Data validation occurs where appropriate see utils.validate module for details
 
-    # Data availability # TODO uncomment and fix
-    # data_availability(
-    #     nc_files_dict,
-    #     stream_harvest,
-    #     export_da,
-    #     gh_write_da,
-    #     wait_for=final_path,
-    # )
+    data_availability(
+        nc_files_dict,
+        stream_harvest,
+        export_da,
+        gh_write_da,
+        wait_for=final_path,
+    )
 
 
 @flow
@@ -148,8 +147,10 @@ def run_stream_ingest(
     # pipeline behavior args
     force_harvest: Optional[bool] = False,
     refresh: Optional[bool] = False,
+    # mostly legacy CAVA args
     export_da: Optional[bool] = True,
     gh_write_da: Optional[bool] = True,
+    # data validation args
     overwrite_attrs: Optional[bool] = False,
     check_qartod: Optional[bool] = False
 ):
