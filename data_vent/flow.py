@@ -129,7 +129,7 @@ def stream_ingest(
         max_chunk,
     )
 
-    # TODO: Add data validation step here!
+    # NOTE Data validation occurs where appropriate see utils.validate module for details
 
     # Data availability # TODO uncomment and fix
     # data_availability(
