@@ -71,7 +71,7 @@ def stream_ingest(
         check_qartod=check_qartod,
     )
 
-    flow_dict = flow_params.dict()
+    flow_dict = flow_params.model_dump()
 
     stream_harvest = get_stream_harvest(
         flow_dict.get("config"), harvest_options, force_harvest, refresh

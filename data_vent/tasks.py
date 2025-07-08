@@ -67,7 +67,7 @@ def write_status_json(
     stream_harvest: StreamHarvest,
 ):
     fs, status_file = setup_status_s3fs(stream_harvest)
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     # write status file from s3 if exists
     with fs.open(status_file, mode="w") as f:
         json.dump(status_json, f)
@@ -149,7 +149,7 @@ def get_stream_harvest(
 @task
 def check_requested(stream_harvest):
     logger = get_run_logger()
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     if status_json.get("status") == "discontinued":
         # Skip discontinued stuff forever
 
@@ -195,7 +195,7 @@ def check_requested(stream_harvest):
 
 @task
 def reset_status_json(stream_harvest):
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     # setting end date to None is #HACK to get subsequent refresh streams to fail nicely
     # could make a nice error #TODO in future
     status_json.update({"data_check": False, "start_date": None, "end_date": None})
@@ -249,7 +249,7 @@ def setup_harvest(stream_harvest: StreamHarvest):
     table_name = stream_harvest.table_name
     streams_list = fetch_streams_list(stream_harvest)
     request_dt = datetime.datetime.utcnow().isoformat()
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     try:
         stream_dct = next(filter(lambda s: s["table_name"] == table_name, streams_list))
     except StopIteration:
@@ -297,7 +297,7 @@ def request_data(
     force_harvest: bool = False,
 ):
     logger = get_run_logger()
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     logger.info("=== Performing data request ===")
     if "requestUUID" in estimated_request["estimated"]:
         logger.info("Continue to actual request ...")
@@ -378,7 +378,7 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
         # Data response file not found
         # may be due to auto deletion by S3
         logger.warning(f"Missing data response file: {stream_harvest.status.data_response}")
-        status_json = stream_harvest.status.dict()
+        status_json = stream_harvest.status.model_dump()
 
         # daily harvest
         if stream_harvest.status.data_response.endswith("daily"):
@@ -424,7 +424,7 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
 def check_data(data_response, stream_harvest):
     logger = get_run_logger()
     logger.info("=== Checking for data readiness ===")
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     result = data_response.get("result")
     status_url = result.get("status_url", None)
     if status_url is not None:
@@ -524,7 +524,7 @@ def data_processing(
     stream = nc_files_dict.get("stream")
     name = stream.get("table_name")
     logger.info(f"=== Processing {name}. ===")
-    status_json = stream_harvest.status.dict()
+    status_json = stream_harvest.status.model_dump()
     status_json.update({"process_status": "pending"})
     update_and_write_status(stream_harvest, status_json)
     dataset_list = sorted(nc_files_dict.get("datasets", []), key=lambda i: i.get("start_ts"))
@@ -651,7 +651,7 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
     logger.info("=== Finalizing data stream. ===")
     try:
         final_path = stores_dict.get("final_path")
-        status_json = stream_harvest.status.dict()
+        status_json = stream_harvest.status.model_dump()
         final_store = fsspec.get_mapper(
             final_path,
             **stream_harvest.harvest_options.path_settings,

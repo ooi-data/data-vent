@@ -10,7 +10,7 @@ from data_vent.settings.main import harvest_settings
 from loguru import logger
 
 ANNOTATIONS_ENDPOINT = "https://ooinet.oceanobservatories.org/api/m2m/12580/anno/find"
-FS = fsspec.filesystem("s3", **harvest_settings.storage_options.aws.dict())
+FS = fsspec.filesystem("s3", **harvest_settings.storage_options.aws.model_dump())
 
 
 def request_annotations(refdes):

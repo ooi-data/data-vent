@@ -146,7 +146,7 @@ class StreamHarvest(BaseModel):
         return self._status
 
     def update_status(self, status_input: Dict[str, Any]):
-        new_status = deepcopy(self._status.dict())
+        new_status = deepcopy(self._status.model_dump())
         new_status.update(status_input)
         self._status = HarvestStatus(**new_status)
 

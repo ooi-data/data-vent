@@ -16,7 +16,7 @@ from data_vent.utils.compute import map_concurrency
 from data_vent.settings.main import harvest_settings
 
 
-FS = fsspec.filesystem("s3", **harvest_settings.storage_options.aws.dict())
+FS = fsspec.filesystem("s3", **harvest_settings.storage_options.aws.model_dump())
 
 
 def parse_inst_ref(name):
