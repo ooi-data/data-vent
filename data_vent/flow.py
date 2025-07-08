@@ -130,14 +130,16 @@ def stream_ingest(
     )
 
     # NOTE Data validation occurs where appropriate see utils.validate module for details
-
-    data_availability(
-        nc_files_dict,
-        stream_harvest,
-        export_da,
-        gh_write_da,
-        wait_for=final_path,
-    )
+    try:
+        data_availability(
+            nc_files_dict,
+            stream_harvest,
+            export_da,
+            gh_write_da,
+            wait_for=final_path,
+        )
+    except Exception as e:
+        logger.warning("Data availability step failed.")
 
 
 @flow
