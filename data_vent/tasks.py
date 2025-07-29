@@ -559,82 +559,77 @@ def data_processing(
             logger.info(
                 f"*** {name} ({d.get('deployment')}) | {d.get('start_ts')} - {d.get('end_ts')} ***"
             )
-            try:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    source_url = "/".join([nc_files_dict.get("async_url"), d.get("name")])
-                    # Download the netcdf files and read to a xarray dataset obj
-                    ncpath = _download(
-                        source_url=source_url,
-                        cache_location=tmpdir,
-                    )
-                    logger.info(f"Downloaded: {ncpath}")
-                    with dask.config.set(scheduler="single-threaded"):
-                        ds = (
-                            xr.open_dataset(ncpath, engine="netcdf4", decode_times=False)
-                            .pipe(preproc)
-                            .pipe(
-                                update_metadata,
-                                nc_files_dict.get("retrieved_dt"),
-                            )
+            with tempfile.TemporaryDirectory() as tmpdir:
+                source_url = "/".join([nc_files_dict.get("async_url"), d.get("name")])
+                # Download the netcdf files and read to a xarray dataset obj
+                ncpath = _download(
+                    source_url=source_url,
+                    cache_location=tmpdir,
+                )
+                logger.info(f"Downloaded: {ncpath}")
+                with dask.config.set(scheduler="single-threaded"):
+                    ds = (
+                        xr.open_dataset(ncpath, engine="netcdf4", decode_times=False)
+                        .pipe(preproc)
+                        .pipe(
+                            update_metadata,
+                            nc_files_dict.get("retrieved_dt"),
                         )
-                        # <<< SOME DATA VALIDATION depending on context >>>
-                        # only check for duplicate timestamps during daily appends
-                        if not refresh:
-                            check_for_timestamp_duplicates(ds)
-                        if refresh and check_qartod:
-                            ds = check_for_empty_qartod_vars(ds)
+                    )
+                    # <<< SOME DATA VALIDATION depending on context >>>
+                    # only check for duplicate timestamps during daily appends
+                    if not refresh:
+                        check_for_timestamp_duplicates(ds)
+                    if refresh and check_qartod:
+                        ds = check_for_empty_qartod_vars(ds)
 
-                        logger.info("Finished preprocessing dataset.")
+                    logger.info("Finished preprocessing dataset.")
 
-                        # Chunk dataset and write to zarr
-                        if isinstance(ds, xr.Dataset):
-                            mod_ds, enc = chunk_ds(
-                                ds,
-                                max_chunk=max_chunk,
-                                existing_enc=existing_enc,
-                                apply=is_first,
+                    # Chunk dataset and write to zarr
+                    if isinstance(ds, xr.Dataset):
+                        mod_ds, enc = chunk_ds(
+                            ds,
+                            max_chunk=max_chunk,
+                            existing_enc=existing_enc,
+                            apply=is_first,
+                        )
+                        logger.info("Finished chunking dataset.")
+
+                        if is_first:
+                            # TODO: Like the _prepare_ds_to_append need to check on the dims and len for all variables
+                            mod_ds.to_zarr(
+                                temp_store,
+                                consolidated=True,
+                                compute=True,
+                                mode="w",
+                                encoding=enc,
                             )
-                            logger.info("Finished chunking dataset.")
-
-                            if is_first:
-                                # TODO: Like the _prepare_ds_to_append need to check on the dims and len for all variables
-                                mod_ds.to_zarr(
-                                    temp_store,
-                                    consolidated=True,
-                                    compute=True,
-                                    mode="w",
-                                    encoding=enc,
-                                )
-                                succeed = True
-                            else:
-                                succeed = append_to_zarr(
-                                    mod_ds, temp_store, enc, overwrite_attrs, logger=logger
-                                )
-
-                            if succeed:
-                                is_done = False
-                                while not is_done:
-                                    store = fsspec.get_mapper(
-                                        temp_zarr,
-                                        **stream_harvest.harvest_options.path_settings,
-                                    )
-                                    is_done = is_zarr_ready(store)
-                                    if is_done:
-                                        continue
-                                    time.sleep(5)
-                                    logger.info("Waiting for zarr file writing to finish...")
-                                logger.info("SUCCESS: File successfully written to zarr.")
-                            else:
-                                logger.warning(
-                                    f"SKIPPED: Issues in file found for {d.get('name')}!"
-                                )
+                            succeed = True
                         else:
-                            logger.warning("SKIPPED: Failed pre processing!")
-            except Exception as e:
-                exc_dict = parse_exception(e)
-                # raise FAIL(message=exc_dict.get('traceback', str(e)), result=exc_dict)
-                logger.warning(exc_dict.get("traceback", str(e)))
-                return Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
+                            succeed = append_to_zarr(
+                                mod_ds, temp_store, enc, overwrite_attrs, logger=logger
+                            )
+
+                        if succeed:
+                            is_done = False
+                            while not is_done:
+                                store = fsspec.get_mapper(
+                                    temp_zarr,
+                                    **stream_harvest.harvest_options.path_settings,
+                                )
+                                is_done = is_zarr_ready(store)
+                                if is_done:
+                                    continue
+                                time.sleep(5)
+                                logger.info("Waiting for zarr file writing to finish...")
+                            logger.info("SUCCESS: File successfully written to zarr.")
+                        else:
+                            logger.warning(
+                                f"SKIPPED: Issues in file found for {d.get('name')}!"
+                            )
+                    else:
+                        logger.warning("SKIPPED: Failed pre processing!")
+
     else:
         # raise SKIP("No datasets to process. Skipping...")
         logger.warning("No datasets to process. Skipping...")
