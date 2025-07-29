@@ -35,6 +35,10 @@ def check_for_empty_qartod_vars(ds: xr.DataArray) -> None:
     logger.info("Checking for empty strings in qartod variables")
 
     qartod_var_list = [var for var in ds.data_vars if "qartod" in var]
+    if len(qartod_var_list) == 0:
+        logger.warning("Qartod variables expected but not found in dataset.")
+        return ds
+    
     subset = ds[qartod_var_list]
     bad_points = subset.where((subset == '').compute(), drop=True)
 
