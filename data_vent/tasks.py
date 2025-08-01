@@ -48,7 +48,7 @@ from data_vent.utils.validate import (
 from data_vent.settings import harvest_settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
-from data_vent.exceptions import DataNotReadyError, NullMetadataError
+from data_vent.exceptions import DataNotReadyError, NullMetadataError, StreamNotFoundError
 
 
 def setup_status_s3fs(
@@ -151,11 +151,10 @@ def check_requested(stream_harvest):
     logger = get_run_logger()
     status_json = stream_harvest.status.model_dump()
     if status_json.get("status") == "discontinued":
-        # Skip discontinued stuff forever
+        # Raise an error if the harvest has stream registered as discontinued
+        raise StreamNotFoundError("Stream is discontinued. Cannot proceed with harvest.")
 
-        logger.warning("Stream is discontinued. Finished")
-        return "SKIPPED"
-
+     
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
 
@@ -253,15 +252,12 @@ def setup_harvest(stream_harvest: StreamHarvest):
     try:
         stream_dct = next(filter(lambda s: s["table_name"] == table_name, streams_list))
     except StopIteration:
-        # Check if stream has been dicontinued
-        logger.warning("Stream not found in OOI Database.")
+        # since we are just harvesting RCA we don't want these to fail quietly anymore
         message = f"{table_name} not found in OOI Database. It may be that this stream has been discontinued."
-        status_json.update({"status": "discontinued", "last_refresh": request_dt})
+        status_json.update({"status": "failed", "last_refresh": request_dt})
         update_and_write_status(stream_harvest, status_json)
-        # raise SKIP(
-        #     message=message, result={"status": status_json, "message": message})
-        logger.warning(message)
-        return Cancelled(message=message, result={"status": status_json, "message": message})
+
+        raise StreamNotFoundError(message=message, result={"status": status_json, "message": message})
 
     if stream_harvest.harvest_options.goldcopy:
         message = "Gold Copy Harvest is not currently supported."

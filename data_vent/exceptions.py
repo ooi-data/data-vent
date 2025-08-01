@@ -8,3 +8,7 @@ class DuplicateTimeStampError(Exception):
 
 class NullMetadataError(Exception):
     pass
+
+
+class StreamNotFoundError(Exception):
+    pass
