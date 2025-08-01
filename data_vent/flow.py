@@ -130,6 +130,8 @@ def stream_ingest(
     )
 
     # NOTE Data validation occurs where appropriate see utils.validate module for details
+    # TODO data availability might be sunset completely, it is slow and not used downstream
+    # at this point - could also remove gh_write_da and export_da args in future?
     # data_availability(
     #     nc_files_dict,
     #     stream_harvest,
