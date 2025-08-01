@@ -257,7 +257,7 @@ def setup_harvest(stream_harvest: StreamHarvest):
         status_json.update({"status": "failed", "last_refresh": request_dt})
         update_and_write_status(stream_harvest, status_json)
 
-        raise StreamNotFoundError(message=message, result={"status": status_json, "message": message})
+        raise StreamNotFoundError(message)
 
     if stream_harvest.harvest_options.goldcopy:
         message = "Gold Copy Harvest is not currently supported."
