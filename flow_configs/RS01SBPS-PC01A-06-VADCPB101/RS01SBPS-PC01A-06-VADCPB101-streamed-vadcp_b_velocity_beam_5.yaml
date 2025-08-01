@@ -7,6 +7,6 @@ harvest_options:
 instrument: RS01SBPS-PC01A-06-VADCPB101
 stream:
   method: streamed
-  name: vadcp_b_velocity_beam_5
+  name: vadcp_b_velocity_beam5
 workflow_config:
   schedule: 0 0 * * *
