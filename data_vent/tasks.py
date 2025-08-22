@@ -48,7 +48,12 @@ from data_vent.utils.validate import (
 from data_vent.settings import harvest_settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
-from data_vent.exceptions import DataNotReadyError, NullMetadataError, StreamNotFoundError
+from data_vent.exceptions import (
+    DataNotReadyError, 
+    NullMetadataError, 
+    StreamNotFoundError, 
+    MissingDataError,
+)
 
 
 def setup_status_s3fs(
@@ -627,9 +632,7 @@ def data_processing(
                         logger.warning("SKIPPED: Failed pre processing!")
 
     else:
-        # raise SKIP("No datasets to process. Skipping...")
-        logger.warning("No datasets to process. Skipping...")
-        return Cancelled(message="No datasets to process. Skipping...")
+        raise MissingDataError("No datasets to process. Skipping...")
     return {
         "final_path": nc_files_dict.get("final_bucket"),
         "temp_path": nc_files_dict.get("temp_bucket"),

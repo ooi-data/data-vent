@@ -12,3 +12,7 @@ class NullMetadataError(Exception):
 
 class StreamNotFoundError(Exception):
     pass
+
+
+class MissingDataError(Exception):
+    pass
