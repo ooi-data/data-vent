@@ -25,7 +25,6 @@ dependencies = [
   "pandas",
   "progressbar2",
   "typer",
-  "zarr",
   "xarray",
   "netcdf4",
   "zarr",
