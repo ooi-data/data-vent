@@ -16,7 +16,7 @@ class GithubConfig(BaseSettings):
 class AWSConfig(BaseSettings):
     key: str = Field(None, validation_alias="aws_key")
     secret: str = Field(None, validation_alias="aws_secret")
-    region_name: str = Field("us-west-2", validation_alias="aws_region")
+    client_kwargs: dict = {"region_name": "us-west-2"}
 
 
 class S3Buckets(BaseModel):
