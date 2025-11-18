@@ -3,8 +3,6 @@ import fsspec
 import json
 import requests
 
-import pandas as pd
-
 from data_vent.config import DATA_BUCKET, UNIFIED_CONFIG_DF
 from data_vent.settings.main import harvest_settings
 from loguru import logger
