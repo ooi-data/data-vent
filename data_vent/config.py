@@ -1,4 +1,5 @@
 from data_vent.settings.main import harvest_settings
+import pandas as pd
 
 # OOI Config
 OOI_USERNAME = harvest_settings.ooi_config.username
@@ -35,3 +36,16 @@ COMPUTE_EXCEPTIONS = {
         "append": "4vcpu_30gb",
     },
 }
+
+# stage 1, 2, 3 instrument configs in rca-data-tools repo
+STAGE1_DF = pd.read_csv(
+    "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
+)
+STAGE2_DF = pd.read_csv(
+    "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/stage2Dictionary.csv" # noqa
+)
+STAGE3_DF = pd.read_csv(
+    "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/stage3Dictionary.csv" # noqa
+)
+
+UNIFIED_CONFIG_DF  = pd.concat([STAGE1_DF, STAGE2_DF, STAGE3_DF])

@@ -5,7 +5,7 @@ import requests
 
 import pandas as pd
 
-from data_vent.config import DATA_BUCKET
+from data_vent.config import DATA_BUCKET, UNIFIED_CONFIG_DF
 from data_vent.settings.main import harvest_settings
 from loguru import logger
 
@@ -35,10 +35,7 @@ def request_annotations(refdes):
 
 @click.command()
 def harvest_annotations():
-    priority_df = pd.read_csv(
-        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
-    )
-    priority_instruments = sorted(priority_df.refDes.unique())
+    priority_instruments = sorted(UNIFIED_CONFIG_DF.refDes.unique())
 
     for instrument in priority_instruments:  # ie: "CE04OSPS-SF01B-2B-PHSENA108"
         annotation_json = request_annotations(instrument)
