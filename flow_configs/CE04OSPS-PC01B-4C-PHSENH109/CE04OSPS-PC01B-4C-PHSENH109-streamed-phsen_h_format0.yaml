@@ -1,0 +1,12 @@
+assigness: []
+harvest_options:
+  goldcopy: false
+  path: s3://ooi-data
+  refresh: false
+  test: false
+instrument: CE04OSPS-PC01B-4C-PHSENH109
+stream:
+  method: streamed
+  name: phsen_h_format0
+workflow_config:
+  schedule: 0 0 * * *
