@@ -515,7 +515,7 @@ def setup_process(response_json, target_bucket):
 @task
 def data_processing(
     nc_files_dict, 
-    stream_harvest, 
+    stream_harvest, #configs stored here
     max_chunk, 
     refresh, 
     overwrite_attrs,
@@ -537,7 +537,7 @@ def data_processing(
 
     existing_enc = None
     if not stream_harvest.harvest_options.refresh:
-        final_zarr = nc_files_dict.get("final_bucket")
+        final_zarr = nc_files_dict.get("final_bucket") # TODO will need 2? parallel buckets if we're running qartod during harvest
         final_store = fsspec.get_mapper(
             final_zarr,
             **stream_harvest.harvest_options.path_settings,
@@ -577,6 +577,7 @@ def data_processing(
                             nc_files_dict.get("retrieved_dt"),
                         )
                     )
+                    # TODO add a .pipe for custom qartod streams?
                     # <<< SOME DATA VALIDATION depending on context >>>
                     # only check for duplicate timestamps during daily appends
                     if not refresh:
@@ -608,7 +609,7 @@ def data_processing(
                             succeed = True
                         else:
                             succeed = append_to_zarr(
-                                mod_ds, temp_store, enc, overwrite_attrs, logger=logger
+                                mod_ds, temp_store, enc, overwrite_attrs, logger=logger #TODO see what temp store and store are and how to impliment them for custom qartod
                             )
 
                         if succeed:
