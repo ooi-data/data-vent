@@ -2,6 +2,7 @@ assigness: []
 harvest_options:
   goldcopy: false
   path: s3://ooi-data
+  rca_advanced_qaqc: false
   refresh: false
   test: false
 instrument: RS01SUM2-MJ01B-12-ADCPSK101
