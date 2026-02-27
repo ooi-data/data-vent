@@ -577,7 +577,6 @@ def data_processing(
                             nc_files_dict.get("retrieved_dt"),
                         )
                     )
-                    # TODO add a .pipe for custom qartod streams?
                     # <<< SOME DATA VALIDATION depending on context >>>
                     # only check for duplicate timestamps during daily appends
                     if not refresh:

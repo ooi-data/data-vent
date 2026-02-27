@@ -12,7 +12,7 @@ from dask.utils import memory_repr
 import numpy as np
 from dateutil import parser
 
-from data_vent.config import DATA_BUCKET, TEMP_DATA_BUCKET
+from data_vent.config import DATA_BUCKET, TEMP_DATA_BUCKET, QAQC_BUCKET
 
 # from data_vent.settings import harvest_settings
 
@@ -296,6 +296,7 @@ def setup_etl(stream, source="ooinet", target_bucket=f"s3://{DATA_BUCKET}"):
     # Setup S3 Bucket
     temp_s3_fold = f"s3://{TEMP_DATA_BUCKET}/{name}.zarr"
     final_s3_fold = f"{target_bucket}/{name}"
+    qaqc_s3_fold = f"s3://{QAQC_BUCKET}/{name}"
 
     if source == "ooinet":
         retrieved_dt = stream["result"]["request_dt"]
@@ -306,6 +307,7 @@ def setup_etl(stream, source="ooinet", target_bucket=f"s3://{DATA_BUCKET}"):
         temp_fold=temp_fold,
         temp_bucket=temp_s3_fold,
         final_bucket=final_s3_fold,
+        qaqc_bucket=qaqc_s3_fold,
         retrieved_dt=retrieved_dt,
         **stream,
     )

@@ -51,6 +51,7 @@ class HarvestOptions(BaseModel):
     force_harvest: bool = False
     refresh: bool = False
     test: bool = False
+    rca_advanced_qaqc: bool = False
     goldcopy: bool = False
     path_settings: dict = {}
     custom_range: HarvestRange = HarvestRange()

@@ -15,6 +15,7 @@ RAW_PATH = harvest_settings.ooi_config.paths.get("raw")
 # Storage Options
 DATA_BUCKET = "ooi-data"
 TEMP_DATA_BUCKET = "temp-ooi-data-prod"
+QAQC_BUCKET = "rca-advanced-qaqc"
 STORAGE_OPTIONS = harvest_settings.storage_options.model_dump()
 METADATA_BUCKET = harvest_settings.s3_buckets.metadata
 HARVEST_CACHE_BUCKET = harvest_settings.s3_buckets.harvest_cache

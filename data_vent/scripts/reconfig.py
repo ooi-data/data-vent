@@ -46,4 +46,4 @@ def add_new_config_keyvalue_pair(new_config_key: Any, new_config_value: Any):
 
 if __name__ == "__main__":
     #change_config_param(new_config_value="s3://ooi-data")
-    add_new_config_keyvalue_pair(new_config_key="test_key", new_config_value="test_value") #TODO
+    add_new_config_keyvalue_pair(new_config_key="rca_advanced_qaqc", new_config_value=False)
