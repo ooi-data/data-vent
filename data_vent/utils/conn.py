@@ -2,6 +2,7 @@ import datetime
 from loguru import logger
 import json
 
+import os
 import zarr
 import fsspec
 import requests
@@ -190,3 +191,11 @@ def request_data(
         "email": str(email),
     }
     return send_request(url, params), {"url": url, "params": params}
+
+
+def get_s3_kwargs():
+    aws_key = os.environ.get("AWS_KEY")
+    aws_secret = os.environ.get("AWS_SECRET")
+    
+    s3_kwargs = {'key': aws_key, 'secret': aws_secret}
+    return s3_kwargs
