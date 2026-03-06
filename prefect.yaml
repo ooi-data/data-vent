@@ -1,7 +1,3 @@
-# Welcome to your prefect.yaml file! You can use this file for storing and managing
-# configuration for deploying your flows. We recommend committing this file to source
-# control along with your flow code.
-
 # Generic metadata about this project
 name: data-vent
 prefect-version: 2.14.15
@@ -17,9 +13,6 @@ pull:
 - prefect.deployments.steps.git_clone:
     repository: https://github.com/ooi-data/data-vent.git
     branch: main
-    access_token: '{{ prefect.blocks.secret.deployment-stream-ingest-2vcpu-16gb-stream-ingest-repo-token
-      }}'
-
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
 - name: stream_ingest_2vcpu_16gb
@@ -31,38 +24,29 @@ deployments:
   work_pool:
     name: data-harvest-push-pool
     work_queue_name:
-    job_variables: {}
+    job_variables:
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: run_stream_ingest_2vcpu_16gb
   version:
   tags: []
-  description: "Launches a data harvest for each specified OOI-RCA instrument streams\n
-    \nIn production setting harvesters run in parallel on AWS Fargate instances.\n\
-    \nArgs:\n    test_run (bool): If true, only launch harvesters for 3 small test
-    instrument streams\n    priority_only (bool): If true, launch harvesters for instrument
-    streams defined as\n        priority in the OOI-RCA priority instrument csv\n\
-    \    non_priority (bool): if true, launch harvesters for all non-priority instruments\n\
-    \    run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances
-    orchestrated\n        by a prefect deployment. Set to false to run harvesters
-    in series on local machine. This\n        can be useful for debugging.\n    force_harvest
-    (Optional[bool]): if `True` force pipeline to make harvest request of m2m\n  \
-    \  refresh (Optional[bool]): whether to refresh stream data from t0, previously
-    default to `False` but\n        was set to `True` once per month\n    export_da
-    (Optional[bool]): arg from legacy pipeline, controls the uploading of data availability.\n\
-    \        Relevant to CAVA frontend/API.\n    gh_write_da (Optional[bool]): arg
-    from legacy pipeline, controls the uploading of data availability\n        to
-    gihub. Relevant to CAVA frontend/API.\n\nAs configured, harvesters will output
-    array data stored as .zarr files to the following s3 buckets:\n\nflow-process-bucket:
-    stores json-like harvest status to inform harvest logic\ntemp-ooi-data-prod: temporary
-    array storage for processing steps?\nooi-data: final storage for processed array
-    data - saved as .zarr"
+  description:
   entrypoint: data_vent/flow.py:run_stream_ingest
   parameters: {}
   work_pool:
     name: data-harvest-push-pool
     work_queue_name:
-    job_variables: {}
+    job_variables:
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: stream_ingest_4vcpu_30gb
@@ -77,6 +61,11 @@ deployments:
     job_variables:
       cpu: 4096
       memory: 30720
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: stream_ingest_8vcpu_60gb
@@ -91,5 +80,10 @@ deployments:
     job_variables:
       cpu: 8192
       memory: 64424
+      task_definition_overrides:
+        containerDefinitions:
+          - name: prefect
+            repositoryCredentials:
+              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
