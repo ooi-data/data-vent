@@ -82,6 +82,7 @@ class HarvestStatus(BaseModel):
     cloud_location: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    advanced_qaqc_end_date: Optional[str] = None
     processed_at: Optional[str] = None
     last_refresh: Optional[str] = None
     data_check: bool = False

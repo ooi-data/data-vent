@@ -29,6 +29,7 @@ from data_vent.processor import (
     append_to_zarr,
     is_zarr_ready,
     preproc,
+    placeholder_qaqc_function,
 )
 from data_vent.processor.checker import check_in_progress
 from data_vent.processor.utils import _write_data_avail, _get_var_encoding
@@ -44,7 +45,7 @@ from data_vent.utils.validate import (
     check_for_timestamp_duplicates, 
     check_for_empty_qartod_vars
 )
-
+from data_vent.utils.conn import get_s3_kwargs, check_zarr
 from data_vent.settings import harvest_settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
@@ -198,11 +199,16 @@ def check_requested(stream_harvest):
 
 
 @task
-def reset_status_json(stream_harvest):
+def reset_status_json(stream_harvest, force_harvest):
+    logger = get_run_logger()
     status_json = stream_harvest.status.model_dump()
     # setting end date to None is #HACK to get subsequent refresh streams to fail nicely
-    # could make a nice error #TODO in future
-    status_json.update({"data_check": False, "start_date": None, "end_date": None})
+    # could make a more specific error #TODO in future
+    if force_harvest:
+        logger.info("force havest - resetting data check flag")
+        status_json.update({"data_check": False, "start_date": None, "end_date": None, "advanced_qaqc_end_date": None})
+    else:
+        status_json.update({"advanced_qaqc_end_date": None})
     update_and_write_status(stream_harvest, status_json)
 
 
@@ -798,3 +804,63 @@ def data_availability(nc_files_dict, stream_harvest, export=False, gh_write=Fals
     except Exception as e:
         exc_dict = parse_exception(e)
         raise Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
+
+
+@task
+def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
+    logger = get_run_logger()
+    logger.info("=== Running advanced QAQC pipeline. ===")
+
+    fs_kwargs = get_s3_kwargs()
+    fs = fsspec.filesystem('s3', **fs_kwargs)
+
+    status_json = stream_harvest.status.model_dump()
+    zarr_end_date = parser.parse(status_json.get("end_date"))
+    try:
+        advanced_qaqc_end_date = parser.parse(status_json.get("advanced_qaqc_end_date"))
+    except TypeError:
+        advanced_qaqc_end_date = None
+
+    final_store = fs.get_mapper(nc_files_dict.get("final_bucket"))
+    qaqc_store = fs.get_mapper(nc_files_dict.get("qaqc_bucket"))
+
+    if refresh or not fs.exists(nc_files_dict.get("qaqc_bucket")):
+        mode = "w"
+    else:
+        mode = "a"
+
+    if advanced_qaqc_end_date is None or zarr_end_date > advanced_qaqc_end_date:
+        logger.info(f"advanced qaqc end date: {advanced_qaqc_end_date}")
+        logger.info(f"zarr end date: {zarr_end_date}")
+        logger.info("New data found since last advanced QAQC. Running advanced QAQC...")
+
+        ds = xr.open_zarr(final_store, consolidated=True, chunks="auto")
+
+        if advanced_qaqc_end_date is None:
+            ds_to_qaqc = ds#.sel(time=slice(None, zarr_end_date))
+        else:
+            qaqc_start_time = advanced_qaqc_end_date
+            ds_to_qaqc = ds.sel(time=slice(qaqc_start_time, None)) # possibly us Don's check_zarr function
+
+        advanced_qaqc_ds = placeholder_qaqc_function(ds_to_qaqc)
+
+        logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
+        advanced_qaqc_ds.to_zarr(
+            qaqc_store, 
+            mode=mode, 
+            append_dim="time" if mode == "a" else None,
+            consolidated=True
+        )
+        zarr.convenience.consolidate_metadata(qaqc_store)
+
+        _, new_advanced_qaqc_end_date = _update_time_coverage(qaqc_store) # NOTE alternate way to get date range
+
+        # new_advanced_qaqc_end_date = (advanced_qaqc_ds["time"].isel(time=-1).item()) # alternate way to grab end date
+        # new_advanced_qaqc_end_date = pd.Timestamp(new_advanced_qaqc_end_date).isoformat()
+
+        # update qaqc metadata in status json on s3
+        status_json.update({"advanced_qaqc_end_date": new_advanced_qaqc_end_date})
+        update_and_write_status(stream_harvest, status_json)
+
+
+

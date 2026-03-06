@@ -24,8 +24,8 @@ from data_vent.tasks import (
     setup_process,
     data_processing,
     finalize_data_stream,
-    data_availability,
     read_status_json,
+    run_advanced_qaqc,
 )
 
 from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS
@@ -82,9 +82,9 @@ def stream_ingest(
     # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data
     # request to m2m, because we don't know what state that flag was left in due to the failure
     # that is likely necessitating the refresh...
-    if refresh and force_harvest:
-        logger.info("force havest - resetting data check flag")
-        reset_status_json(stream_harvest)
+    if refresh:
+        logger.info("refresh in progess - resetting date fields in status json")
+        reset_status_json(stream_harvest, force_harvest)
 
     is_requested = check_requested(stream_harvest)
 
@@ -123,12 +123,20 @@ def stream_ingest(
     )
 
     # Finalize data and transfer to final
-    final_path = finalize_data_stream(
+    finalize_data_stream(
         stores_dict,
         stream_harvest,
         max_chunk,
     )
 
+    if stream_harvest.harvest_options.rca_advanced_qaqc:
+        run_advanced_qaqc(
+            stream_harvest,
+            nc_files_dict,
+            refresh,
+        )
+
+ 
     # NOTE Data validation occurs where appropriate see utils.validate module for details
     # TODO data availability might be sunset completely, it is slow and not used downstream
     # at this point - could also remove gh_write_da and export_da args in future?
