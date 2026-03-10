@@ -207,7 +207,7 @@ def run_stream_ingest(
     priority_df = priority_df[priority_df["harvestInterval"] == 1]
     priority_instruments = sorted(priority_df.refDes.unique())
 
-    config_dir = os.path.join(os.getcwd(), "flow_configs")
+    config_dir = os.path.join(os.getcwd(), "configs", "flow_configs")
 
     if streams:
         all_paths = []

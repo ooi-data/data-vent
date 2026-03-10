@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def change_config_param(new_config_value: Any):
-    config_dir = os.path.join(os.getcwd(), "flow_configs")
+    config_dir = os.path.join(os.getcwd(), "configs", "flow_configs")
     fs = fsspec.filesystem("")
     glob_path = config_dir + "/**/*.yaml"
     logger.info(f"Searching for config yamls at path: {glob_path}")
@@ -26,7 +26,7 @@ def change_config_param(new_config_value: Any):
 
 
 def add_new_config_keyvalue_pair(new_config_key: Any, new_config_value: Any):
-    config_dir = os.path.join(os.getcwd(), "flow_configs")
+    config_dir = os.path.join(os.getcwd(), "configs", "flow_configs")
     fs = fsspec.filesystem("")
     glob_path = config_dir + "/**/*.yaml"
     logger.info(f"Searching for config yamls at path: {glob_path}")
