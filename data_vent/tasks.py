@@ -29,7 +29,6 @@ from data_vent.processor import (
     append_to_zarr,
     is_zarr_ready,
     preproc,
-    placeholder_qaqc_function,
 )
 from data_vent.processor.checker import check_in_progress
 from data_vent.processor.utils import _write_data_avail, _get_var_encoding
