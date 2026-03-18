@@ -40,7 +40,8 @@ dependencies = [
   "requests-html",
   "rechunker",
   "pydantic>2",
-  "pydantic-settings"
+  "pydantic-settings",
+  "rca-data-tools @ git+https://github.com/OOI-CabledArray/rca-data-tools.git@main"
 ]
 
 [project.scripts]
@@ -49,5 +50,9 @@ dependencies = [
   ooi-data-catalog = "data_vent.cli:app"
   annotations-harvest = "data_vent.metadata.annotations:harvest_annotations"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.ruff]
 line-length = 95
+
