@@ -135,9 +135,9 @@ def compile_instrument_streams(instruments):
         for st in it.chain.from_iterable(streams_list)
     )
     streamsdf = pd.DataFrame(streams_list)
-    streamsdf.loc[:, "beginTime"] = streamsdf["beginTime"].apply(pd.to_datetime)
-    streamsdf.loc[:, "endTime"] = streamsdf["endTime"].apply(pd.to_datetime)
-    streamsdf.loc[:, "group_code"] = streamsdf.reference_designator.apply(set_instrument_group)
+    streamsdf["beginTime"] = pd.to_datetime(streamsdf["beginTime"], utc=True)
+    streamsdf["endTime"] = pd.to_datetime(streamsdf["endTime"], utc=True)
+    streamsdf["group_code"] = streamsdf.reference_designator.apply(set_instrument_group)
     return df2list(streamsdf)
 
 
