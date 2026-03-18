@@ -55,7 +55,7 @@ from data_vent.exceptions import (
     StreamNotFoundError, 
     MissingDataError,
 )
-
+from rca_data_tools.qaqc.plots import run_calculations_for_site
 
 def setup_status_s3fs(
     stream_harvest: StreamHarvest,
@@ -830,19 +830,20 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
         mode = "a"
 
     if advanced_qaqc_end_date is None or zarr_end_date > advanced_qaqc_end_date:
-        logger.info(f"advanced qaqc end date: {advanced_qaqc_end_date}")
-        logger.info(f"zarr end date: {zarr_end_date}")
+        logger.info(f"Advanced qaqc end date: {advanced_qaqc_end_date}")
+        logger.info(f"Zarr end date: {zarr_end_date}")
         logger.info("New data found since last advanced QAQC. Running advanced QAQC...")
 
         ds = xr.open_zarr(final_store, consolidated=True, chunks="auto")
 
         if advanced_qaqc_end_date is None:
-            ds_to_qaqc = ds#.sel(time=slice(None, zarr_end_date))
+            ds_to_qaqc = ds
         else:
             qaqc_start_time = advanced_qaqc_end_date
             ds_to_qaqc = ds.sel(time=slice(qaqc_start_time, None)) # possibly us Don's check_zarr function
 
-        advanced_qaqc_ds = placeholder_qaqc_function(ds_to_qaqc)
+        # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
+        advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.instrument, ds_to_qaqc)
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
