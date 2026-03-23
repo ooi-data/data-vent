@@ -1,7 +1,7 @@
 import datetime
 
 import typer
-from . import create_metadata
+from data_vent.metadata import create_metadata
 
 app = typer.Typer()
 
