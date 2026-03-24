@@ -217,11 +217,11 @@ def create_ooinet_inventory():
         (ooinetdf.iris_enabled == True) & ~ooinetdf.reference_designator.str.contains("BOTPT")  # noqa
     ].copy()
     # GET STUFF THAT ARE IN RAW DATA ARCHIVE
-    rawdatadf = ooinetdf[~ooinetdf.rds_link.isna()]
+    rawdatadf = ooinetdf
     # GET STUFF THAT ARE IN CI
     m2mdf = ooinetdf[
         ooinetdf.reference_designator.str.contains("BOTPT")
-        | (ooinetdf.iris_enabled == False & ooinetdf.rds_link.isna())
+        | (ooinetdf.iris_enabled == False)
     ]
 
     return {"iris": irisdf, "rawdata": rawdatadf, "m2m": m2mdf}
