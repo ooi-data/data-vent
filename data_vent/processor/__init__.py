@@ -61,6 +61,7 @@ def preproc(ds):
             and not np.issubdtype(var.dtype, np.datetime64)
             and not np.issubdtype(var.dtype, np.bool_)
             and "qartod_executed" not in v  # keep qartod_executed variable
+            and "frame_type" not in v  # frame_type needed for nitrate advanced qaqc
         ):
             if not coding.strings.is_unicode_dtype(var.dtype) or var.dtype == object:
                 string_variables.append(v)
