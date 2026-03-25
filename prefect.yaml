@@ -24,12 +24,7 @@ deployments:
   work_pool:
     name: data-harvest-push-pool
     work_queue_name:
-    job_variables:
-      task_definition_overrides:
-        containerDefinitions:
-          - name: prefect
-            repositoryCredentials:
-              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
+    job_variables: {}
   schedule:
   is_schedule_active: true
 - name: run_stream_ingest_2vcpu_16gb
@@ -41,12 +36,7 @@ deployments:
   work_pool:
     name: data-harvest-push-pool
     work_queue_name:
-    job_variables:
-      task_definition_overrides:
-        containerDefinitions:
-          - name: prefect
-            repositoryCredentials:
-              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
+    job_variables: {}
   schedule:
   is_schedule_active: true
 - name: stream_ingest_4vcpu_30gb
@@ -61,11 +51,6 @@ deployments:
     job_variables:
       cpu: 4096
       memory: 30720
-      task_definition_overrides:
-        containerDefinitions:
-          - name: prefect
-            repositoryCredentials:
-              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
 - name: stream_ingest_8vcpu_60gb
@@ -80,10 +65,5 @@ deployments:
     job_variables:
       cpu: 8192
       memory: 64424
-      task_definition_overrides:
-        containerDefinitions:
-          - name: prefect
-            repositoryCredentials:
-              credentialsParameter: "arn:aws:secretsmanager:us-west-2:688122822031:secret:jdduprey-dockerhub-creds-iouyGp"
   schedule:
   is_schedule_active: true
