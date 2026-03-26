@@ -68,6 +68,8 @@ def preproc(ds):
     # Drop variables that contains strings.. not necessary data.
     logger.info(f"Removing variables containing strings: {','.join(string_variables)}")
     rawds = rawds.drop_vars(string_variables, errors="ignore")
+    if "frame_type" in rawds:
+        rawds["frame_type"] = rawds["frame_type"].astype("|S3")
     return rawds
 
 
