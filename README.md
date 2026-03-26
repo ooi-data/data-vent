@@ -49,7 +49,18 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
 5) Recalculated advanced QAQC products can be found in the `rca-advanced-qaqc` S3 bucket. These products will mirror the refreshed zarr
 dimensions and data, with added arrays containing advanced QAQC results.
 
-# Development Environment 
+# Development
+`data-vent` has a direct dependency on the latest commit of `rca-data-tools` main branch. This means that if you want changes 
+to `rca-data-tools` to be reflected in production `data-vent` you need to rebuild the `data-vent` image. To accomplish
+this navigate to the `data-vent` directory and run the following commands.
+
+```
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/p0l4c7i2/data-vent:latest --push .
+
+```
+
+
 With data-vent as cwd:
 
 `conda create --name data-vent python=3.11 pip`
@@ -60,3 +71,4 @@ With data-vent as cwd:
 
 Linting uses black to 95 line length:
 `black --line-length 95 data_vent/`
+
