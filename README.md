@@ -57,7 +57,6 @@ this navigate to the `data-vent` directory and run the following commands.
 ```
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 docker buildx build --platform linux/amd64,linux/arm64 -t public.ecr.aws/p0l4c7i2/data-vent:latest --push .
-
 ```
 
 
