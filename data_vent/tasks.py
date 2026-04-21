@@ -512,6 +512,8 @@ def setup_process(response_json, target_bucket):
     catalog_dict = parse_response_thredds(response_json)
     filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
     harvest_catalog = dict(**filtered_catalog_dict, **response_json)
+    
+    logger.info(f"m2m response can be viewed here: {harvest_catalog.get('async_url')}")
     nc_files_dict = setup_etl(harvest_catalog, target_bucket=target_bucket)
     logger.info(f"{len(nc_files_dict.get('datasets', []))} netcdf files to be processed.")
     return nc_files_dict
