@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional, List
 
 import os
 import yaml
-import pandas as pd
 from pathlib import Path
 from pydantic import BaseModel
 from prefect import flow, get_run_logger
@@ -28,7 +27,7 @@ from data_vent.tasks import (
     run_advanced_qaqc,
 )
 
-from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS
+from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS, UNIFIED_CONFIG_DF
 
 
 class FlowParameters(BaseModel):
@@ -194,14 +193,7 @@ def run_stream_ingest(
     logger = get_run_logger()
     logger.info("Starting parent flow...")
 
-    stage1_df = pd.read_csv(
-        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
-    )
-    stage2_df = pd.read_csv(
-        "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/stage2Dictionary.csv"
-    )
-
-    priority_df = pd.concat([stage1_df, stage2_df])
+    priority_df = UNIFIED_CONFIG_DF[UNIFIED_CONFIG_DF["stage"].isin([1, 2])]
 
     # there may be some instruments we want to plot but not harvest
     priority_df = priority_df[priority_df["harvestInterval"] == 1]
