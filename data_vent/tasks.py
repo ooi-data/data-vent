@@ -809,10 +809,6 @@ def data_availability(nc_files_dict, stream_harvest, export=False, gh_write=Fals
 
 @task
 def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
-    if not refresh: 
-        # TODO the append version of this function is generating arrays with missing timestamps 
-        # TODO need to iron out this logic, for now just generate advanced qaqc products during refresh
-        return
     logger = get_run_logger()
     logger.info("=== Running advanced QAQC pipeline. ===")
 
@@ -844,19 +840,7 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
         if advanced_qaqc_end_date is None:
             ds_to_qaqc = ds
         else:
-            qaqc_start_time = advanced_qaqc_end_date
-            ds_to_qaqc = ds.sel(time=slice(qaqc_start_time, None)) # possibly us Don's check_zarr function
-            # TODO: fix two bugs in this slice:
-            # 1. OVERLAP — qaqc_start_time equals the last timestamp already written to the qaqc zarr,
-            #    so that timestamp gets re-computed and re-appended on every append run, creating
-            #    duplicate time coordinate values that accumulate over time.
-            # 2. MISSING TIMESTAMPS — advanced_qaqc_end_date is stored/retrieved as a string
-            #    (float64 → datetime64 → str → parser.parse → Python datetime → float64),
-            #    and sub-second precision can be lost in that round-trip. The reconstructed
-            #    qaqc_start_time may land slightly *after* the true last timestamp, causing
-            #    the slice to skip a few of the most recently appended timestamps.
-            # Fix: select strictly after the last processed time using datetime64 comparison:
-            #   ds_to_qaqc = ds.sel(time=ds.time > np.datetime64(advanced_qaqc_end_date))
+            ds_to_qaqc = ds.isel(time=(ds.time > np.datetime64(advanced_qaqc_end_date)).values)
 
         # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
         advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.instrument, ds_to_qaqc)
