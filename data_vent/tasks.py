@@ -430,6 +430,7 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
 def check_data(data_response, stream_harvest):
     logger = get_run_logger()
     logger.info("=== Checking for data readiness ===")
+    logger.info(f"Data request response: {data_response}")
     status_json = stream_harvest.status.model_dump()
     result = data_response.get("result")
     status_url = result.get("status_url", None)
