@@ -194,9 +194,6 @@ def run_stream_ingest(
     logger.info("Starting parent flow...")
 
     priority_df = UNIFIED_CONFIG_DF[UNIFIED_CONFIG_DF["stage"].isin([1, 2])]
-
-    # there may be some instruments we want to plot but not harvest
-    priority_df = priority_df[priority_df["harvestInterval"] == 1]
     priority_instruments = sorted(priority_df.refDes.unique())
 
     config_dir = os.path.join(os.getcwd(), "configs", "flow_configs")
