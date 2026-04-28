@@ -232,7 +232,7 @@ def _check_stream(stream_harvest):
     if resp.status_code == 200:
         try:
             all_streams = resp.json()
-            logger.info(f"all streams: {all_streams}")
+            logger.debug(f"all streams: {all_streams}")
             current_end_dt = next(
                 filter(
                     lambda s: s["stream"] == stream_harvest.stream.name
@@ -859,9 +859,6 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
         zarr.convenience.consolidate_metadata(qaqc_store)
 
         _, new_advanced_qaqc_end_date = _update_time_coverage(qaqc_store) # NOTE alternate way to get date range
-
-        # new_advanced_qaqc_end_date = (advanced_qaqc_ds["time"].isel(time=-1).item()) # alternate way to grab end date
-        # new_advanced_qaqc_end_date = pd.Timestamp(new_advanced_qaqc_end_date).isoformat()
 
         # update qaqc metadata in status json on s3
         status_json.update({"advanced_qaqc_end_date": new_advanced_qaqc_end_date})
