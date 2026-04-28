@@ -55,6 +55,8 @@ from data_vent.exceptions import (
     MissingDataError,
 )
 from rca_data_tools.qaqc.plots import run_calculations_for_site
+from rca_data_tools.qaqc.utils import load_site_calculations
+from rca_data_tools.qaqc.constants import PARAMS_DIR
 
 def setup_status_s3fs(
     stream_harvest: StreamHarvest,
@@ -844,7 +846,8 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
             ds_to_qaqc = ds.isel(time=(ds.time > np.datetime64(advanced_qaqc_end_date)).values)
 
         # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
-        advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.instrument, ds_to_qaqc)
+        harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
+        advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.instrument, ds_to_qaqc, calculate_dict=harvest_calc_dict)
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
