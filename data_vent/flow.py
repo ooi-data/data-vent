@@ -27,6 +27,9 @@ from data_vent.tasks import (
     run_advanced_qaqc,
 )
 
+from rca_data_tools.qaqc.utils import load_site_calculations
+from rca_data_tools.qaqc.constants import PARAMS_DIR
+
 from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS, UNIFIED_CONFIG_DF
 
 
@@ -77,6 +80,8 @@ def stream_ingest(
     )
 
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
+    harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
+    stream_harvest.harvest_options.rca_advanced_qaqc = stream_harvest.instrument in harvest_calc_dict
 
     # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data
     # request to m2m, because we don't know what state that flag was left in due to the failure
