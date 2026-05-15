@@ -81,7 +81,6 @@ def stream_ingest(
 
     stream_harvest.harvest_options.path_settings = STORAGE_OPTIONS["aws"]
     harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
-    stream_harvest.harvest_options.rca_advanced_qaqc = stream_harvest.instrument in harvest_calc_dict
 
     # when refreshing we need to reset the `data_check`` flag to False to ensure a fresh data
     # request to m2m, because we don't know what state that flag was left in due to the failure
@@ -133,7 +132,7 @@ def stream_ingest(
         max_chunk,
     )
 
-    if stream_harvest.harvest_options.rca_advanced_qaqc:
+    if stream_harvest.instrument in harvest_calc_dict:
         run_advanced_qaqc(
             stream_harvest,
             nc_files_dict,
