@@ -132,7 +132,7 @@ def stream_ingest(
         max_chunk,
     )
 
-    if stream_harvest.instrument in harvest_calc_dict:
+    if stream_harvest.table_name in harvest_calc_dict:
         run_advanced_qaqc(
             stream_harvest,
             nc_files_dict,

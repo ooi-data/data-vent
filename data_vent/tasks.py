@@ -847,7 +847,7 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
 
         # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
         harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
-        advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.instrument, ds_to_qaqc, calculate_dict=harvest_calc_dict)
+        advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.table_name, ds_to_qaqc, calculate_dict=harvest_calc_dict)
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
