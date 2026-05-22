@@ -37,7 +37,12 @@ COMPUTE_EXCEPTIONS = {
         "append": "4vcpu_30gb",
     },
     "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample": {
-        "refresh": "4vcpu_30gb", # needs extra due to advanced qaqc
+        "refresh": "4vcpu_30gb", # NUTNRAs need extra due to advanced qaqc
+        "append": "4vcpu_30gb",
+    },
+    "RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample": {
+        "refresh": "4vcpu_30gb",
+        "append": "4vcpu_30gb",
     }
 }
 
