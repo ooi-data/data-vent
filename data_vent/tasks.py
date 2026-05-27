@@ -851,10 +851,11 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
-            qaqc_store, 
-            mode=mode, 
+            qaqc_store,
+            mode=mode,
             append_dim="time" if mode == "a" else None,
-            consolidated=True
+            consolidated=True,
+            align_chunks=True,
         )
         zarr.convenience.consolidate_metadata(qaqc_store)
 
