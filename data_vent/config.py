@@ -43,7 +43,11 @@ COMPUTE_EXCEPTIONS = {
     "RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample": {
         "refresh": "4vcpu_30gb",
         "append": "4vcpu_30gb",
-    }
+    },
+    "RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample": {
+        "refresh": "4vcpu_30gb",
+        "append": "4vcpu_30gb",
+    },
 }
 
 # consolidated instrument config with stage column in rca-data-tools repo
