@@ -48,6 +48,9 @@ COMPUTE_EXCEPTIONS = {
         "refresh": "4vcpu_30gb",
         "append": "4vcpu_30gb",
     },
+    "CE04OSPS-SF01B-3D-SPKIRA102-streamed-spkir_data_record": {
+        "refresh": "4vcpu_30gb",
+    },
 }
 
 # consolidated instrument config with stage column in rca-data-tools repo
