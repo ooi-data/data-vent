@@ -205,23 +205,24 @@ def _append_zarr(store, ds_to_append, append_dim="time", consolidated=True):
 
 
 def _reindex_zarr(store, dim_indexer):
-    existing_zarr = zarr.open_group(store, mode="a")
-    new_dim_sizes = {k: len(v) for k, v in dim_indexer.items()}
-    for arr_name, za in existing_zarr.arrays():
-        arr_dims = za.attrs["_ARRAY_DIMENSIONS"]
-        existing_dims = dict(zip(arr_dims, za.shape))
-        new_shape = tuple(
-            new_dim_sizes[d] if d in new_dim_sizes else existing_dims[d] for d in arr_dims
-        )
-        if arr_name in new_dim_sizes:
-            za = existing_zarr[arr_name]
-            za.resize(new_shape)
-            za[:] = dim_indexer[arr_name]
-        elif any(dim in dim_indexer for dim in arr_dims):
-            za = existing_zarr[arr_name]
-            za.resize(new_shape)
-    zarr.consolidate_metadata(store)
-    return existing_zarr
+    existing_ds = xr.open_zarr(store, consolidated=True)
+    reindexed = existing_ds.reindex(dim_indexer, fill_value=np.nan)
+
+    # Update chunk encoding for vars whose non-time dims changed size so the
+    # rewritten store's chunk shape matches what future appends will expect.
+    for var_name in list(reindexed.data_vars) + list(reindexed.coords):
+        var = reindexed[var_name]
+        enc = {**var.encoding}
+        if "chunks" in enc:
+            new_chunks = tuple(
+                len(dim_indexer[d]) if d in dim_indexer else enc["chunks"][i]
+                for i, d in enumerate(var.dims)
+            )
+            if new_chunks != enc["chunks"]:
+                reindexed[var_name].encoding = {**enc, "chunks": new_chunks}
+
+    reindexed.to_zarr(store, mode="w", consolidated=True)
+    return zarr.open_group(store, mode="a")
 
 
 def _download(source_url: str, cache_location: str) -> str:

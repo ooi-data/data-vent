@@ -208,8 +208,13 @@ def append_to_zarr(mod_ds, store, encoding, overwrite_attrs, logger=None):
         return False
 
     if modify_zarr_dims:
-        logger.info("Reindexing zarr ...")
+        changed = {d: (existing_zarr[d].shape[0], len(v)) for d, v in dim_indexer.items()}
+        logger.warning(
+            f"Non-time dimension size increased: {changed}. "
+            "Rewriting entire zarr store to expand dimension — this may take a while."
+        )
         existing_zarr = _reindex_zarr(store, dim_indexer)
+        logger.warning("Zarr rewrite complete. Resuming append with expanded dimensions.")
     elif dim_indexer and not modify_zarr_dims:
         logger.info("Reindexing dataset to append ...")
         mod_ds = mod_ds.reindex(dim_indexer)
