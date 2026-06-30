@@ -159,12 +159,14 @@ def reindex_to_max_coordinates(ds, instrument, logger=None):
     for inst_key, coord_maxes in MAX_COORD_SIZES.items():
         if inst_key in instrument:
             for coord, max_size in coord_maxes.items():
-                if coord in ds.dims and ds.dims[coord] < max_size:
+                if coord in ds.dims:
+                    current_size = ds.dims[coord]
                     logger.info(
-                        f"Padding {coord} from {ds.dims[coord]} to {max_size} "
-                        f"({inst_key} max coordinate size)."
+                        f"Incoming {coord} values ({current_size}): {ds[coord].values}"
                     )
-                    ds = ds.reindex({coord: np.arange(max_size)})
+                    if current_size < max_size:
+                        logger.info(f"Reindexing {coord} to {max_size}.")
+                        ds = ds.reindex({coord: np.arange(max_size)})
     return ds
 
 
