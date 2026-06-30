@@ -29,6 +29,7 @@ from data_vent.processor import (
     append_to_zarr,
     is_zarr_ready,
     preproc,
+    reindex_to_max_coordinates,
 )
 from data_vent.processor.checker import check_in_progress
 from data_vent.processor.utils import _write_data_avail, _get_var_encoding
@@ -595,6 +596,8 @@ def data_processing(
                         ds = check_for_empty_qartod_vars(ds)
 
                     logger.info("Finished preprocessing dataset.")
+
+                    ds = reindex_to_max_coordinates(ds, stream_harvest.instrument, logger)
 
                     # Chunk dataset and write to zarr
                     if isinstance(ds, xr.Dataset):

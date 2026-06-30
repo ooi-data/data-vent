@@ -12,6 +12,8 @@ from xarray import coding
 from rechunker.algorithm import prod
 from rechunker import rechunk  # noqa
 
+from rca_data_tools.qaqc.constants import MAX_COORD_SIZES
+
 from .utils import (
     _reindex_zarr,
     _prepare_existing_zarr,
@@ -149,6 +151,21 @@ def update_metadata(dstime, download_date, unit=None, extra_attrs={}):
     dstime = _meta_cleanup(dstime)
 
     return dstime
+
+
+def reindex_to_max_coordinates(ds, instrument, logger=None):
+    if logger is None:
+        logger = get_logger()
+    for inst_key, coord_maxes in MAX_COORD_SIZES.items():
+        if inst_key in instrument:
+            for coord, max_size in coord_maxes.items():
+                if coord in ds.dims and ds.dims[coord] < max_size:
+                    logger.info(
+                        f"Padding {coord} from {ds.dims[coord]} to {max_size} "
+                        f"({inst_key} max coordinate size)."
+                    )
+                    ds = ds.reindex({coord: np.arange(max_size)})
+    return ds
 
 
 def _meta_cleanup(chunked_ds):
