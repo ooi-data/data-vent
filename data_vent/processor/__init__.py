@@ -165,8 +165,13 @@ def reindex_to_max_coordinates(ds, instrument, logger=None):
                         f"Incoming {coord} values ({current_size}): {ds[coord].values}"
                     )
                     if current_size < max_size:
-                        logger.info(f"Reindexing {coord} to {max_size}.")
-                        ds = ds.reindex({coord: np.arange(max_size)})
+                        if ds[coord].isnull().any():
+                            logger.warning(
+                                f"{coord} has NaN values, skipping reindex. "
+                                "Append will be skipped downstream by _validate_dims."
+                            )
+                        else:
+                            ds = ds.reindex({coord: np.arange(max_size)})
     return ds
 
 
