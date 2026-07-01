@@ -16,3 +16,7 @@ class StreamNotFoundError(Exception):
 
 class MissingDataError(Exception):
     pass
+
+
+class DimensionChangedError(Exception):
+    pass

@@ -13,9 +13,9 @@ from rechunker.algorithm import prod
 from rechunker import rechunk  # noqa
 
 from rca_data_tools.qaqc.constants import MAX_COORD_SIZES
+from data_vent.exceptions import DimensionChangedError
 
 from .utils import (
-    _reindex_zarr,
     _prepare_existing_zarr,
     _prepare_ds_to_append,
     _validate_dims,
@@ -233,12 +233,10 @@ def append_to_zarr(mod_ds, store, encoding, overwrite_attrs, logger=None):
 
     if modify_zarr_dims:
         changed = {d: (existing_zarr[d].shape[0], len(v)) for d, v in dim_indexer.items()}
-        logger.warning(
+        raise DimensionChangedError(
             f"Non-time dimension size increased: {changed}. "
-            "Rewriting entire zarr store to expand dimension — this may take a while."
+            "Run with refresh=True to rewrite the store at the new dimension size."
         )
-        existing_zarr = _reindex_zarr(store, dim_indexer)
-        logger.warning("Zarr rewrite complete. Resuming append with expanded dimensions.")
     elif dim_indexer and not modify_zarr_dims:
         logger.info("Reindexing dataset to append ...")
         mod_ds = mod_ds.reindex(dim_indexer)
