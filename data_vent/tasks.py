@@ -668,20 +668,21 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
             **stream_harvest.harvest_options.path_settings,
         )
         if stream_harvest.harvest_options.refresh:
-            # Remove missing groups in the final store
-            temp_group = zarr.open_consolidated(temp_store)
-            final_group = zarr.open_group(final_store, mode="a")
-            final_modified = False
-            for k, _ in final_group.items():
-                if k not in list(temp_group.array_keys()):
-                    final_group.pop(k)
-                    final_modified = True
-
-            if final_modified:
-                zarr.consolidate_metadata(final_store)
+            # Refresh must be a true replace of the final store, not a merge.
+            # copy_store only overwrites colliding keys, so chunks from a
+            # previous chunk grid (e.g. a changed wavelength size) or removed
+            # variables would otherwise survive and corrupt later appends.
+            stale_keys = set(final_store) - set(temp_store)
 
             # Copy over the store, at this point, they should be similar
             zarr.copy_store(temp_store, final_store, if_exists="replace")
+
+            if stale_keys:
+                logger.warning(
+                    f"Removing {len(stale_keys)} stale keys from final store "
+                    "left over from a previous store layout."
+                )
+                final_store.delitems(list(stale_keys))
         # NOTE: Comment out since append to live data happened during
         # data_processing task
         # else:
