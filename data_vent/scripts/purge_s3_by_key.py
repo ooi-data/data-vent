@@ -58,7 +58,9 @@ def main(bucket, prefixes, patterns, execute):
 
     keys = set()
     for prefix in prefixes:
-        keys.update(fs.find(f"{bucket}/{prefix}"))
+        path = f"{bucket}/{prefix}"
+        # glob prefix-matches filenames; find recursively walks the whole bucket
+        keys.update(fs.glob(f"{path}*") if prefix else fs.find(path))
 
     if patterns:
         to_delete = [k for k in keys if any(p in k for p in patterns)]
