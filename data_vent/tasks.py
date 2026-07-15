@@ -254,7 +254,7 @@ def _check_stream(stream_harvest):
     # raise SKIP("OOINet is currently down.")
 
 
-@task(retries=6, retry_delay_seconds=600)
+@task(retries=8, retry_delay_seconds=600)
 def setup_harvest(stream_harvest: StreamHarvest):
     logger = get_run_logger()
     logger.info("=== Setting up data request ===")
@@ -429,7 +429,7 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
 
 
 # TODO: Create state handler that update to request.yaml each time check_data is run
-@task(retries=6, retry_delay_seconds=300)
+@task(retries=8, retry_delay_seconds=300)
 def check_data(data_response, stream_harvest):
     logger = get_run_logger()
     logger.info("=== Checking for data readiness ===")
