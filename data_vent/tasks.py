@@ -844,10 +844,20 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
 
         ds = xr.open_zarr(final_store, consolidated=True, chunks="auto")
 
-        if advanced_qaqc_end_date is None:
+        if mode == "w":
             ds_to_qaqc = ds
         else:
-            ds_to_qaqc = ds.isel(time=(ds.time > np.datetime64(advanced_qaqc_end_date)).values)
+            # Derive the append cutoff from the flags store itself, NOT from
+            # advanced_qaqc_end_date: the status json string round-trips through
+            # dateutil at microsecond precision while decoded zarr times carry
+            # nanosecond residue, which re-included the boundary point and
+            # appended one duplicate timestamp per run.
+            last_flag_time = xr.open_zarr(qaqc_store, consolidated=True).time[-1].values
+            ds_to_qaqc = ds.isel(time=(ds.time > last_flag_time).values)
+
+        if ds_to_qaqc.time.size == 0:
+            logger.info("No new data past the last advanced QAQC flag. Skipping.")
+            return
 
         # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
         harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
