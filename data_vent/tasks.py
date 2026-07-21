@@ -50,10 +50,11 @@ from data_vent.settings import harvest_settings
 from data_vent.config import FLOW_PROCESS_BUCKET
 from data_vent.config import STORAGE_OPTIONS
 from data_vent.exceptions import (
-    DataNotReadyError, 
-    NullMetadataError, 
-    StreamNotFoundError, 
+    DataNotReadyError,
+    NullMetadataError,
+    StreamNotFoundError,
     MissingDataError,
+    RefreshRequestInAppendModeError,
 )
 from rca_data_tools.qaqc.plots import run_calculations_for_site
 from rca_data_tools.qaqc.utils import load_site_calculations
@@ -536,6 +537,21 @@ def data_processing(
     stream = nc_files_dict.get("stream")
     name = stream.get("table_name")
     logger.info(f"=== Processing {name}. ===")
+
+    # An append run must never consume a refresh data request. The request type
+    # (encoded in the data_response suffix) and the processing mode can decouple
+    # across the async gap between requesting and processing: a refresh request
+    # left ready gets picked up by a later append run, which then appends the
+    # full re-pulled series onto the live store instead of rewriting it. Fail
+    # loud rather than silently double the store.
+    if not stream_harvest.harvest_options.refresh and \
+            (stream_harvest.status.data_response or "").endswith("refresh"):
+        raise RefreshRequestInAppendModeError(
+            f"Append run found a refresh data request ({stream_harvest.status.data_response}). "
+            "Refusing to append a full-series payload onto the live store. "
+            "Re-launch this stream with refresh=True to consume it as a clean rewrite."
+        )
+
     status_json = stream_harvest.status.model_dump()
     status_json.update({"process_status": "pending"})
     update_and_write_status(stream_harvest, status_json)

@@ -20,3 +20,7 @@ class MissingDataError(Exception):
 
 class DimensionChangedError(Exception):
     pass
+
+
+class RefreshRequestInAppendModeError(Exception):
+    pass
