@@ -23,11 +23,32 @@ name + "most recent" / "running now" and it will resolve the ID.
 ## Store integrity (zarr)
 
 Stores are structurally immutable during normal appends. A refresh
-(`refresh=True`) is the only sanctioned full rewrite. When diagnosing a
-suspect store, check for a torn append (time-dimensioned arrays at differing
-lengths) or a doubled/non-monotonic time axis by reading `.zmetadata` shapes
-and sampling the `time` array — both are symptoms of a crashed/mis-moded run,
-not something appends self-heal.
+(`refresh=True`) is the only sanctioned full rewrite. Diagnose a suspect store
+by reading `.zmetadata` (one S3 GET — sampling the time array over many big
+stores times out). Corruption fingerprints:
+
+- **Torn**: time-dimensioned arrays at DIFFERING lengths (some vars extended,
+  others not). Cause: crashed mid-append — `to_zarr` writes vars one at a time
+  with no transaction. Worsens across later appends. Surfaces downstream as
+  `ValueError: conflicting sizes for dimension 'time'` in QAQC `xr.open_zarr`.
+- **Doubled**: uniform lengths but a NON-monotonic time axis (resets backward).
+  A full re-pulled series appended on top of the existing one. Uniform length
+  does not rule this out — must sample `time` and check monotonicity. Cause: a
+  refresh payload consumed by an append-mode run.
+- **NaT boundary**: a NaN/fill time boundary makes `_update_time_coverage`
+  write the literal `"NaT"` into the status json `end_date`, which later breaks
+  a daily append with `ParserError: Unknown string format: NaTZ`.
+
+## Interpreting failed runs
+
+A harvest-status json with null (or `NaT`) `end_date` + a clean store is NOT a
+stuck state on its own. A refresh nulls the date fields at start, writes to the
+temp bucket, and only repopulates the status at finalize. A daily append that
+fires mid-refresh reads the null and dies with `NullMetadataError` (None) or
+`ParserError: NaTZ` (`"NaT"`) — transient collateral that self-heals when the
+refresh finalizes. Only treat it as a real problem if the refresh run itself
+landed Failed/Crashed with no matching finalize. Don't flag these transient
+append failures as store corruption.
 
 ## Config source of truth
 
