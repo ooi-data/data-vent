@@ -55,3 +55,41 @@ append failures as store corruption.
 Reference designators, stream params, and configs live in rca-data-tools:
 https://github.com/OOI-CabledArray/rca-data-tools/tree/main/rca_data_tools/qaqc/params
 (installed into the image via the `rca-data-tools @ git+...@main` dependency).
+
+**rca-data-tools changes need an image rebuild.** The deployment's only pull
+step clones data-vent; rca-data-tools is resolved at image build time, so
+editing `maxCoordinateSizes.csv` without `docker buildx ... --push` is a no-op.
+
+`run_stream_ingest(streams=[...])` resolves `<refdes>/<name>.yaml`, so pass the
+**filename stem** — it can differ from the stream name inside (`..._beam_5.yaml`
+holds stream `vadcp_b_velocity_beam5`).
+
+## Refreshing a stream (two-phase, see README)
+
+1. `_REQUEST_DATA` — `refresh=ON`, `force_harvest=ON`. Usually ends in
+   `DataNotReadyError` after ~40 min; that is the designed outcome.
+2. `_GET_DATA` — `refresh=ON`, `force_harvest=OFF`, hours later. Writes the zarr.
+
+Phase 1 nulls `start_date`/`end_date`, so daily appends fail with
+`NullMetadataError` between the phases — normal, self-heals at finalize. Only a
+problem if phase 2 can never succeed, and nothing times the window out: look for
+a days-old `requested_at` still at `process_status: pending`.
+
+Phase 2 never re-requests (`check_requested` just returns `data_check`), so
+repeated phase-2 runs re-process the same, possibly stale, payload.
+
+## Non-time dimension growth (DimensionChangedError)
+
+`_validate_dims` reindexes an incoming dim *down* silently but raises on
+*growth* (no in-place reindex since `3f23ff3`, 2026-07-01). A refresh rebuilds
+from t0, so the earliest deployment sets the store dims — if a later deployment
+is bigger, refresh can never succeed even while daily appends keep working.
+
+Fix: add a row to `maxCoordinateSizes.csv` in rca-data-tools, then refresh so the
+store is rewritten at that size. Leave headroom to the next chunk boundary.
+
+- The row and the refresh must land together; the row alone breaks working appends.
+- Matching is `inst_key in instrument`, a substring test on the **refdes**: `ADCP`
+  also matches `VADCP`, and a row hits **every stream of that instrument**
+  (VADCPB301 serves `vadcp_b_velocity_beam` at bin 167 and
+  `vadcp_b_velocity_beam5` at bin 100 — one row forces a refresh of both).
