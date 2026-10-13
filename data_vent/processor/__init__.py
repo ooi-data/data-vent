@@ -9,8 +9,8 @@ import dask
 import xarray as xr
 from xarray import coding
 
-from rechunker.algorithm import prod
-from rechunker import rechunk  # noqa
+import numcodecs
+from zarr.codecs import BloscCodec
 
 from rca_data_tools.qaqc.constants import MAX_COORD_SIZES
 from data_vent.exceptions import DimensionChangedError
@@ -21,15 +21,20 @@ from .utils import (
     _validate_dims,
     _download
 )
+# Output zarr format for newly created stores. Pinned to 2 so stores stay
+# readable by zarr-python 2 clients; zarr-python 3 would otherwise default to 3.
+# Flip to 3 and refresh every stream to migrate.
+ZARR_FORMAT = 2
 
 
 def _update_time_coverage(store: fsspec.mapping.FSMap) -> None:
     """Updates start and end date in global attributes"""
     zg = zarr.open_group(store, mode="r+")
-    calendar = zg.time.attrs.get("calendar", "gregorian")
-    units = zg.time.attrs.get("units", "seconds since 1900-01-01 0:0:0")
+    time_arr = zg["time"]
+    calendar = time_arr.attrs.get("calendar", "gregorian")
+    units = time_arr.attrs.get("units", "seconds since 1900-01-01 0:0:0")
     start, end = xr.coding.times.decode_cf_datetime(
-        [zg.time[0], zg.time[-1]], units=units, calendar=calendar
+        [time_arr[0], time_arr[-1]], units=units, calendar=calendar
     )
     zg.attrs["time_coverage_start"] = str(start)
     zg.attrs["time_coverage_end"] = str(end)
@@ -44,7 +49,8 @@ def get_logger():
 
 
 def is_zarr_ready(store):
-    meta = store.get(".zmetadata")
+    # zarr format 2 consolidates to .zmetadata; format 3 to root zarr.json
+    meta = store.get("zarr.json") or store.get(".zmetadata")
     if meta is None:
         return False
     return True
@@ -211,7 +217,7 @@ def append_to_zarr(mod_ds, store, encoding, overwrite_attrs, logger=None):
                 existing_zarr[var_name].attrs.update(mod_ds[var_name].attrs)
 
         # rebuild consolidated metadata
-        zarr.convenience.consolidate_metadata(existing_zarr.store)
+        zarr.consolidate_metadata(store)
 
     existing_var_count = len(list(existing_zarr.array_keys()))
     to_append_var_count = len(mod_ds.variables)
@@ -278,7 +284,7 @@ def _calc_chunks(variable: xr.DataArray, max_chunk="100MB"):
     dim_shape = {x: y for x, y in zip(variable.dims, variable.shape) if x != "time"}
     if "time" in variable.dims:
         time_chunk = math.ceil(
-            max_chunk_size / prod(dim_shape.values()) / variable.dtype.itemsize
+            max_chunk_size / math.prod(dim_shape.values()) / variable.dtype.itemsize
         )
         dim_shape["time"] = _round_down(time_chunk)
     chunks = tuple(dim_shape[d] for d in list(variable.dims))
@@ -292,7 +298,12 @@ def chunk_ds(
     existing_enc=None,
     apply=True,
 ):
-    compress = zarr.Blosc(cname="zstd", clevel=3, shuffle=2)
+    # format 2 takes a numcodecs codec, format 3 takes a zarr codec
+    compress = (
+        numcodecs.Blosc(cname="zstd", clevel=3, shuffle=2)
+        if ZARR_FORMAT == 2
+        else BloscCodec(cname="zstd", clevel=3, shuffle="bitshuffle")
+    )
 
     if existing_enc is None:
         raw_enc = {}
@@ -303,7 +314,7 @@ def chunk_ds(
             extra_enc = {}
             if "_FillValue" in v.encoding:
                 extra_enc["_FillValue"] = v.encoding["_FillValue"]
-            raw_enc[k] = dict(compressor=compress, dtype=v.dtype, chunks=chunks, **extra_enc)
+            raw_enc[k] = dict(compressors=compress, dtype=v.dtype, chunks=chunks, **extra_enc)
 
         if "time" in chunked_ds:
             chunks = _calc_chunks(chunked_ds["time"], max_chunk=time_max_chunks)
