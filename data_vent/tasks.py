@@ -22,6 +22,7 @@ from data_vent.producer import (
     perform_request,
 )
 from data_vent.processor import (
+    ZARR_FORMAT,
     _download,
     _update_time_coverage,
     update_metadata,
@@ -570,7 +571,7 @@ def data_processing(
             **stream_harvest.harvest_options.path_settings,
         )
         zg = zarr.open_consolidated(final_store)
-        existing_enc = {k: _get_var_encoding(var) for k, var in zg.arrays()}
+        existing_enc = {k: _get_var_encoding(k, var) for k, var in zg.arrays()}
         # change "temp" to the actual final when daily append
         temp_zarr = final_zarr
         temp_store = final_store
@@ -633,6 +634,7 @@ def data_processing(
                                 compute=True,
                                 mode="w",
                                 encoding=enc,
+                                zarr_format=ZARR_FORMAT,
                             )
                             succeed = True
                         else:
@@ -685,13 +687,15 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
         )
         if stream_harvest.harvest_options.refresh:
             # Refresh must be a true replace of the final store, not a merge.
-            # copy_store only overwrites colliding keys, so chunks from a
+            # Copying only overwrites colliding keys, so chunks from a
             # previous chunk grid (e.g. a changed wavelength size) or removed
             # variables would otherwise survive and corrupt later appends.
+            # NOTE: zarr.copy_store is not implemented in zarr-python 3, so
+            # copy raw bytes key by key between the fsspec mappers.
             stale_keys = set(final_store) - set(temp_store)
 
-            # Copy over the store, at this point, they should be similar
-            zarr.copy_store(temp_store, final_store, if_exists="replace")
+            for key in temp_store:
+                final_store[key] = temp_store[key]
 
             if stale_keys:
                 logger.warning(
@@ -886,8 +890,9 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
             append_dim="time" if mode == "a" else None,
             consolidated=True,
             align_chunks=True,
+            zarr_format=ZARR_FORMAT if mode == "w" else None,
         )
-        zarr.convenience.consolidate_metadata(qaqc_store)
+        zarr.consolidate_metadata(qaqc_store)
 
         _, new_advanced_qaqc_end_date = _update_time_coverage(qaqc_store) # NOTE alternate way to get date range
 

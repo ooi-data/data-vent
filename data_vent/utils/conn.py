@@ -50,7 +50,8 @@ SESSION.mount("https://", timeout_adapter)
 
 def check_zarr(dest_fold, storage_options={}):
     fsmap = fsspec.get_mapper(dest_fold, **storage_options)
-    if fsmap.get(".zmetadata") is not None:
+    # zarr format 2 consolidates to .zmetadata; format 3 to root zarr.json
+    if fsmap.get("zarr.json") is not None or fsmap.get(".zmetadata") is not None:
         zgroup = zarr.open_consolidated(fsmap)
         if "time" not in zgroup:
             raise ValueError(f"Dimension time is missing from the dataset {dest_fold}!")

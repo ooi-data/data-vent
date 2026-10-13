@@ -13,22 +13,20 @@ from data_vent.utils.encoders import NumpyEncoder
 from data_vent.settings.main import harvest_settings
 
 
-def _get_var_encoding(var):
-    compress = zarr.Blosc(cname="zstd", clevel=3, shuffle=2)
+def _get_var_encoding(name, var):
     enc = {
-        "chunks": getattr(var, "_chunks"),
+        "chunks": var.chunks,
     }
-    if var.basename != "time":
+    if name != "time":
         enc = dict(
             **{
-                "compressor": getattr(var, "_compressor", compress),
-                "dtype": getattr(var, "_dtype"),
+                "compressors": var.compressors,
+                "dtype": var.dtype,
             },
             **enc,
         )
-        fill_value = getattr(var, "_fill_value", None)
-        if fill_value is not None:
-            enc["_FillValue"] = fill_value
+        if var.fill_value is not None:
+            enc["_FillValue"] = var.fill_value
     return enc
 
 
@@ -121,17 +119,22 @@ def _prepare_existing_zarr(store, ds_to_append, enc):
             if "_FillValue" in enc[var_name]:
                 fill_value = enc[var_name]["_FillValue"]
 
-            za = existing_zarr.create(
+            # zarr format 2 stores dimension names in the _ARRAY_DIMENSIONS
+            # attribute; format 3 has them natively in array metadata
+            is_v2 = existing_zarr.metadata.zarr_format == 2
+            za = existing_zarr.create_array(
                 var_name,
                 shape=existing_arr_shape,
                 chunks=existing_chunks,
                 dtype=enc[var_name]["dtype"],
                 fill_value=fill_value,
-                compressor=enc[var_name]["compressor"],
+                compressors=enc[var_name]["compressors"],
+                dimension_names=None if is_v2 else list(new_var.dims),
             )
 
             attributes = json.loads(json.dumps(new_var.attrs, cls=NumpyEncoder))
-            attributes["_ARRAY_DIMENSIONS"] = list(new_var.dims)
+            if is_v2:
+                attributes["_ARRAY_DIMENSIONS"] = list(new_var.dims)
 
             za.attrs.put(attributes)
             logger.info(f"{var_name} creation finished.")
