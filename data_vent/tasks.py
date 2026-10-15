@@ -13,7 +13,6 @@ import dask.array as da
 from dateutil import parser
 
 from prefect import task, get_run_logger
-from prefect.states import Cancelled, Failed
 
 from data_vent.producer import (
     StreamHarvest,
@@ -55,6 +54,11 @@ from data_vent.exceptions import (
     StreamNotFoundError,
     MissingDataError,
     RefreshRequestInAppendModeError,
+    DataRequestTimeoutError,
+    MissingDataResponseError,
+    DataRequestFailedError,
+    OOIMaintenanceError,
+    HarvestNotSupportedError,
 )
 from rca_data_tools.qaqc.plots import run_calculations_for_site
 from rca_data_tools.qaqc.utils import load_site_calculations
@@ -250,8 +254,7 @@ def _check_stream(stream_harvest):
             if "maintenance" in html_title:
                 # if there's maintainance then skip
                 # raise SKIP("OOI is under maintenance!")
-                logger.warning("OOI is under maintenance!")
-                return Cancelled(message="OOI is under maintenance!")
+                raise OOIMaintenanceError("OOI is under maintenance!")
     # raise SKIP("OOINet is currently down.")
 
 
@@ -278,8 +281,7 @@ def setup_harvest(stream_harvest: StreamHarvest):
         logger.warning(message)
         status_json.update({"status": "failed"})
         update_and_write_status(stream_harvest, status_json)
-        # raise SKIP(message=message, result={"status": status_json, "message": message},)
-        return Cancelled(message=message, result={"status": status_json, "message": message})
+        raise HarvestNotSupportedError(message)
 
     else:
         estimated_request = create_request_estimate(
@@ -338,12 +340,7 @@ def request_data(
                 message = "Error found with ooi-harvester during request"
             else:
                 message = f"Error found with OOI M2M during request: ({result.get('status_code')}) {result.get('reason')}"
-            # raise FAIL(
-            #     message=message,
-            #     result={"status": status_json, "message": message},
-            # )
-            logger.warning(message)
-            return Failed(message=message, result={"status": status_json, "message": message})
+            raise DataRequestFailedError(message)
         else:
             status_json.update(
                 {
@@ -361,15 +358,7 @@ def request_data(
         status_json.update({"status": "failed"})
         update_and_write_status(stream_harvest, status_json)
         message = "No data is available for harvesting."
-        # raise SKIP(
-        #     message="No data is available for harvesting.",
-        #     result={"status": status_json, "message": message},
-        # )
-        logger.warning(message)
-        return Cancelled(
-            message="No data is available for harvesting.",
-            result={"status": status_json, "message": message},
-        )
+        raise DataRequestFailedError(message)
 
 
 @task
@@ -420,84 +409,90 @@ def get_request_response(stream_harvest: StreamHarvest, logger=None):
         )
         update_and_write_status(stream_harvest, status_json)
 
-        logger.warning(message)
-        return Cancelled(
-            message=message,
-            result={"status": status_json, "message": message},
-        )
+        raise MissingDataResponseError(message)
 
     return request_response
 
 
 # TODO: Create state handler that update to request.yaml each time check_data is run
-@task(retries=8, retry_delay_seconds=300)
+def _retry_unless_terminal(task, task_run, state) -> bool:
+    """Retry transient readiness failures, but not a decided timeout."""
+    try:
+        state.result()
+    except DataRequestTimeoutError:
+        return False
+    except Exception:
+        return True
+    return False
+
+
+@task(retries=8, retry_delay_seconds=300, retry_condition_fn=_retry_unless_terminal)
 def check_data(data_response, stream_harvest):
     logger = get_run_logger()
     logger.info("=== Checking for data readiness ===")
     logger.info(f"Data request response: {data_response}")
     status_json = stream_harvest.status.model_dump()
-    result = data_response.get("result")
+    result = data_response.get("result") or {}
     status_url = result.get("status_url", None)
-    if status_url is not None:
-        in_progress = check_in_progress(status_url)
-        if not in_progress:
-            logger.info("Data available for download.")
-            status_json.update({"status": "success", "data_ready": True})
-            stream_harvest = update_and_write_status(stream_harvest, status_json)
-            return {
-                "data_response": data_response,
-                "stream_harvest": stream_harvest,
-            }
-        else:
-            time_since_request = datetime.datetime.utcnow() - dateutil.parser.parse(
-                data_response["result"]["request_dt"]
-            )
-            if time_since_request >= datetime.timedelta(days=2):
-                try:
-                    catalog_dict = parse_response_thredds(data_response)
-                    filtered_catalog_dict = filter_and_parse_datasets(catalog_dict)
-                    if len(filtered_catalog_dict["datasets"]) > 0:
-                        logger.info(
-                            "Data request timeout reached. But nc files are still available."
-                        )
-                        status_json.update(
-                            {
-                                "status": "success",
-                                "data_ready": True,
-                            }
-                        )
-                        stream_harvest = update_and_write_status(stream_harvest, status_json)
-                        return {
-                            "data_response": data_response,
-                            "stream_harvest": stream_harvest,
-                        }
-                except Exception:
-                    message = f"Data request timeout reached. Has been waiting for more than 2 days. ({str(time_since_request)}) | {status_url}"
-                    status_json.update(
-                        {
-                            "status": "failed",
-                            "data_ready": False,
-                        }
-                    )
-                    update_and_write_status(stream_harvest, status_json)
-                    logger.warning(message)
-                    return Cancelled(
-                        message=message,
-                        result={"status": status_json, "message": message},
-                    )
-            else:
-                logger.info(f"Data request time elapsed: {str(time_since_request)}")
-                message = "Data is not ready for download..."
-                status_json.update(
-                    {
-                        "status": "pending",
-                        "data_ready": False,
-                        "data_check": True,
-                    }
-                )
-                update_and_write_status(stream_harvest, status_json)
 
-                raise DataNotReadyError
+    if status_url is None:
+        raise DataRequestFailedError(
+            f"Data request response carries no status_url, so readiness cannot be "
+            f"checked: {result}"
+        )
+
+    if not check_in_progress(status_url):
+        logger.info("Data available for download.")
+        status_json.update({"status": "success", "data_ready": True})
+        stream_harvest = update_and_write_status(stream_harvest, status_json)
+        return {
+            "data_response": data_response,
+            "stream_harvest": stream_harvest,
+        }
+
+    time_since_request = datetime.datetime.utcnow() - dateutil.parser.parse(
+        result["request_dt"]
+    )
+
+    if time_since_request < datetime.timedelta(days=2):
+        logger.info(f"Data request time elapsed: {str(time_since_request)}")
+        status_json.update(
+            {
+                "status": "pending",
+                "data_ready": False,
+                "data_check": True,
+            }
+        )
+        update_and_write_status(stream_harvest, status_json)
+        raise DataNotReadyError
+
+    # Past the timeout OOI may still have published usable nc files, so check the
+    # catalog before giving up. Only the catalog read is guarded - a failure here
+    # must not be reported as the timeout itself.
+    datasets = []
+    try:
+        catalog_dict = parse_response_thredds(data_response)
+        datasets = filter_and_parse_datasets(catalog_dict)["datasets"]
+    except Exception:
+        logger.exception(f"Could not read the THREDDS catalog for this request | {status_url}")
+
+    if datasets:
+        logger.info("Data request timeout reached. But nc files are still available.")
+        status_json.update({"status": "success", "data_ready": True})
+        stream_harvest = update_and_write_status(stream_harvest, status_json)
+        return {
+            "data_response": data_response,
+            "stream_harvest": stream_harvest,
+        }
+
+    message = (
+        f"Data request timeout reached. Has been waiting for more than 2 days. "
+        f"({str(time_since_request)}) | {status_url}"
+    )
+    status_json.update({"status": "failed", "data_ready": False})
+    update_and_write_status(stream_harvest, status_json)
+    logger.warning(message)
+    raise DataRequestTimeoutError(message)
 
 
 @task
@@ -769,8 +764,8 @@ def finalize_data_stream(stores_dict, stream_harvest, max_chunk):
             }
         )
         update_and_write_status(stream_harvest, status_json)
-        exc_dict = parse_exception(e)
-        raise Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
+        logger.error(parse_exception(e).get("traceback", str(e)))
+        raise
 
 
 @task
@@ -826,8 +821,8 @@ def data_availability(nc_files_dict, stream_harvest, export=False, gh_write=Fals
 
             return avail_dict
     except Exception as e:
-        exc_dict = parse_exception(e)
-        raise Failed(message=exc_dict.get("traceback", str(e)), result=exc_dict)
+        logger.error(parse_exception(e).get("traceback", str(e)))
+        raise
 
 
 @task
