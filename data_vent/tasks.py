@@ -489,7 +489,9 @@ def check_data(data_response, stream_harvest):
         f"Data request timeout reached. Has been waiting for more than 2 days. "
         f"({str(time_since_request)}) | {status_url}"
     )
-    status_json.update({"status": "failed", "data_ready": False})
+    # Clear data_check so the next run issues a fresh request instead of
+    # re-checking this one, which OOI may have dropped.
+    status_json.update({"status": "failed", "data_ready": False, "data_check": False})
     update_and_write_status(stream_harvest, status_json)
     logger.warning(message)
     raise DataRequestTimeoutError(message)
@@ -656,6 +658,10 @@ def data_processing(
                         logger.warning("SKIPPED: Failed pre processing!")
 
     else:
+        # An empty delivery won't fill in later; clear the flags so the next run
+        # re-requests rather than reprocessing this response.
+        status_json.update({"data_ready": False, "data_check": False})
+        update_and_write_status(stream_harvest, status_json)
         raise MissingDataError("No datasets to process. Skipping...")
     return {
         "final_path": nc_files_dict.get("final_bucket"),
