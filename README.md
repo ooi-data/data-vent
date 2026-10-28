@@ -34,6 +34,7 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
    - Log into the prefect2 dashboard with an authorized uw email address. Click on deployments. In the deployments list click on `run_stream_ingest_2vcpu_16gb`. It may be on page 2 of the list.
    - In the upper right click the `run` button and on the dropdown select `custom run`.
    - Enter a run name. I usually tag the initial run with the stream name and `_REQUEST_DATA`.
+   - Set `streams` to the table name, e.g. `["CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record"]`. Left empty, the run covers every daily stream (rca-data-tools `params/harvest.yaml`).
    - **Make sure `force_harvest` and `refresh` parameters are toggled `ON`.**
    - Hit submit in the lower right.
   

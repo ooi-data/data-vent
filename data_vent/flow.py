@@ -1,14 +1,9 @@
 from typing import Any, Dict, Optional, List
 
-import os
-import yaml
-from pathlib import Path
 from pydantic import BaseModel
 from prefect import flow, get_run_logger
 from prefect.deployments import run_deployment
 from prefect.states import Completed
-
-import fsspec
 
 from data_vent.tasks import (
     get_stream_harvest,
@@ -28,9 +23,19 @@ from data_vent.tasks import (
 )
 
 from rca_data_tools.qaqc.utils import load_site_calculations
-from rca_data_tools.qaqc.constants import PARAMS_DIR
+from rca_data_tools.qaqc.constants import PARAMS_DIR, HARVEST_STREAMS, HARVEST_COMPUTE
 
-from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET, COMPUTE_EXCEPTIONS, UNIFIED_CONFIG_DF
+from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET
+
+
+def stream_config(table_name: str) -> Dict[str, Any]:
+    """stream_ingest config for a table name: <27-char refDes>-<method>-<stream>"""
+    method, name = table_name[28:].split("-", 1)
+    return {
+        "instrument": table_name[:27],
+        "stream": {"method": method, "name": name},
+        "harvest_options": {"path": f"s3://{DATA_BUCKET}"},
+    }
 
 
 class FlowParameters(BaseModel):
@@ -172,6 +177,9 @@ def run_stream_ingest(
     In production setting harvesters run in parallel on AWS Fargate instances.
 
     Args:
+        streams (Optional[List[str]]): table names to harvest, e.g.
+            `RS01SBPS-PC01A-4A-CTDPFA103-streamed-ctdpf_optode_sample` (archived streams too).
+            Defaults to rca-data-tools `HARVEST_STREAMS` (params/harvest.yaml).
         run_in_cloud (bool): If true, harvesters run in parallel on AWS Fargate instances orchestrated
             by a prefect deployment. Set to false to run harvesters in series on local machine. This
             can be useful for debugging.
@@ -197,42 +205,12 @@ def run_stream_ingest(
     logger = get_run_logger()
     logger.info("Starting parent flow...")
 
-    priority_df = UNIFIED_CONFIG_DF[UNIFIED_CONFIG_DF["stage"].isin([1, 2])]
-    priority_instruments = sorted(priority_df.refDes.unique())
+    streams = streams or HARVEST_STREAMS
+    logger.info(f"Running {len(streams)} streams")
 
-    config_dir = os.path.join(os.getcwd(), "configs", "flow_configs")
-
-    if streams:
-        all_paths = []
-        for stream in streams:
-            fpath = os.path.join(config_dir, stream[:27], f"{stream}.yaml")
-            all_paths.append(fpath)
-
-        logger.info(f"Running specified streams at the following paths: {all_paths}")
-
-    else:  # grabs all config yamls
-        fs = fsspec.filesystem("")
-        glob_path = config_dir + "/**/*.yaml"
-        logger.info(f"Searching for config yamls at path: {glob_path}")
-        all_paths = fs.glob(glob_path)
-
-        # instrument ref_des is first 27 characters of stream
-        all_paths = [
-            f for f in all_paths if os.path.basename(f)[:27] in priority_instruments
-        ]
-
-    for config_path in all_paths:
-        config_json = yaml.safe_load(Path(config_path).open())
-        run_name = "-".join(
-            [
-                config_json["instrument"],
-                config_json["stream"]["method"],
-                config_json["stream"]["name"],
-            ]
-        )
-
+    for run_name in streams:
         flow_params = {
-            "config": config_json,
+            "config": stream_config(run_name),
             "target_bucket": f"s3://{DATA_BUCKET}",
             "force_harvest": force_harvest,
             "refresh": refresh,
@@ -253,9 +231,9 @@ def run_stream_ingest(
             else:
                 harvest_type = "append"
 
-            if run_name in COMPUTE_EXCEPTIONS and harvest_type in COMPUTE_EXCEPTIONS[run_name]:
+            if harvest_type in HARVEST_COMPUTE.get(run_name, {}):
                 deployment_name = (
-                    f"stream-ingest/stream_ingest_{COMPUTE_EXCEPTIONS[run_name][harvest_type]}"
+                    f"stream-ingest/stream_ingest_{HARVEST_COMPUTE[run_name][harvest_type]}"
                 )
                 logger.warning(
                     f"{run_name} requires additional compute. Running deployment: {deployment_name}"

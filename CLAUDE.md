@@ -57,12 +57,15 @@ https://github.com/OOI-CabledArray/rca-data-tools/tree/main/rca_data_tools/qaqc/
 (installed into the image via the `rca-data-tools @ git+...@main` dependency).
 
 **rca-data-tools changes need an image rebuild.** The deployment's only pull
-step clones data-vent; rca-data-tools is resolved at image build time, so
-editing `maxCoordinateSizes.csv` without `docker buildx ... --push` is a no-op.
+step clones data-vent; rca-data-tools is resolved at image build time. A push to
+rca-data-tools main triggers the rebuild (`build-image.yaml`); until it finishes,
+edits to `harvest.yaml` or `maxCoordinateSizes.csv` are not live.
 
-`run_stream_ingest(streams=[...])` resolves `<refdes>/<name>.yaml`, so pass the
-**filename stem** — it can differ from the stream name inside (`..._beam_5.yaml`
-holds stream `vadcp_b_velocity_beam5`).
+The daily harvest list is rca-data-tools `HARVEST_STREAMS`: every stage 1/2
+instrument's `zarrFile` in `sitesDictionary.csv` plus `extra_streams` in
+`params/harvest.yaml`, which also sets non-default ECS sizes (`HARVEST_COMPUTE`).
+`run_stream_ingest(streams=[...])` takes table names
+(`<refDes>-<method>-<stream>`), including archived streams not in the daily list.
 
 ## Refreshing a stream (two-phase, see README)
 
