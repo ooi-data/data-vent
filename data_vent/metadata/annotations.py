@@ -3,7 +3,8 @@ import fsspec
 import json
 import requests
 
-from data_vent.config import DATA_BUCKET, UNIFIED_CONFIG_DF
+from data_vent.config import DATA_BUCKET
+from rca_data_tools.qaqc.constants import ALL_CONFIGS_DICT
 from data_vent.settings.main import harvest_settings
 from loguru import logger
 
@@ -33,7 +34,7 @@ def request_annotations(refdes):
 
 @click.command()
 def harvest_annotations():
-    priority_instruments = sorted(UNIFIED_CONFIG_DF.refDes.unique())
+    priority_instruments = sorted(ALL_CONFIGS_DICT)  # every sitesDictionary.csv refDes
 
     for instrument in priority_instruments:  # ie: "CE04OSPS-SF01B-2B-PHSENA108"
         annotation_json = request_annotations(instrument)

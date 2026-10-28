@@ -52,9 +52,14 @@ append failures as store corruption.
 
 ## Config source of truth
 
+Ownership: data-vent owns everything that talks to OOINet and writes data stores;
+rca-data-tools owns the instrument registry and everything that reads stores and renders.
+
 Reference designators, stream params, and configs live in rca-data-tools:
 https://github.com/OOI-CabledArray/rca-data-tools/tree/main/rca_data_tools/qaqc/params
 (installed into the image via the `rca-data-tools @ git+...@main` dependency).
+Read them only through the installed package (`rca_data_tools.qaqc.constants`), never
+from GitHub raw URLs, so one run never mixes two config versions.
 
 **rca-data-tools changes need an image rebuild.** The deployment's only pull
 step clones data-vent; rca-data-tools is resolved at image build time. A push to

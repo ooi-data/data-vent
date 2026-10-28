@@ -15,6 +15,15 @@ This migration has two aims:
 * Separation of CAVA and OOI code bases and functionalities
 * Upgrade to Prefect 2.0 for orchestration 
 
+## Ownership
+New code goes in the repo this rule points to:
+
+* **data-vent** owns everything that talks to OOINet and writes data stores (`ooi-data`, `rca-advanced-qaqc`).
+* **[rca-data-tools](https://github.com/OOI-CabledArray/rca-data-tools)** owns the instrument registry (`rca_data_tools/qaqc/params/`) and everything that reads stores and renders.
+
+data-vent reads the registry from its installed rca-data-tools: the daily harvest list (`HARVEST_STREAMS`, from
+`params/harvest.yaml`), ECS sizes, coordinate padding and the harvest-time calculations.
+
 This repo's structure has been copied over from ooi-harvester. 
 `tasks.py` contains the harvest's workhorse functions decorated as prefect @tasks 
 `flow.py` contains the complete orchestration and logic of the harvest process.

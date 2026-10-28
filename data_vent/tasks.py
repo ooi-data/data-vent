@@ -60,7 +60,7 @@ from data_vent.exceptions import (
     OOIMaintenanceError,
     HarvestNotSupportedError,
 )
-from rca_data_tools.qaqc.plots import run_calculations_for_site
+from rca_data_tools.qaqc.calculate import run_calculations_for_site
 from rca_data_tools.qaqc.utils import load_site_calculations
 from rca_data_tools.qaqc.constants import PARAMS_DIR
 

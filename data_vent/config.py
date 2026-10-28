@@ -1,5 +1,4 @@
 from data_vent.settings.main import harvest_settings
-import pandas as pd
 
 # OOI Config
 OOI_USERNAME = harvest_settings.ooi_config.username
@@ -25,8 +24,3 @@ FLOW_PROCESS_BUCKET = "flow-process-bucket"
 GH_PAT = harvest_settings.github.pat
 GH_DATA_ORG = harvest_settings.github.data_org
 GH_MAIN_BRANCH = harvest_settings.github.main_branch
-
-# consolidated instrument config with stage column in rca-data-tools repo
-UNIFIED_CONFIG_DF = pd.read_csv(
-    "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
-)
