@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "data_vent"
-version = "1.4.1"
+version = "2.0.0"
 description = "inital attempt at migrating data-harvest"
 authors = [
   { name = "Joe Duprey", email = "jduprey@uw.edu" },
@@ -15,7 +15,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
   "fsspec",
   "requests",
@@ -25,9 +25,10 @@ dependencies = [
   "pandas>2",
   "progressbar2",
   "typer",
-  "xarray>=2024.1.1",
+  "xarray>=2025.6.0",
   "netcdf4",
-  "zarr<3.0.0",
+  "zarr>=3.1",
+  "numcodecs",
   "lxml<5.2",
   "gspread<5.2",
   "fastparquet",
@@ -38,7 +39,6 @@ dependencies = [
   "prefect>3.0.3",
   "prefect-aws",
   "requests-html",
-  "rechunker",
   "pydantic>2",
   "pydantic-settings",
   "rca-data-tools @ git+https://github.com/OOI-CabledArray/rca-data-tools.git@main"
