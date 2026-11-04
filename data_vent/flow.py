@@ -22,7 +22,7 @@ from data_vent.tasks import (
     run_advanced_qaqc,
 )
 
-from rca_data_tools.qaqc.utils import load_site_calculations
+from rca_data_tools.qaqc.utils import ecs_job_variables, load_site_calculations
 from rca_data_tools.qaqc.constants import PARAMS_DIR, HARVEST_STREAMS, HARVEST_COMPUTE
 
 from data_vent.config import STORAGE_OPTIONS, DATA_BUCKET
@@ -223,30 +223,18 @@ def run_stream_ingest(
 
         logger.info(f"Launching child flow: {run_name}")
         logger.info(f"flow_params: {flow_params}")
-        # run stream_ingest in parallel using AWS ECS fargate - this infrastructure is tied to
-        # the prefect deployment
+        # run stream_ingest in parallel on AWS ECS fargate, sized per run from harvest.yaml
         if run_in_cloud:
-            if refresh:
-                harvest_type = "refresh"
-            else:
-                harvest_type = "append"
-
-            if harvest_type in HARVEST_COMPUTE.get(run_name, {}):
-                deployment_name = (
-                    f"stream-ingest/stream_ingest_{HARVEST_COMPUTE[run_name][harvest_type]}"
-                )
-                logger.warning(
-                    f"{run_name} requires additional compute. Running deployment: {deployment_name}"
-                )
-            else:
-                deployment_name = (
-                    "stream-ingest/stream_ingest_2vcpu_16gb"  # default deployment
-                )
+            harvest_type = "refresh" if refresh else "append"
+            size = HARVEST_COMPUTE.get(run_name, {}).get(harvest_type, "2vcpu_16gb")
+            if size != "2vcpu_16gb":
+                logger.warning(f"{run_name} requires additional compute: {size}")
 
             run_deployment(
-                name=deployment_name,
+                name="stream-ingest/stream_ingest",
                 parameters=flow_params,
                 flow_run_name=run_name,
+                job_variables=ecs_job_variables(size),
                 timeout=20,  # timeout can be adjusted based on AWS cluster race conditions
             )
 
