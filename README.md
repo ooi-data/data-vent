@@ -15,6 +15,15 @@ This migration has two aims:
 * Separation of CAVA and OOI code bases and functionalities
 * Upgrade to Prefect 2.0 for orchestration 
 
+## Ownership
+New code goes in the repo this rule points to:
+
+* **data-vent** owns everything that talks to OOINet and writes data stores (`ooi-data`, `rca-advanced-qaqc`).
+* **[rca-data-tools](https://github.com/OOI-CabledArray/rca-data-tools)** owns the instrument registry (`rca_data_tools/qaqc/params/`) and everything that reads stores and renders.
+
+data-vent reads the registry from its installed rca-data-tools: the daily harvest list (`HARVEST_STREAMS`, from
+`params/harvest.yaml`), ECS sizes, coordinate padding and the harvest-time calculations.
+
 This repo's structure has been copied over from ooi-harvester. 
 `tasks.py` contains the harvest's workhorse functions decorated as prefect @tasks 
 `flow.py` contains the complete orchestration and logic of the harvest process.
@@ -34,6 +43,7 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
    - Log into the prefect2 dashboard with an authorized uw email address. Click on deployments. In the deployments list click on `run_stream_ingest_2vcpu_16gb`. It may be on page 2 of the list.
    - In the upper right click the `run` button and on the dropdown select `custom run`.
    - Enter a run name. I usually tag the initial run with the stream name and `_REQUEST_DATA`.
+   - Set `streams` to the table name, e.g. `["CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record"]`. Left empty, the run covers every daily stream (rca-data-tools `params/harvest.yaml`).
    - **Make sure `force_harvest` and `refresh` parameters are toggled `ON`.**
    - Hit submit in the lower right.
   

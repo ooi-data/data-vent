@@ -6,6 +6,7 @@ import requests
 from loguru import logger
 import json
 import fsspec
+from netCDF4 import default_fillvals
 from pathlib import Path
 from github import Github
 
@@ -112,12 +113,14 @@ def _prepare_existing_zarr(store, ds_to_append, enc):
             existing_arr_shape = tuple(
                 existing_zarr[dim].shape[0] for dim, size in new_var.sizes.items()
             )
-            existing_chunks = tuple(
-                existing_zarr[dim].chunks[0] for dim, size in new_var.sizes.items()
-            )
-            fill_value = None
-            if "_FillValue" in enc[var_name]:
-                fill_value = enc[var_name]["_FillValue"]
+            # Explicit fill so the unwritten history reads as missing, not uninitialized memory
+            dtype = np.dtype(enc[var_name]["dtype"])
+            fill_value = enc[var_name].get("_FillValue")
+            if fill_value is None:
+                fill_value = (
+                    np.nan if dtype.kind == "f"
+                    else default_fillvals.get(dtype.str[1:], np.zeros((), dtype).item())
+                )
 
             # zarr format 2 stores dimension names in the _ARRAY_DIMENSIONS
             # attribute; format 3 has them natively in array metadata
@@ -125,7 +128,7 @@ def _prepare_existing_zarr(store, ds_to_append, enc):
             za = existing_zarr.create_array(
                 var_name,
                 shape=existing_arr_shape,
-                chunks=existing_chunks,
+                chunks=enc[var_name]["chunks"],
                 dtype=enc[var_name]["dtype"],
                 fill_value=fill_value,
                 compressors=enc[var_name]["compressors"],

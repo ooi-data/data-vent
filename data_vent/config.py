@@ -1,5 +1,4 @@
 from data_vent.settings.main import harvest_settings
-import pandas as pd
 
 # OOI Config
 OOI_USERNAME = harvest_settings.ooi_config.username
@@ -25,35 +24,3 @@ FLOW_PROCESS_BUCKET = "flow-process-bucket"
 GH_PAT = harvest_settings.github.pat
 GH_DATA_ORG = harvest_settings.github.data_org
 GH_MAIN_BRANCH = harvest_settings.github.main_branch
-
-# Cloud config
-COMPUTE_EXCEPTIONS = {
-    "CE04OSBP-LJ01C-07-VEL3DC107-streamed-vel3d_cd_velocity_data": {
-        "refresh": "4vcpu_30gb",
-        "append": "4vcpu_30gb",
-    },
-    "CE02SHBP-LJ01D-07-VEL3DC108-streamed-vel3d_cd_velocity_data": {
-        "refresh": "4vcpu_30gb",
-        "append": "4vcpu_30gb",
-    },
-    "CE04OSPS-SF01B-4A-NUTNRA102-streamed-nutnr_a_sample": {
-        "refresh": "4vcpu_30gb", # NUTNRAs need extra due to advanced qaqc
-        "append": "4vcpu_30gb",
-    },
-    "RS01SBPS-SF01A-4A-NUTNRA101-streamed-nutnr_a_sample": {
-        "refresh": "4vcpu_30gb",
-        "append": "4vcpu_30gb",
-    },
-    "RS03AXPS-SF03A-4A-NUTNRA301-streamed-nutnr_a_sample": {
-        "refresh": "4vcpu_30gb",
-        "append": "4vcpu_30gb",
-    },
-    "CE04OSPS-SF01B-3D-SPKIRA102-streamed-spkir_data_record": {
-        "refresh": "4vcpu_30gb",
-    },
-}
-
-# consolidated instrument config with stage column in rca-data-tools repo
-UNIFIED_CONFIG_DF = pd.read_csv(
-    "https://raw.githubusercontent.com/OOI-CabledArray/rca-data-tools/main/rca_data_tools/qaqc/params/sitesDictionary.csv"  # noqa
-)

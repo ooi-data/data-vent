@@ -134,7 +134,7 @@ class StreamHarvest(BaseModel):
     assignees: Optional[List[str]] = None
     labels: Optional[List[str]] = None
     harvest_options: HarvestOptions
-    workflow_config: Workflow
+    workflow_config: Optional[Workflow] = None
     table_name: Optional[str] = None
     _status: HarvestStatus
 

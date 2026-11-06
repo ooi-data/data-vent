@@ -305,24 +305,25 @@ def chunk_ds(
         else BloscCodec(cname="zstd", clevel=3, shuffle="bitshuffle")
     )
 
-    if existing_enc is None:
-        raw_enc = {}
-        for k, v in chunked_ds.data_vars.items():
-            chunks = _calc_chunks(v, max_chunk=max_chunk)
-
-            # add extra encodings
-            extra_enc = {}
-            if "_FillValue" in v.encoding:
-                extra_enc["_FillValue"] = v.encoding["_FillValue"]
-            raw_enc[k] = dict(compressors=compress, dtype=v.dtype, chunks=chunks, **extra_enc)
-
-        if "time" in chunked_ds:
-            chunks = _calc_chunks(chunked_ds["time"], max_chunk=time_max_chunks)
-            raw_enc["time"] = {"chunks": chunks}
-    elif isinstance(existing_enc, dict):
-        raw_enc = existing_enc
-    else:
+    if existing_enc is not None and not isinstance(existing_enc, dict):
         raise ValueError("existing encoding only accepts dictionary!")
+
+    raw_enc = {}
+    for k, v in chunked_ds.data_vars.items():
+        chunks = _calc_chunks(v, max_chunk=max_chunk)
+
+        # add extra encodings
+        extra_enc = {}
+        if "_FillValue" in v.encoding:
+            extra_enc["_FillValue"] = v.encoding["_FillValue"]
+        raw_enc[k] = dict(compressors=compress, dtype=v.dtype, chunks=chunks, **extra_enc)
+
+    if "time" in chunked_ds:
+        chunks = _calc_chunks(chunked_ds["time"], max_chunk=time_max_chunks)
+        raw_enc["time"] = {"chunks": chunks}
+
+    # Store encoding wins; computed entries cover variables new to the store
+    raw_enc.update(existing_enc or {})
 
     # Chunk the actual xr dataset
     if apply:

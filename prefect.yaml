@@ -15,18 +15,13 @@ pull:
     branch: main
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name: stream_ingest_2vcpu_16gb
-  version:
-  tags: []
-  description:
+# flow.py sets stream_ingest's cpu/memory per run from rca-data-tools params/harvest.yaml
+- name: stream_ingest
   entrypoint: data_vent/flow.py:stream_ingest
   parameters: {}
   work_pool:
     name: data-harvest-push-pool
-    work_queue_name:
     job_variables: {}
-  schedule:
-  is_schedule_active: true
 - name: run_stream_ingest_2vcpu_16gb
   version:
   tags: []
@@ -37,33 +32,5 @@ deployments:
     name: data-harvest-push-pool
     work_queue_name:
     job_variables: {}
-  schedule:
-  is_schedule_active: true
-- name: stream_ingest_4vcpu_30gb
-  version:
-  tags: []
-  description:
-  entrypoint: data_vent/flow.py:stream_ingest
-  parameters: {}
-  work_pool:
-    name: data-harvest-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 4096
-      memory: 30720
-  schedule:
-  is_schedule_active: true
-- name: stream_ingest_8vcpu_60gb
-  version:
-  tags: []
-  description:
-  entrypoint: data_vent/flow.py:stream_ingest
-  parameters: {}
-  work_pool:
-    name: data-harvest-push-pool
-    work_queue_name:
-    job_variables:
-      cpu: 8192
-      memory: 64424
   schedule:
   is_schedule_active: true
