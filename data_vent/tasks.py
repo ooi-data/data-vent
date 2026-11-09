@@ -859,7 +859,18 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
         logger.info(f"Zarr end date: {zarr_end_date}")
         logger.info("New data found since last advanced QAQC. Running advanced QAQC...")
 
-        ds = xr.open_zarr(final_store, consolidated=True, chunks="auto")
+        # store chunks (~100MB): "auto" can't size object-dtype string arrays
+        ds = xr.open_zarr(final_store, consolidated=True)
+
+        existing = None
+        if mode == "a":
+            try:
+                existing = xr.open_zarr(qaqc_store, consolidated=True)
+            except ValueError as e:
+                if "conflicting sizes" not in str(e):
+                    raise
+                logger.warning(f"Advanced QAQC store is torn, rebuilding from full history: {e}")
+                mode = "w"
 
         if mode == "w":
             ds_to_qaqc = ds
@@ -869,7 +880,7 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
             # dateutil at microsecond precision while decoded zarr times carry
             # nanosecond residue, which re-included the boundary point and
             # appended one duplicate timestamp per run.
-            last_flag_time = xr.open_zarr(qaqc_store, consolidated=True).time[-1].values
+            last_flag_time = existing.time[-1].values
             ds_to_qaqc = ds.isel(time=(ds.time > last_flag_time).values)
 
         if ds_to_qaqc.time.size == 0:
@@ -879,6 +890,13 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
         # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
         harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
         advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.table_name, ds_to_qaqc, calculate_dict=harvest_calc_dict)
+
+        # to_zarr appends can't add or drop variables without tearing the store
+        if mode == "a" and set(advanced_qaqc_ds.variables) != set(existing.variables):
+            changed = set(advanced_qaqc_ds.variables) ^ set(existing.variables)
+            logger.warning(f"Advanced QAQC variables changed ({sorted(changed)}), rebuilding from full history.")
+            mode = "w"
+            advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.table_name, ds, calculate_dict=harvest_calc_dict)
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
