@@ -831,6 +831,11 @@ def data_availability(nc_files_dict, stream_harvest, export=False, gh_write=Fals
         raise
 
 
+# flags this far back are recomputed on each append: profile indices land after the
+# harvest, and upcasts and rolling-window tests straddle appends
+ADVANCED_QAQC_TAIL = np.timedelta64(2, "D")
+
+
 @task
 def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
     logger = get_run_logger()
@@ -881,22 +886,36 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
             # nanosecond residue, which re-included the boundary point and
             # appended one duplicate timestamp per run.
             last_flag_time = existing.time[-1].values
-            ds_to_qaqc = ds.isel(time=(ds.time > last_flag_time).values)
-
-        if ds_to_qaqc.time.size == 0:
-            logger.info("No new data past the last advanced QAQC flag. Skipping.")
-            return
+            if ds.time[-1].values <= last_flag_time:
+                logger.info("No new data past the last advanced QAQC flag. Skipping.")
+                return
+            tail_start = last_flag_time - ADVANCED_QAQC_TAIL
+            ds_to_qaqc = ds.isel(time=(ds.time > tail_start).values)
 
         # which calculations to run for each site/inst/refdes are define in rca-data-tools configs
         harvest_calc_dict = load_site_calculations(PARAMS_DIR / 'siteCalculations.csv', during_harvest=True)
         advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.table_name, ds_to_qaqc, calculate_dict=harvest_calc_dict)
 
-        # to_zarr appends can't add or drop variables without tearing the store
-        if mode == "a" and set(advanced_qaqc_ds.variables) != set(existing.variables):
-            changed = set(advanced_qaqc_ds.variables) ^ set(existing.variables)
-            logger.warning(f"Advanced QAQC variables changed ({sorted(changed)}), rebuilding from full history.")
-            mode = "w"
-            advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.table_name, ds, calculate_dict=harvest_calc_dict)
+        if mode == "a":
+            i0 = int((existing.time <= tail_start).sum())
+            in_tail = (advanced_qaqc_ds.time <= last_flag_time).values
+            # to_zarr appends can't add or drop variables without tearing the store
+            if set(advanced_qaqc_ds.variables) != set(existing.variables):
+                changed = set(advanced_qaqc_ds.variables) ^ set(existing.variables)
+                logger.warning(f"Advanced QAQC variables changed ({sorted(changed)}), rebuilding from full history.")
+                mode = "w"
+            elif not np.array_equal(advanced_qaqc_ds.time.values[in_tail], existing.time.values[i0:]):
+                logger.warning("Recomputed tail doesn't match the stored times, rebuilding from full history.")
+                mode = "w"
+            if mode == "w":
+                advanced_qaqc_ds, _ = run_calculations_for_site(stream_harvest.table_name, ds, calculate_dict=harvest_calc_dict)
+            else:
+                # overwrite the recomputed tail in place; the new samples append below
+                tail = advanced_qaqc_ds.isel(time=in_tail)
+                tail.drop_vars([v for v in tail.variables if "time" not in tail[v].dims]).load().to_zarr(
+                    qaqc_store, region={"time": slice(i0, existing.sizes["time"])}
+                )
+                advanced_qaqc_ds = advanced_qaqc_ds.isel(time=~in_tail)
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
