@@ -57,7 +57,8 @@ Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record
 4) Confirm daily `stream_ingest` and `qaqc_pipeline_flow` are working as intended with the refreshed zarr of `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.
 
 5) Recalculated advanced QAQC products can be found in the `rca-advanced-qaqc` S3 bucket. These products will mirror the refreshed zarr
-dimensions and data, with added arrays containing advanced QAQC results.
+dimensions and data, with added arrays containing advanced QAQC results. Each daily append also recomputes the last
+2 days of results in place (`ADVANCED_QAQC_TAIL` in `tasks.py`).
 
 # Development
 `data-vent` has a direct dependency on the latest commit of `rca-data-tools` main branch. This means that if you want changes 

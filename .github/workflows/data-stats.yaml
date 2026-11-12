@@ -5,21 +5,14 @@ on:
     - cron: "0 11 * * *"
   push:
     branches:
-      - "main"
+      - main
     paths:
       - data_vent/stats/**
   workflow_dispatch:
 
-env:
-    ENV_FILE: .ci/data-vent.yaml
-    CONDA_ENV: data_vent
-    CACHE_NUMBER: 0
 jobs:
-  catalog-creation:
+  stats-creation:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -l {0}
     env:
       OOI_USERNAME: ${{ secrets.OOI_USERNAME }}
       OOI_TOKEN: ${{ secrets.OOI_TOKEN }}
@@ -28,25 +21,17 @@ jobs:
       GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
       GH_PAT: ${{ secrets.GH_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           repository: ooi-data/data-vent
           token: ${{ secrets.GH_TOKEN }}
-      - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@v1
+      - uses: astral-sh/setup-uv@v6
         with:
-          environment-file: ${{ env.ENV_FILE }}
-          environment-name: ${{ env.CONDA_ENV }}
-          cache-environment: true
-          cache-environment-key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
-      - name: Print conda env
-        run: |
-          conda info
-          conda list
+          python-version: "3.11"  # matches the prefect image
+          activate-environment: true
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
       - name: Install package
-        run: |
-          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/ooi-data/data-vent.git@main
+        run: uv pip install .
       - name: Run Stats Creation
-        run: |
-          ooi-data-stats
+        run: ooi-data-stats
