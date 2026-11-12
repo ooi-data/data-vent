@@ -56,7 +56,8 @@ def get_ooi_streams_and_parameters(instruments=None):
 def _get_zarr_params(table_name, params, bucket=DATA_BUCKET):
     data_stream = f"s3://{bucket}/{table_name}"
     fmap = fsspec.get_mapper(data_stream, **STORAGE_OPTIONS["aws"])
-    if fmap.get(".zmetadata") is None:
+    # zarr format 2 consolidates to .zmetadata; format 3 to root zarr.json
+    if fmap.get("zarr.json") is None and fmap.get(".zmetadata") is None:
         logger.warning(f"{table_name} does not exist as zarr.")
         return params
 
@@ -88,7 +89,10 @@ def _get_zarr_params(table_name, params, bucket=DATA_BUCKET):
             "data_level": data_level,
             "data_product_type": arr_attrs.get("data_product_identifier", "Science Data"),
             "data_product_identifier": arr_attrs.get("data_product_identifier", None),
-            "dimensions": arr_attrs.get("_ARRAY_DIMENSIONS", None),
+            # v2 stores dims in the _ARRAY_DIMENSIONS attr; v3 natively in metadata
+            "dimensions": arr_attrs.get(
+                "_ARRAY_DIMENSIONS", getattr(arr.metadata, "dimension_names", None)
+            ),
         }
         pre = {}
         if k in preload_products:

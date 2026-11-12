@@ -28,7 +28,8 @@ def parse_inst_ref(name):
 
 def is_valid(inst, instrument_refs=[]):
     name = inst["name"]
-    meta_exists = FS.exists(f"{name}/.zmetadata")
+    # zarr format 2 consolidates to .zmetadata; format 3 to root zarr.json
+    meta_exists = FS.exists(f"{name}/zarr.json") or FS.exists(f"{name}/.zmetadata")
     if meta_exists:
         inst_ref = parse_inst_ref(name)
         if inst_ref:

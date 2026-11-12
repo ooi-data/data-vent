@@ -330,7 +330,11 @@ def create_catalog_source(
     """Create a catalog dictionary entry for a zarr dataset in s3"""
     name = os.path.basename(data_zarr)
     # print(f"=== Creating data catalog entry for {name} ===")
-    zmeta = os.path.join(data_zarr, ".zmetadata")
+    # zarr format 2 consolidates to .zmetadata; format 3 to root zarr.json
+    zmeta_candidates = [
+        os.path.join(data_zarr, "zarr.json"),
+        os.path.join(data_zarr, ".zmetadata"),
+    ]
     intake_dict = {
         "description": "",
         "metadata": {},
@@ -342,7 +346,7 @@ def create_catalog_source(
         },
     }
 
-    if fs.exists(zmeta):
+    if any(fs.exists(zmeta) for zmeta in zmeta_candidates):
         try:
             zg = zarr.open_consolidated(fs.get_mapper(data_zarr))
             # print("Parsing global attributes ...")
@@ -388,8 +392,8 @@ def create_catalog_source(
                         or "BOTSFLU" in arr_attrs["data_product_identifier"]
                     )
                 ):
-                    # Remove Array Dimensions key
-                    del arr_attrs["_ARRAY_DIMENSIONS"]
+                    # Remove Array Dimensions key (absent on v3-format stores)
+                    arr_attrs.pop("_ARRAY_DIMENSIONS", None)
                     data_product_list.append(dict(reference_designator=k, **arr_attrs))
 
             intake_dict["metadata"].update(
