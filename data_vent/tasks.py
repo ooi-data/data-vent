@@ -903,10 +903,15 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
         if mode == "a":
             i0 = int((existing.time <= tail_start).sum())
             in_tail = (advanced_qaqc_ds.time <= last_flag_time).values
-            # to_zarr appends can't add or drop variables without tearing the store
-            if set(advanced_qaqc_ds.variables) != set(existing.variables):
-                changed = set(advanced_qaqc_ds.variables) ^ set(existing.variables)
-                logger.warning(f"Advanced QAQC variables changed ({sorted(changed)}), rebuilding from full history.")
+            # to_zarr appends can't add or drop variables, change their dims, or widen fixed-width
+            # strings (a new test in a flags string) without failing or tearing the store
+            changed = set(advanced_qaqc_ds.variables) ^ set(existing.variables) | {
+                v for v in set(advanced_qaqc_ds.variables) & set(existing.variables)
+                if advanced_qaqc_ds[v].dims != existing[v].dims
+                or (advanced_qaqc_ds[v].dtype.kind in "US" and advanced_qaqc_ds[v].dtype != existing[v].dtype)
+            }
+            if changed:
+                logger.warning(f"Advanced QAQC schema changed ({sorted(changed)}), rebuilding from full history.")
                 mode = "w"
             elif not np.array_equal(advanced_qaqc_ds.time.values[in_tail], existing.time.values[i0:]):
                 logger.warning("Recomputed tail doesn't match the stored times, rebuilding from full history.")
