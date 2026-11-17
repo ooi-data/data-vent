@@ -858,7 +858,8 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
     final_store = fs.get_mapper(nc_files_dict.get("final_bucket"))
     qaqc_store = fs.get_mapper(nc_files_dict.get("qaqc_bucket"))
 
-    if refresh or not fs.exists(nc_files_dict.get("qaqc_bucket")):
+    # a store without .zmetadata is missing or half-written: rebuild it
+    if refresh or not fs.exists(f"{nc_files_dict.get('qaqc_bucket')}/.zmetadata"):
         mode = "w"
     else:
         mode = "a"
@@ -925,6 +926,10 @@ def run_advanced_qaqc(stream_harvest, nc_files_dict, refresh):
                     qaqc_store, region={"time": slice(i0, existing.sizes["time"])}
                 )
                 advanced_qaqc_ds = advanced_qaqc_ds.isel(time=~in_tail)
+
+        if mode == "w":
+            # zarr needs uniform chunks; calculations can return irregular dask chunks along time
+            advanced_qaqc_ds = advanced_qaqc_ds.chunk(time=ds["time"].encoding["chunks"][0])
 
         logger.info("Writing advanced QAQC results to rca-advanced-qaqc bucket...")
         advanced_qaqc_ds.to_zarr(
