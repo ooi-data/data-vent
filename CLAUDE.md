@@ -41,14 +41,9 @@ stores times out). Corruption fingerprints:
 
 ## Interpreting failed runs
 
-A harvest-status json with null (or `NaT`) `end_date` + a clean store is NOT a
-stuck state on its own. A refresh nulls the date fields at start, writes to the
-temp bucket, and only repopulates the status at finalize. A daily append that
-fires mid-refresh reads the null and dies with `NullMetadataError` (None) or
-`ParserError: NaTZ` (`"NaT"`) — transient collateral that self-heals when the
-refresh finalizes. Only treat it as a real problem if the refresh run itself
-landed Failed/Crashed with no matching finalize. Don't flag these transient
-append failures as store corruption.
+A daily append that ends Completed with "Refresh pending; skipping append" is
+waiting out that stream's refresh, not stuck. A failed refresh shows up as a
+Failed `refresh-sweeper` run naming the stream.
 
 ## Config source of truth
 
@@ -72,19 +67,22 @@ instrument's `zarrFile` in `sitesDictionary.csv` plus `extra_streams` in
 `run_stream_ingest(streams=[...])` takes table names
 (`<refDes>-<method>-<stream>`), including archived streams not in the daily list.
 
-## Refreshing a stream (two-phase, see README)
+## Refreshing a stream (see README)
 
-1. `_REQUEST_DATA` — `refresh=ON`, `force_harvest=ON`. Usually ends in
-   `DataNotReadyError` after ~40 min; that is the designed outcome.
-2. `_GET_DATA` — `refresh=ON`, `force_harvest=OFF`, hours later. Writes the zarr.
+Launch with `refresh=True` only. A refresh is pending while the status json has
+`data_check` set and `data_response` ending `refresh`
+(`HarvestStatus.refresh_pending`). Finalize, the 2-day request timeout, an empty
+delivery and a missing response file all clear it.
 
-Phase 1 nulls `start_date`/`end_date`, so daily appends fail with
-`NullMetadataError` between the phases — normal, self-heals at finalize. Only a
-problem if phase 2 can never succeed, and nothing times the window out: look for
-a days-old `requested_at` still at `process_status: pending`.
-
-Phase 2 never re-requests (`check_requested` just returns `data_check`), so
-repeated phase-2 runs re-process the same, possibly stale, payload.
+- Not pending: the run makes a new (forced) m2m request. Pending: it processes
+  the outstanding request. `force_harvest=True` drops a pending request for a new one.
+- Not ready within `check_data`'s ~40 min: the run ends Completed. The hourly
+  `refresh-sweeper` flow launches the processing run (tagged `refresh-sweeper`)
+  once m2m's `status_url` says ready, or after 2 days so `check_data` settles it.
+- Each request gets one sweeper launch. If it fails, the sweeper ends Failed every
+  hour until a human relaunches.
+- Appends skip a pending stream (`check_requested` returns `REFRESH_PENDING`); its
+  start/end dates stay valid throughout.
 
 ## Non-time dimension growth (DimensionChangedError)
 

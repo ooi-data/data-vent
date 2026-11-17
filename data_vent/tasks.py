@@ -168,21 +168,17 @@ def check_requested(stream_harvest):
         # Raise an error if the harvest has stream registered as discontinued
         raise StreamNotFoundError("Stream is discontinued. Cannot proceed with harvest.")
 
-     
     if stream_harvest.harvest_options.refresh is True:
         return stream_harvest.status.data_check
+
+    # appends wait out a pending refresh; their request would replace its data_response
+    if stream_harvest.status.refresh_pending:
+        return "REFRESH_PENDING"
 
     try:
         last_data_date = parser.parse(status_json.get("end_date") + "Z")
     except TypeError as e:
-        raise NullMetadataError(
-            f"Unable to parse end date in status json: {str(e)}: This is "
-            "likely because this stream was recently run with flag `refresh` and `force-harvest`. "
-            "Try running the stream again with `refresh` set to `True` and `force-harvest` set "
-            "to `False`. If the full time series is ready, it will be processed to zarr and "
-            "valid start_dates and end_dates added to the json. Once complete APPENDS can be "
-            "run again succesfully."
-        )
+        raise NullMetadataError(f"Unable to parse end date in status json: {str(e)}")
     logger.info(f"RCA Cloud -- Last data point: {last_data_date}")
 
     if stream_harvest.status.data_check is True:
@@ -207,16 +203,13 @@ def check_requested(stream_harvest):
 
 
 @task
-def reset_status_json(stream_harvest, force_harvest):
-    logger = get_run_logger()
+def reset_status_json(stream_harvest, new_request):
+    """Refresh start. Dates stay valid until finalize; advanced QAQC rebuilds from the new store."""
     status_json = stream_harvest.status.model_dump()
-    # setting end date to None is #HACK to get subsequent refresh streams to fail nicely
-    # could make a more specific error #TODO in future
-    if force_harvest:
-        logger.info("force havest - resetting data check flag")
-        status_json.update({"data_check": False, "start_date": None, "end_date": None, "advanced_qaqc_end_date": None})
-    else:
-        status_json.update({"advanced_qaqc_end_date": None})
+    status_json.update({"advanced_qaqc_end_date": None})
+    if new_request:
+        # drops any outstanding request so check_requested makes a fresh one
+        status_json.update({"data_check": False})
     update_and_write_status(stream_harvest, status_json)
 
 

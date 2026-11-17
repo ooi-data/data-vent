@@ -36,27 +36,29 @@ https://docs.prefect.io/latest/guides/deployment/push-work-pools/.
 Note: in the future this could be automated with a github workflow.
 
 # How to refresh a UW RCA zarr file for a given stream 
-(Updated 03/26/2026)
+(Updated 11/17/2026)
 
 Example scenario: `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record` zarr needs a complete refresh.  
-1) **Request new data from m2m through the RCA data harvest.**
-   - Log into the prefect2 dashboard with an authorized uw email address. Click on deployments. In the deployments list click on `run_stream_ingest_2vcpu_16gb`. It may be on page 2 of the list.
-   - In the upper right click the `run` button and on the dropdown select `custom run`.
-   - Enter a run name. I usually tag the initial run with the stream name and `_REQUEST_DATA`.
+1) **Launch the refresh.**
+   - In the Prefect dashboard, open the `run_stream_ingest_2vcpu_16gb` deployment, then `run` > `custom run`.
    - Set `streams` to the table name, e.g. `["CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record"]`. Left empty, the run covers every daily stream (rca-data-tools `params/harvest.yaml`).
-   - **Make sure `force_harvest` and `refresh` parameters are toggled `ON`.**
-   - Hit submit in the lower right.
-  
-3) **If necessary, get data you requested in step 2**
-   - The initial prefect run will wait 30 minutes for m2m to serve the requested data. If the stream is dense it will likey take longer than this and you will see your initial request fails with a `data not ready error`
-   - In this case wait 2-24 hours and make a new request. In prefect deployments once again click `run_stream_ingest_2vcpu_16gb`, and select `custom run`.
-   - Enter a run name, for subsequent runs I usually tag them `_GET_DATA` and the stream name.
-   - **`force harvest` should be toggled `OFF` when getting data that has already been requested, `refresh` should be toggled `ON`**
-   - Hit submit, data should be ready and the run will proceed to concetenate the .nc files to zarr.
+   - Toggle **`refresh` ON**. Leave `force_harvest` OFF.
 
-4) Confirm daily `stream_ingest` and `qaqc_pipeline_flow` are working as intended with the refreshed zarr of `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.
+2) **That's it.** The run requests the full series from m2m and waits ~40 minutes for it.
+   - Ready in time: the run rewrites the zarr.
+   - Not ready: the run ends `Completed` ("Refresh requested..."). The hourly `refresh-sweeper` flow launches the
+     processing run once m2m has the request ready, or after 2 days, when the run settles the timeout.
+   - Daily appends skip the stream until the refresh finalizes ("Refresh pending; skipping append"), then pick up
+     from the refreshed end date.
 
-5) Recalculated advanced QAQC products can be found in the `rca-advanced-qaqc` S3 bucket. These products will mirror the refreshed zarr
+`refresh-sweeper` launches one processing run per request. If that run fails, the sweeper ends `Failed` each hour,
+naming the stream, until it's handled:
+   - Fix the cause, then relaunch with `refresh` ON to process the same request.
+   - Or relaunch with `refresh` and `force_harvest` ON to drop the pending request and make a new one.
+
+3) Confirm daily `stream_ingest` and `qaqc_pipeline_flow` are working as intended with the refreshed zarr of `CE04OSPS-SF01B-4F-PCO2WA102-streamed-pco2w_a_sami_data_record`.
+
+4) Recalculated advanced QAQC products can be found in the `rca-advanced-qaqc` S3 bucket. These products will mirror the refreshed zarr
 dimensions and data, with added arrays containing advanced QAQC results. Each daily append also recomputes the last
 2 days of results in place (`ADVANCED_QAQC_TAIL` in `tasks.py`).
 

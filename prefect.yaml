@@ -34,3 +34,15 @@ deployments:
     job_variables: {}
   schedule:
   is_schedule_active: true
+# launches processing for refresh requests once OOINet has them ready
+- name: refresh_sweeper
+  entrypoint: data_vent/flow.py:refresh_sweeper
+  parameters: {}
+  work_pool:
+    name: data-harvest-push-pool
+    job_variables:
+      cpu: 1024
+      memory: 4096
+  schedules:
+  - cron: "0 * * * *"
+    timezone: UTC

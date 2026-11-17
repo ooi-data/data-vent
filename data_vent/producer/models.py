@@ -91,6 +91,12 @@ class HarvestStatus(BaseModel):
         super().__init__(**data)
         self.last_updated = datetime.utcnow().isoformat()
 
+    @property
+    def refresh_pending(self) -> bool:
+        """A refresh request is out and not yet processed. Finalize, timeout, empty delivery and a
+        missing response file all clear data_check."""
+        return self.data_check and (self.data_response or "").endswith("refresh")
+
     @field_validator("processed_at")
     @classmethod
     def processed_at_isoformat(cls, v):
